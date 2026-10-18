@@ -1,0 +1,111 @@
+"use client";
+
+import { HandIcon, PhoneIcon } from "lucide-react";
+import { useAuth } from "@/components/auth-provider";
+import { EntityForm } from "@/components/form/entity-form";
+import { useFormValues } from "@/components/form/use-form-values";
+import { LockBanner, Panel, SaveFooter } from "@/components/crm/panel";
+import { WhatsAppButton } from "@/components/crm/whatsapp-button";
+import { PropertyMatches } from "@/components/matching/property-matches";
+import { LinkedTasks } from "@/components/tasks/linked-tasks";
+import { ReminderButton } from "@/components/tasks/reminder-button";
+import { ViewingsList } from "@/components/viewings/viewings-list";
+import { Button } from "@/components/ui/button";
+import { useAgentName, useDeleteRecord, useRecord, useSaveRecord } from "@/lib/data";
+import { formatRelative } from "@/lib/format";
+import { canEditBuyer, isAdmin } from "@/lib/permissions";
+import type { Buyer } from "@/lib/types";
+import { usePanelParam } from "@/lib/use-panel-param";
+import { BUYER_SECTIONS } from "./buyer-fields";
+import { DuplicatePhoneWarning } from "./duplicate-phone-warning";
+
+export function BuyerPanel({ id, onClose }: { id: string | null; onClose: () => void }) {
+  const { profile } = useAuth();
+  const agentName = useAgentName();
+  const { data: buyer, isLoading } = useRecord<Buyer>("buyers", id);
+  const form = useFormValues(BUYER_SECTIONS, buyer, `${buyer?.id}:${buyer?.updated_at}`);
+  const save = useSaveRecord("buyers");
+  const remove = useDeleteRecord("buyers");
+
+  const [, setOpenId] = usePanelParam();
+  const editable = buyer ? canEditBuyer(profile, buyer) : false;
+  const admin = isAdmin(profile);
+
+  return (
+    <Panel
+      open={!!id}
+      onClose={onClose}
+      loading={isLoading || !buyer}
+      title={buyer?.full_name}
+      subtitle={buyer && `עודכן ${formatRelative(buyer.updated_at)}`}
+      badges={
+        buyer && admin ? (
+          <span className="text-xs text-muted-foreground">
+            {buyer.owner_agent_id ? `סוכן: ${agentName(buyer.owner_agent_id)}` : "לא משויך לסוכן"}
+          </span>
+        ) : undefined
+      }
+      headerActions={
+        buyer && (
+          <>
+            {buyer.phone && (
+              <Button variant="outline" size="sm" render={<a href={`tel:${buyer.phone}`} />} nativeButton={false}>
+                <PhoneIcon />
+                חייג
+              </Button>
+            )}
+            <WhatsAppButton phone={buyer.phone} />
+            <ReminderButton buyerId={buyer.id} defaultTitle={`לחזור ל${buyer.full_name.split(" ")[0]}`} />
+            {!buyer.owner_agent_id && (
+              <Button
+                size="sm"
+                onClick={() => save.mutate({ id: buyer.id, values: { owner_agent_id: profile!.id } })}
+                disabled={save.isPending}
+              >
+                <HandIcon />
+                שייך אליי
+              </Button>
+            )}
+          </>
+        )
+      }
+      footer={
+        buyer && (
+          <SaveFooter
+            dirty={form.dirty}
+            saving={save.isPending}
+            disabled={!editable}
+            onSave={() => save.mutate({ id: buyer.id, values: form.changes })}
+            onReset={form.reset}
+            onDelete={admin ? () => remove.mutate(buyer.id, { onSuccess: onClose }) : undefined}
+          />
+        )
+      }
+    >
+      {buyer && (
+        <>
+          {!editable && (
+            <LockBanner>
+              הקונה משויך ל<strong>{agentName(buyer.owner_agent_id)}</strong>. רק הסוכן המטפל והמנהל יכולים לערוך את הפרטים.
+            </LockBanner>
+          )}
+          <EntityForm
+            sections={BUYER_SECTIONS}
+            values={form.values}
+            onChange={form.set}
+            readOnly={!editable}
+            idPrefix="buyer"
+          />
+          {"phone" in form.changes && (
+            <div className="mt-4">
+              <DuplicatePhoneWarning phone={String(form.values.phone ?? "")} excludeId={buyer.id} onOpen={setOpenId} />
+            </div>
+          )}
+          <LinkedTasks buyerId={buyer.id} title="המשימות שלי על הקונה" />
+          <PropertyMatches buyer={buyer} />
+          <ViewingsList buyerId={buyer.id} />
+        </>
+      )}
+    </Panel>
+  );
+}

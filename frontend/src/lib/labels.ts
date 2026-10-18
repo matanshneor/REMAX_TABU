@@ -1,0 +1,80 @@
+import type { Enum } from "./types";
+
+export type Option = { value: string; label: string };
+
+export type Tone = "neutral" | "blue" | "red" | "orange" | "green" | "gray" | "purple";
+
+type Labeled<T extends string> = Record<T, { label: string; tone: Tone }>;
+
+export const PROPERTY_STATUS: Labeled<Enum<"property_status">> = {
+  active: { label: "פעיל", tone: "green" },
+  frozen: { label: "מוקפא", tone: "gray" },
+  sold: { label: "נמכר", tone: "purple" },
+};
+
+export const CANDIDATE_STATUS: Labeled<Enum<"candidate_status">> = {
+  new: { label: "חדש", tone: "blue" },
+  interview_scheduled: { label: "נקבע ראיון", tone: "orange" },
+  passed_first: { label: "עבר ראיון ראשון", tone: "purple" },
+  hired: { label: "התקבל", tone: "green" },
+  rejected: { label: "נדחה", tone: "gray" },
+};
+
+export const TRANSACTION_TYPE: Labeled<Enum<"transaction_type">> = {
+  income: { label: "הכנסה", tone: "green" },
+  expense: { label: "הוצאה", tone: "red" },
+};
+
+/** How much a buyer cares about a feature (balcony, elevator, safe room). */
+export const REQUIREMENT: Labeled<Enum<"requirement">> = {
+  must: { label: "חובה", tone: "blue" },
+  nice: { label: "רצוי", tone: "neutral" },
+  any: { label: "לא משנה", tone: "gray" },
+};
+
+/** Areas in Pisgat Ze'ev, stored in buyers.preferred_neighborhoods. Label is the short form. */
+export const PISGAT_AREAS: Option[] = [
+  { value: "פסגת זאב מרכז", label: "מרכז" },
+  { value: "פסגת זאב מזרח", label: "מזרח" },
+  { value: "פסגת זאב מערב", label: "מערב" },
+  { value: "פסגת זאב צפון", label: "צפון" },
+];
+
+export const USER_ROLE: Labeled<Enum<"user_role">> = {
+  agent: { label: "סוכן", tone: "blue" },
+  admin: { label: "מנהל", tone: "purple" },
+};
+
+export function toOptions<T extends string>(map: Labeled<T>): Option[] {
+  return Object.entries<{ label: string }>(map).map(([value, { label }]) => ({ value, label }));
+}
+
+function list(...labels: string[]): Option[] {
+  return labels.map((label) => ({ value: label, label }));
+}
+
+export const PROPERTY_TYPES = list(
+  "דירה",
+  "דירת גן",
+  "פנטהאוז",
+  "דופלקס",
+  "בית פרטי",
+  "קוטג׳",
+  "דו-משפחתי",
+  "מגרש",
+  "מסחרי",
+);
+
+export const LEAD_SOURCES = list("יד2", "פייסבוק", "אינסטגרם", "אתר", "הפניה", "שלט", "הגיע למשרד", "אחר");
+
+export const CANDIDATE_SOURCES = list("לינקדאין", "פייסבוק", "הפניה", "אתר דרושים", "אחר");
+
+export const TRANSACTION_CATEGORIES = list(
+  "עמלה",
+  "שיווק",
+  "שכירות",
+  "תשלום לסוכן",
+  "ציוד משרדי",
+  "תוכנה ומנויים",
+  "אחר",
+);
