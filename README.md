@@ -67,13 +67,13 @@ npm run dev                  # http://localhost:3000
 
 ## 3. העלאה ל-Railway
 
-ב-Railway, כל `railway.json` מגדיר שירות אחד בלבד. לכן יוצרים פרויקט אחד עם שלושה שירותים שמחוברים לאותו מאגר GitHub. לכל שירות מגדירים את ה-Root Directory שלו ב-Settings:
+המערכת רצה בפרויקט Railway בשם `remax-crm`, באזור אירופה (הולנד). כל שירות מחובר למאגר `matanshneor/remax-crm` ומתעדכן אוטומטית בכל דחיפה ל-`main`. ההגדרות נשמרות בשירות עצמו ב-Railway, ולא בקבצים בקוד.
 
-| שירות | Root Directory | Config file | משתני סביבה |
-|---|---|---|---|
-| frontend | `/frontend` | `/frontend/railway.json` | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_API_URL` |
-| backend | `/backend` | `/backend/railway.json` | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `CORS_ORIGINS` (כתובת ה-frontend) |
-| daily-digest (cron) | `/backend` | `/backend/railway.cron.json` | כמו backend |
+| שירות | Root Directory | Start command | Healthcheck | משתני סביבה |
+|---|---|---|---|---|
+| frontend | `/frontend` | `npm run start -- -p $PORT` | `/login` | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_API_URL` |
+| backend | `/backend` | `uvicorn app.main:app --host 0.0.0.0 --port $PORT` | `/health` | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `CORS_ORIGINS` (כתובת ה-frontend) |
+| daily-digest | `/backend` | `python -m app.jobs.daily_digest` · Cron `0 5 * * *` | — | כמו backend |
 
 אחרי ההעלאה, ב-Supabase תחת **Authentication → URL Configuration**, משנים את ה-Site URL לכתובת של ה-frontend ב-Railway. בלי זה, הקישורים במיילים של "שכחתי סיסמה" ושל הזמנת סוכן יפנו ל-localhost.
 
