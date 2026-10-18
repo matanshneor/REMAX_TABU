@@ -7,7 +7,9 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     supabase_url: str
-    supabase_service_role_key: str
+    # Optional at startup so the service (and its health check) can run before the key is
+    # configured; endpoints that need it return 503 until it's set.
+    supabase_service_role_key: str = ""
     # Comma-separated list of allowed frontend origins.
     cors_origins: str = "http://localhost:3000"
 
