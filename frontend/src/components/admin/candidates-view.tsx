@@ -147,6 +147,7 @@ function CandidatePanel({ candidate, onClose }: { candidate: Candidate | null; o
   const remove = useDeleteRecord("candidates");
   return (
     <Panel
+      dirty={form.dirty}
       open={!!candidate}
       onClose={onClose}
       title={candidate?.full_name}

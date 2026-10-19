@@ -53,6 +53,7 @@ export function BuyerPanel({ id, onClose }: { id: string | null; onClose: () => 
 
   return (
     <Panel
+      dirty={form.dirty}
       open={!!id}
       onClose={onClose}
       loading={isLoading || !buyer}

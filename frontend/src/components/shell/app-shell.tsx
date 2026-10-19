@@ -2,6 +2,8 @@
 
 import { AuthProvider, useAuth } from "@/components/auth-provider";
 import { PendingApproval } from "@/components/auth/pending-approval";
+import { SignupApprovalGate } from "@/components/admin/signup-approval-gate";
+import { isAdmin } from "@/lib/permissions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GlobalSearch } from "./global-search";
 import { NotificationsBell } from "./notifications-bell";
@@ -47,6 +49,7 @@ function Shell({ children }: { children: React.ReactNode }) {
         </header>
         <main className="flex-1 px-8 py-6">{children}</main>
       </div>
+      {isAdmin(profile) && <SignupApprovalGate />}
     </div>
   );
 }

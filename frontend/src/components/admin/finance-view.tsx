@@ -465,6 +465,7 @@ function TransactionPanel({ tx, onClose }: { tx: Transaction | null; onClose: ()
   const remove = useDeleteRecord("financial_transactions");
   return (
     <Panel
+      dirty={form.dirty}
       open={!!tx}
       onClose={onClose}
       title={

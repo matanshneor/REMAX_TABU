@@ -18,6 +18,7 @@ export function TaskPanel({ id, onClose }: { id: string | null; onClose: () => v
 
   return (
     <Panel
+      dirty={form.dirty}
       open={!!id}
       onClose={onClose}
       loading={isLoading || !task}

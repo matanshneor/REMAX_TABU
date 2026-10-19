@@ -25,6 +25,7 @@ export function Panel({
   loading,
   children,
   footer,
+  dirty = false,
 }: {
   open: boolean;
   onClose: () => void;
@@ -35,35 +36,75 @@ export function Panel({
   loading?: boolean;
   children: React.ReactNode;
   footer?: React.ReactNode;
+  /** Unsaved edits: closing asks first instead of throwing them away. */
+  dirty?: boolean;
 }) {
+  const guard = useDiscardGuard(dirty, onClose);
   return (
-    <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent side="left" className="gap-0 p-0 data-[side=left]:w-full data-[side=left]:sm:max-w-2xl">
-        <SheetHeader className="gap-2 border-b px-6 pt-5 pb-4">
-          <div className="flex items-start justify-between gap-3 pe-8">
-            <div className="min-w-0">
-              <SheetTitle className="truncate text-xl font-normal">{loading ? <Skeleton className="h-6 w-48" /> : title}</SheetTitle>
-              {subtitle && <SheetDescription className="mt-0.5">{subtitle}</SheetDescription>}
+    <>
+      <Sheet open={open} onOpenChange={(o) => !o && guard.requestClose()}>
+        <SheetContent side="left" className="gap-0 p-0 data-[side=left]:w-full data-[side=left]:sm:max-w-2xl">
+          <SheetHeader className="gap-2 border-b px-6 pt-5 pb-4">
+            <div className="flex items-start justify-between gap-3 pe-8">
+              <div className="min-w-0">
+                <SheetTitle className="truncate text-xl font-normal">{loading ? <Skeleton className="h-6 w-48" /> : title}</SheetTitle>
+                {subtitle && <SheetDescription className="mt-0.5">{subtitle}</SheetDescription>}
+              </div>
+              {headerActions && <div className="flex shrink-0 items-center gap-2">{headerActions}</div>}
             </div>
-            {headerActions && <div className="flex shrink-0 items-center gap-2">{headerActions}</div>}
+            {badges && <div className="flex flex-wrap items-center gap-1.5">{badges}</div>}
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto px-6 py-5">
+            {loading ? (
+              <div className="flex flex-col gap-3">
+                {Array.from({ length: 6 }, (_, i) => (
+                  <Skeleton key={i} className="h-8 w-full" />
+                ))}
+              </div>
+            ) : (
+              children
+            )}
           </div>
-          {badges && <div className="flex flex-wrap items-center gap-1.5">{badges}</div>}
-        </SheetHeader>
-        <div className="flex-1 overflow-y-auto px-6 py-5">
-          {loading ? (
-            <div className="flex flex-col gap-3">
-              {Array.from({ length: 6 }, (_, i) => (
-                <Skeleton key={i} className="h-8 w-full" />
-              ))}
-            </div>
-          ) : (
-            children
-          )}
-        </div>
-        {footer && !loading && <div className="flex items-center gap-2 border-t bg-muted/40 px-6 py-3">{footer}</div>}
-      </SheetContent>
-    </Sheet>
+          {footer && !loading && <div className="flex items-center gap-2 border-t bg-muted/40 px-6 py-3">{footer}</div>}
+        </SheetContent>
+      </Sheet>
+      {guard.dialog}
+    </>
   );
+}
+
+/**
+ * Wraps a close action: with unsaved changes it first asks "leave without saving?".
+ * Render `dialog` next to the panel or form it guards.
+ */
+export function useDiscardGuard(dirty: boolean, close: () => void) {
+  const [asking, setAsking] = useState(false);
+  const requestClose = () => (dirty ? setAsking(true) : close());
+  const dialog = (
+    <Dialog open={asking} onOpenChange={setAsking}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>לצאת בלי לשמור?</DialogTitle>
+          <DialogDescription>השינויים שהקלדת עדיין לא נשמרו. אם תצא עכשיו, הם יימחקו.</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setAsking(false)}>
+            המשך לערוך
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={() => {
+              setAsking(false);
+              close();
+            }}
+          >
+            צא בלי לשמור
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+  return { requestClose, dialog };
 }
 
 export function PanelSection({

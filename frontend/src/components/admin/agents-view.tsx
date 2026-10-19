@@ -230,15 +230,19 @@ const DONE: Record<Enum<"account_status">, string> = {
   pending: "",
 };
 
-function useSetStatus() {
+/** Approve / block an account. Stays busy until the lists have refreshed, so a card can't be clicked twice. */
+export function useSetStatus() {
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
   async function run(profile: Profile, status: Enum<"account_status">) {
     setBusy(true);
     const { error } = await createClient().from("profiles").update({ status }).eq("id", profile.id);
+    if (error) {
+      setBusy(false);
+      return toast.error(errorMessage(error));
+    }
+    await qc.invalidateQueries({ queryKey: ["profiles"] });
     setBusy(false);
-    if (error) return toast.error(errorMessage(error));
-    qc.invalidateQueries({ queryKey: ["profiles"] });
     toast.success(`${profile.full_name}: ${DONE[status]}`);
   }
   return { run, busy };
