@@ -2,6 +2,7 @@
 
 import {
   Building2Icon,
+  CircleHelpIcon,
   HandshakeIcon,
   ListChecksIcon,
   LogOutIcon,
@@ -32,6 +33,7 @@ const MAIN: NavItem[] = [
   { href: "/properties", label: "מוכרים", icon: Building2Icon },
   { href: "/tasks", label: "משימות", icon: ListChecksIcon },
   { href: "/deals", label: "העסקאות שלי", icon: HandshakeIcon },
+  { href: "/help", label: "מדריך", icon: CircleHelpIcon },
 ];
 
 const ADMIN: NavItem[] = [

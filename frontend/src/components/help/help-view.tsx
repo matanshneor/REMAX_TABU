@@ -1,0 +1,313 @@
+"use client";
+
+import {
+  BellIcon,
+  Building2Icon,
+  HandshakeIcon,
+  KeyRoundIcon,
+  ListChecksIcon,
+  MessageSquareTextIcon,
+  ShieldCheckIcon,
+  SmartphoneIcon,
+  SparklesIcon,
+  UserCheckIcon,
+  UsersIcon,
+  WalletIcon,
+} from "lucide-react";
+import { useAuth } from "@/components/auth-provider";
+import { PageHeader } from "@/components/crm/page-header";
+import { isAdmin } from "@/lib/permissions";
+
+type Topic = { id: string; icon: React.ReactNode; title: string; body: React.ReactNode };
+
+/** The user guide. Agents see their part; the admin also sees the manager's part. Keep in sync with the features. */
+const AGENT_TOPICS: Topic[] = [
+  {
+    id: "start",
+    icon: <KeyRoundIcon />,
+    title: "כניסה וחשבון",
+    body: (
+      <>
+        <Steps
+          items={[
+            <>בדף הכניסה לוחצים <B>הרשמה</B> וממלאים שם, טלפון, אימייל וסיסמה.</>,
+            <>עד שמנהל המשרד מאשר, מופיע מסך <B>״החשבון ממתין לאישור״</B>. אחרי האישור המערכת נפתחת מעצמה.</>,
+            <>שכחת סיסמה? בדף הכניסה לוחצים <B>״שכחת סיסמה?״</B> ומקבלים למייל קישור לבחירת סיסמה חדשה. הקישור תקף לשעה.</>,
+            <>שם, טלפון וסיסמה משנים ב<B>״החשבון שלי״</B>: לחיצה על השם שלך בתחתית התפריט.</>,
+          ]}
+        />
+      </>
+    ),
+  },
+  {
+    id: "buyers",
+    icon: <UsersIcon />,
+    title: "קונים",
+    body: (
+      <>
+        <Steps
+          items={[
+            <>מוסיפים קונה בכפתור <B>״קונה חדש״</B>, או בכפתור האדום <B>״הוספה מהירה״</B> בתפריט.</>,
+            <>חשוב למלא את הדרישות: אזור בפסגה, תקציב, חדרים, קומה, וממ״ד / מעלית / מרפסת (<B>חובה</B> או <B>רצוי</B>). לפיהן המערכת מוצאת לו מוכרים.</>,
+            <>אם מקלידים טלפון שכבר קיים במשרד, מופיעה אזהרה, כדי ששני סוכנים לא יעבדו על אותו לקוח.</>,
+            <>לחיצה על קונה פותחת את הכרטיס שלו, עם כפתורי <B>חייג</B>, <B>וואטסאפ</B> ו<B>תזכורת</B>.</>,
+            <>כשהקונה קונה דרכנו, משנים את הסטטוס ל<B>״קנה דרכנו״</B>. מנהל המשרד מקבל התראה לרשום את העסקה.</>,
+          ]}
+        />
+        <Note>את הקונים שלך רואים רק אתה ומנהל המשרד. סוכנים אחרים לא רואים אותם.</Note>
+      </>
+    ),
+  },
+  {
+    id: "calls",
+    icon: <MessageSquareTextIcon />,
+    title: "יומן שיחות ולידים מוזנחים",
+    body: (
+      <>
+        <Steps
+          items={[
+            <>אחרי כל שיחה עם קונה, רושמים בכרטיס שלו ב<B>״יומן שיחות״</B> מה היה. <B>Ctrl+Enter</B> שומר מהר.</>,
+            <>בטבלת הקונים, העמודה <B>״שיחה אחרונה״</B> מראה מתי דיברת איתו לאחרונה.</>,
+            <>קונה שלא דיברו איתו <B>14 יום</B> מסומן <span className="font-semibold text-brand-red">באדום</span>. בסינון הסטטוס יש אפשרות <B>״מוזנחים״</B> שמציגה רק אותם.</>,
+          ]}
+        />
+        <Note>רישום קצר אחרי כל שיחה הוא מה ששומר את הלידים חמים.</Note>
+      </>
+    ),
+  },
+  {
+    id: "sellers",
+    icon: <Building2Icon />,
+    title: "מוכרים (נכסים)",
+    body: (
+      <>
+        <Steps
+          items={[
+            <>מוסיפים בכפתור <B>״מוכר חדש״</B>: כתובת, מחיר, חדרים, קומה, מאפיינים, ופרטי המוכר.</>,
+            <>בכרטיס המוכר אפשר להוסיף <B>תמונות</B>, לתעד <B>צפייה</B> עם קונה, ולשלוח את הנכס בוואטסאפ.</>,
+            <>בצד (בטלפון: כפתור <B>״סינון״</B>) מסננים לפי סטטוס, עיר, שכונה, מחיר, חדרים, מאפיינים, <B>״בלעדיות בלבד״</B> או <B>״הנכסים שגייסתי״</B>.</>,
+          ]}
+        />
+        <Note>
+          את כל המוכרים ופרטי המוכר רואים כל סוכני המשרד. נכס <B>בבלעדיות</B> יכולים לערוך רק הסוכן שגייס אותו ומנהל המשרד.
+        </Note>
+      </>
+    ),
+  },
+  {
+    id: "matches",
+    icon: <SparklesIcon />,
+    title: "התאמות אוטומטיות",
+    body: (
+      <>
+        <Steps
+          items={[
+            <>בכרטיס של קונה מופיעים <B>המוכרים שמתאימים לו</B>, ובכרטיס של מוכר <B>הקונים שמתאימים לו</B>.</>,
+            <>התאמה = האזור, התקציב (עד 5% מעליו), מספר החדרים, הקומה, סוג הנכס, וכל דרישות ה<B>חובה</B>.</>,
+            <>כשנכנס מוכר חדש, או כשמחיר יורד, ומוכר מתחיל להתאים לקונה שלך, מגיעה התראה בפעמון 🔔.</>,
+          ]}
+        />
+      </>
+    ),
+  },
+  {
+    id: "tasks",
+    icon: <ListChecksIcon />,
+    title: "משימות ותזכורות",
+    body: (
+      <>
+        <Steps
+          items={[
+            <>ב<B>״משימות״</B> כותבים משימה בשורה העליונה ובוחרים מתי: היום, מחר או בעוד שבוע.</>,
+            <>מכרטיס של קונה או מוכר, הכפתור <B>״תזכורת״</B> יוצר משימה שקשורה אליו.</>,
+            <>משימה שהזמן שלה עבר מופיעה <span className="font-semibold text-brand-red">באדום</span>, וכל בוקר ב-8:00 מגיעה עליה התראה.</>,
+          ]}
+        />
+        <Note>המשימות שלך פרטיות: אף אחד אחר לא רואה אותן, גם לא המנהל.</Note>
+      </>
+    ),
+  },
+  {
+    id: "deals",
+    icon: <HandshakeIcon />,
+    title: "העסקאות שלי",
+    body: (
+      <p>
+        כשמנהל המשרד רושם עסקה שסגרת, היא מופיעה ב<B>״העסקאות שלי״</B>, עם העמלה שמגיעה לך מכל עסקה.
+      </p>
+    ),
+  },
+  {
+    id: "bell",
+    icon: <BellIcon />,
+    title: "התראות וחיפוש",
+    body: (
+      <Steps
+        items={[
+          <>הפעמון 🔔 למעלה מציג התראות: מוכרים שמתאימים, משימות באיחור, בלעדיות שמסתיימת. לחיצה על התראה פותחת את מה שהיא מדברת עליו.</>,
+          <>
+            שורת החיפוש למעלה מוצאת קונים ומוכרים לפי שם, טלפון או רחוב. אפשר להקליד טלפון בלי מקפים. במחשב, המקש <B>/</B> קופץ ישר לחיפוש.
+          </>,
+        ]}
+      />
+    ),
+  },
+  {
+    id: "phone",
+    icon: <SmartphoneIcon />,
+    title: "שימוש מהטלפון",
+    body: (
+      <Steps
+        items={[
+          <>המערכת עובדת מהדפדפן בטלפון, באותה כתובת.</>,
+          <>התפריט נפתח מהכפתור <B>☰</B> בפינה העליונה.</>,
+        ]}
+      />
+    ),
+  },
+];
+
+const ADMIN_TOPICS: Topic[] = [
+  {
+    id: "approve",
+    icon: <UserCheckIcon />,
+    title: "אישור סוכנים חדשים",
+    body: (
+      <>
+        <Steps
+          items={[
+            <>כשסוכן נרשם, מגיעה התראה, וקופץ חלון עם הפרטים שלו. אי אפשר להמשיך לעבוד עד שלוחצים <B>אישור</B> או <B>דחייה</B>.</>,
+            <>לפני האישור כדאי לשלוח לו הודעה מכפתור הוואטסאפ שבחלון, כדי לוודא שזה באמת הסוכן.</>,
+            <>במסך <B>״סוכנים״</B> רואים את כל צוות המשרד. סוכן שעזב חוסמים דרך הכפתור <B>⋯</B> ליד השם. הנתונים שלו נשמרים, ואפשר לאשר אותו מחדש.</>,
+          ]}
+        />
+      </>
+    ),
+  },
+  {
+    id: "recruiting",
+    icon: <UsersIcon />,
+    title: "מועמדים",
+    body: (
+      <p>
+        בראש מסך <B>״סוכנים״</B> נמצאת טבלת המועמדים לגיוס: מוסיפים מועמד, מעדכנים סטטוס (נקבע ראיון, עבר ראיון ראשון, התקבל...)
+        ומצרפים קורות חיים.
+      </p>
+    ),
+  },
+  {
+    id: "money",
+    icon: <WalletIcon />,
+    title: "עסקאות והנהלת חשבונות",
+    body: (
+      <>
+        <Steps
+          items={[
+            <>רושמים עסקה בכפתור <B>״עסקה שנסגרה״</B> ב<B>״הנהלת חשבונות״</B>. כשסוכן מסמן קונה ״קנה דרכנו״, מגיעה התראה עם קישור.</>,
+            <>לכל סוכן יש אחוז עמלה קבוע, שמתמלא אוטומטית בעסקה. משנים אותו ב<B>״הנהלת חשבונות״</B>.</>,
+            <>העסקה יוצרת לבד שתי שורות: הכנסה למשרד ותשלום לסוכן. הוצאות אחרות מוסיפים ב<B>״תנועה חדשה״</B>, ואפשר לצרף קבלה.</>,
+          ]}
+        />
+      </>
+    ),
+  },
+  {
+    id: "admin-data",
+    icon: <ShieldCheckIcon />,
+    title: "הנתונים של המשרד",
+    body: (
+      <>
+        <Steps
+          items={[
+            <>המנהל רואה את כל הקונים של כל הסוכנים, ויכול לסנן לפי סוכן.</>,
+            <>רק המנהל יכול <B>למחוק</B> קונים, מוכרים ותנועות. סוכנים לא מוחקים.</>,
+            <>הכפתור <B>״ייצוא״</B> בכל מסך מוריד את הנתונים לאקסל.</>,
+          ]}
+        />
+        <Note>מומלץ להוריד פעם בשבוע את הקונים, המוכרים והנהלת החשבונות לאקסל, ולשמור. זה הגיבוי של המשרד.</Note>
+      </>
+    ),
+  },
+  {
+    id: "login-help",
+    icon: <KeyRoundIcon />,
+    title: "בעיה בכניסה של סוכן",
+    body: (
+      <p>
+        סוכן ששכח סיסמה בוחר בעצמו סיסמה חדשה דרך <B>״שכחת סיסמה?״</B> בדף הכניסה. אם המייל לא מגיע, כדאי לבדוק איתו את תיקיית
+        הספאם.
+      </p>
+    ),
+  },
+];
+
+export function HelpView() {
+  const { profile } = useAuth();
+  const admin = isAdmin(profile);
+
+  return (
+    <div className="mx-auto max-w-3xl">
+      <PageHeader title="מדריך למערכת" description="כל מה שצריך לדעת כדי לעבוד עם המערכת, בקצרה" />
+
+      <nav aria-label="תוכן המדריך" className="mb-6 flex flex-wrap gap-1.5">
+        {[...AGENT_TOPICS, ...(admin ? ADMIN_TOPICS : [])].map((t) => (
+          <a
+            key={t.id}
+            href={`#${t.id}`}
+            className="rounded-full border bg-card px-3 py-1 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+          >
+            {t.title}
+          </a>
+        ))}
+      </nav>
+
+      <TopicList topics={AGENT_TOPICS} />
+
+      {admin && (
+        <>
+          <h2 className="mt-10 mb-4 font-display text-xl">למנהל המשרד</h2>
+          <TopicList topics={ADMIN_TOPICS} />
+        </>
+      )}
+    </div>
+  );
+}
+
+function TopicList({ topics }: { topics: Topic[] }) {
+  return (
+    <div className="flex flex-col gap-4">
+      {topics.map((t) => (
+        <section key={t.id} id={t.id} className="scroll-mt-20 rounded-xl border bg-card p-5">
+          <h3 className="mb-3 flex items-center gap-2 font-semibold [&_svg]:size-5 [&_svg]:text-primary">
+            {t.icon}
+            {t.title}
+          </h3>
+          <div className="text-[15px] leading-relaxed">{t.body}</div>
+        </section>
+      ))}
+    </div>
+  );
+}
+
+function Steps({ items }: { items: React.ReactNode[] }) {
+  return (
+    <ol className="flex flex-col gap-2">
+      {items.map((item, i) => (
+        <li key={i} className="flex gap-3">
+          <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground">
+            {i + 1}
+          </span>
+          <span>{item}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function Note({ children }: { children: React.ReactNode }) {
+  return <p className="mt-3 rounded-lg bg-secondary/60 px-3 py-2 text-sm">💡 {children}</p>;
+}
+
+function B({ children }: { children: React.ReactNode }) {
+  return <strong className="font-semibold">{children}</strong>;
+}
