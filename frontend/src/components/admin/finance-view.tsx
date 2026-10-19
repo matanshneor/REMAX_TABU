@@ -9,7 +9,6 @@ import {
   HandshakeIcon,
   PaperclipIcon,
   PlusIcon,
-  ReceiptIcon,
   SearchIcon,
   TrendingDownIcon,
   TrendingUpIcon,
@@ -44,7 +43,6 @@ import {
   periodOf,
   previousLabel,
   shiftPeriod,
-  needsReceipt,
   totals,
 } from "@/lib/finance";
 import { formatDate, toDateInput } from "@/lib/format";
@@ -75,13 +73,12 @@ const TX_SECTIONS: FormSection[] = [
 ];
 
 /** What the table below the charts shows; the KPI cards switch it. */
-type View = "all" | "income" | "expense" | "missing";
+type View = "all" | "income" | "expense";
 
 const VIEW_TITLE: Record<View, string> = {
   all: "כל התנועות",
   income: "הכנסות",
   expense: "הוצאות",
-  missing: "הוצאות בלי קבלה",
 };
 
 export function FinanceView() {
@@ -134,7 +131,6 @@ export function FinanceView() {
   const rows = current.filter((t) => {
     if (view === "income" && t.type !== "income") return false;
     if (view === "expense" && t.type !== "expense") return false;
-    if (view === "missing" && !needsReceipt(t)) return false;
     if (category && t.category !== category) return false;
     const q = text.trim().toLowerCase();
     return !q || [t.category, t.notes, t.agent_id && agentName(t.agent_id)].some((s) => s?.toLowerCase().includes(q));
@@ -196,7 +192,7 @@ export function FinanceView() {
         <Skeleton className="h-96 rounded-xl" />
       ) : (
         <>
-          <div className="mb-5 grid grid-cols-2 gap-4 xl:grid-cols-4">
+          <div className="mb-5 grid gap-4 sm:grid-cols-3">
             <KpiCard
               label="הכנסות"
               value={<Money value={now.income} />}
@@ -223,16 +219,6 @@ export function FinanceView() {
               noteTone={now.net < 0 ? "red" : "muted"}
               onClick={() => openView("all")}
               selected={view === "all"}
-            />
-            <KpiCard
-              tone={now.missingReceipts ? "red" : "blue"}
-              label="הוצאות בלי קבלה"
-              value={now.missingReceipts}
-              icon={<ReceiptIcon />}
-              note={now.missingReceipts ? "לצרף לפני הדוח לרואה החשבון" : "הכל מתועד"}
-              noteTone={now.missingReceipts ? "red" : "green"}
-              onClick={() => openView("missing")}
-              selected={view === "missing"}
             />
           </div>
 
@@ -301,7 +287,7 @@ export function FinanceView() {
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                {(["all", "income", "expense", "missing"] as View[]).map((v) => (
+                {(["all", "income", "expense"] as View[]).map((v) => (
                   <FilterChip key={v} active={view === v} onClick={() => setView(v)}>
                     {VIEW_TITLE[v]}
                   </FilterChip>
@@ -362,25 +348,9 @@ export function FinanceView() {
                   },
                   { header: "סוכן", cell: (t) => (t.agent_id ? agentName(t.agent_id) : "—") },
                   {
-                    header: "קבלה",
+                    header: "קובץ",
                     cell: (t) =>
-                      t.receipt_path ? (
-                        <PaperclipIcon className="mx-auto size-4 text-muted-foreground" aria-label="יש קבלה" />
-                      ) : needsReceipt(t) ? (
-                        // One click to the place where the receipt is attached.
-                        <Button
-                          size="xs"
-                          variant="outline"
-                          className="border-red-200 text-brand-red hover:bg-red-50"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOpenId(t.id);
-                          }}
-                        >
-                          <PaperclipIcon />
-                          צירוף קבלה
-                        </Button>
-                      ) : null,
+                      t.receipt_path ? <PaperclipIcon className="mx-auto size-4 text-muted-foreground" aria-label="יש קובץ מצורף" /> : null,
                     className: "text-center",
                   },
                   { header: "הערות", cell: (t) => <span className="line-clamp-1 text-muted-foreground">{t.notes}</span> },
@@ -397,7 +367,7 @@ export function FinanceView() {
         title="תנועה כספית חדשה"
         table="financial_transactions"
         sections={TX_SECTIONS}
-        initial={{ type: view === "expense" || view === "missing" ? "expense" : "income", occurred_on: toDateInput(new Date()) }}
+        initial={{ type: view === "expense" ? "expense" : "income", occurred_on: toDateInput(new Date()) }}
         onCreated={(t) => setOpenId(t.id)}
       />
       <TransactionPanel tx={all.find((t) => t.id === openId) ?? null} onClose={() => setOpenId(null)} />

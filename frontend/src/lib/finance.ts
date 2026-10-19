@@ -50,26 +50,16 @@ export function inPeriod(rows: Transaction[], p: Period): Transaction[] {
   });
 }
 
-/**
- * Receipts matter for expenses (bookkeeping); incomes are invoiced separately, and an agent's
- * payout created from a deal is an internal split, not a supplier expense.
- */
-export function needsReceipt(t: Transaction): boolean {
-  return t.type === "expense" && !t.receipt_path && !t.deal_id;
-}
-
-export type Totals = { income: number; expense: number; net: number; count: number; missingReceipts: number };
+export type Totals = { income: number; expense: number; net: number; count: number };
 
 export function totals(rows: Transaction[]): Totals {
   let income = 0;
   let expense = 0;
-  let missingReceipts = 0;
   for (const t of rows) {
     if (t.type === "income") income += Number(t.amount);
     else expense += Number(t.amount);
-    if (needsReceipt(t)) missingReceipts += 1;
   }
-  return { income, expense, net: income - expense, count: rows.length, missingReceipts };
+  return { income, expense, net: income - expense, count: rows.length };
 }
 
 /** Relative change, or null when there's no base to compare to. */
