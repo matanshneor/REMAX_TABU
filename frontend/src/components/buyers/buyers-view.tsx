@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, PlusIcon, SearchIcon, UsersIcon } from "lucide-react";
+import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, Columns3Icon, PlusIcon, SearchIcon, UsersIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { CreateDialog } from "@/components/crm/create-dialog";
@@ -27,6 +27,10 @@ import { BuyerPanel } from "./buyer-panel";
 import { BuyersKpis } from "./buyers-kpis";
 import { DuplicatePhoneWarning } from "./duplicate-phone-warning";
 import { MatchBanner } from "./match-banner";
+
+/** Columns shown by default; the rest are in the buyer's card or behind "all columns". */
+const COMPACT_COLUMNS = new Set(["name", "status", "phone", "area", "rooms", "budget", "agent"]);
+const SHOW_ALL_KEY = "buyers:show-all-columns";
 
 /** Admin-only filter: everyone, unassigned leads, or one agent's buyers. */
 type AgentFilter = "all" | "unassigned" | (string & {});
@@ -69,6 +73,21 @@ export function BuyersView() {
   );
 
   const [sort, setSort] = useState<{ key: string; dir: 1 | -1 } | null>(null);
+  // Remembered per browser; storage can be unavailable (private mode), so it's best effort.
+  const [showAll, setShowAll] = useState(() => {
+    try {
+      return localStorage.getItem(SHOW_ALL_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+  function toggleShowAll() {
+    const next = !showAll;
+    setShowAll(next);
+    try {
+      localStorage.setItem(SHOW_ALL_KEY, next ? "1" : "0");
+    } catch {}
+  }
 
   const filtered = useMemo(() => {
     const t = text.trim().toLowerCase();
@@ -94,7 +113,7 @@ export function BuyersView() {
     setSort((s) => (s?.key !== key ? { key, dir: 1 } : s.dir === 1 ? { key, dir: -1 } : null));
   }
 
-  const columns = admin ? COLUMNS : COLUMNS.filter((c) => c.key !== "agent");
+  const columns = COLUMNS.filter((c) => (admin || c.key !== "agent") && (showAll || COMPACT_COLUMNS.has(c.key)));
 
   return (
     <>
@@ -158,6 +177,11 @@ export function BuyersView() {
             ))}
           </NativeSelect>
         )}
+
+        <Button variant="outline" onClick={toggleShowAll} aria-pressed={showAll} className="h-10">
+          <Columns3Icon />
+          {showAll ? "תצוגה מצומצמת" : "הצג את כל העמודות"}
+        </Button>
       </div>
 
       {error ? (
@@ -173,7 +197,13 @@ export function BuyersView() {
       ) : (
         <div className="overflow-hidden rounded-xl border bg-card shadow-[0_1px_2px_rgb(15_26_46/0.04),0_8px_24px_-14px_rgb(15_26_46/0.12)]">
           <div className="overflow-x-auto">
-            <Table className="text-[13px] [&_td]:px-1 [&_td]:py-3 [&_th]:h-11 [&_th]:px-1 [&_th]:text-xs [&_th]:font-semibold [&_th]:text-muted-foreground [&_th]:leading-tight [&_th]:whitespace-normal">
+            <Table
+              className={cn(
+                "[&_td]:py-3 [&_th]:h-11 [&_th]:text-xs [&_th]:font-semibold [&_th]:text-muted-foreground [&_th]:leading-tight [&_th]:whitespace-normal",
+                // All 15 columns only fit when packed tight; the compact view can breathe.
+                showAll ? "text-[13px] [&_td]:px-1 [&_th]:px-1" : "text-sm [&_td]:px-3 [&_th]:px-3",
+              )}
+            >
               <TableHeader>
                 <TableRow className="bg-muted/50 hover:bg-muted/50">
                   {columns.map((c, i) => (
@@ -226,7 +256,9 @@ export function BuyersView() {
               מציג <strong className="text-foreground tabular-nums">{rows.length}</strong> מתוך{" "}
               <strong className="text-foreground tabular-nums">{buyers.length}</strong> קונים
             </span>
-            <span>לחץ על כותרת עמודה כדי למיין</span>
+            <span>
+              {showAll ? "" : "מייל, קומה, דרישות ומימון מופיעים בכרטיס הקונה · "}לחץ על כותרת עמודה כדי למיין
+            </span>
           </div>
         </div>
       )}
