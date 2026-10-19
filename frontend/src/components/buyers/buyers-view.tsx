@@ -156,7 +156,7 @@ export function BuyersView() {
       {!isLoading && !error && <BuyersKpis buyers={byOwnership} />}
 
       <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border bg-card p-3 shadow-xs">
-        <div className="relative flex-1">
+        <div className="relative basis-full sm:basis-0 sm:flex-1">
           <SearchIcon className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={text}
@@ -169,7 +169,7 @@ export function BuyersView() {
         <NativeSelect
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-          className="w-44"
+          className="w-full sm:w-44"
           aria-label="סינון לפי סטטוס"
         >
           {/* Default: only buyers still being worked on. Closed ones stay one click away. */}
@@ -189,7 +189,7 @@ export function BuyersView() {
           <NativeSelect
             value={agentFilter}
             onChange={(e) => setAgentFilter(e.target.value)}
-            className="w-52"
+            className="w-full sm:w-52"
             aria-label="סינון לפי סוכן"
           >
             <option value="all">כל הסוכנים ({buyers.length})</option>
@@ -202,7 +202,7 @@ export function BuyersView() {
           </NativeSelect>
         )}
 
-        <Button variant="outline" onClick={toggleShowAll} aria-pressed={showAll} className="h-10">
+        <Button variant="outline" onClick={toggleShowAll} aria-pressed={showAll} className="h-10 w-full sm:w-auto">
           <Columns3Icon />
           {showAll ? "תצוגה מצומצמת" : "הצג את כל העמודות"}
         </Button>

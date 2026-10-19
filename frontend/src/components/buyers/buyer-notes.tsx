@@ -117,7 +117,7 @@ export function BuyerNotes({ buyerId }: { buyerId: string }) {
                     disabled={remove.isPending}
                     aria-label="מחק רישום"
                     title="מחק רישום"
-                    className="absolute end-0 top-0 rounded p-1 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive focus-visible:opacity-100"
+                    className="absolute end-0 top-0 rounded p-1 text-muted-foreground transition-opacity hover:text-destructive focus-visible:opacity-100 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100"
                   >
                     <Trash2Icon className="size-3.5" />
                   </button>

@@ -96,7 +96,7 @@ export function PropertyFiltersPanel({
   const dirty = JSON.stringify(value) !== JSON.stringify(DEFAULT_FILTERS);
 
   return (
-    <aside className="sticky top-20 flex w-64 shrink-0 flex-col gap-4 self-start rounded-xl border bg-card p-4 shadow-[0_1px_2px_rgb(15_26_46/0.04),0_8px_24px_-14px_rgb(15_26_46/0.12)]">
+    <aside className="flex w-full shrink-0 flex-col gap-4 self-start rounded-xl border bg-card p-4 lg:sticky lg:top-20 lg:w-64 shadow-[0_1px_2px_rgb(15_26_46/0.04),0_8px_24px_-14px_rgb(15_26_46/0.12)]">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold">סינון מתקדם</h2>
         {dirty && (

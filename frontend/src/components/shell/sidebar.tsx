@@ -46,15 +46,25 @@ const QUICK_ADD = [
   { href: "/tasks?new=1", label: "משימה חדשה", icon: ListChecksIcon },
 ];
 
+/** Fixed menu on desktop; on smaller screens the same content opens from the header's ☰ button. */
 export function Sidebar() {
+  return (
+    <aside className="fixed inset-y-0 start-0 z-30 hidden w-64 flex-col bg-sidebar text-sidebar-foreground lg:flex">
+      <SidebarContent />
+    </aside>
+  );
+}
+
+/** `onNavigate` closes the mobile menu after a link is chosen. */
+export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { profile, signOut } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const counts = useNavCounts();
 
   return (
-    <aside className="fixed inset-y-0 start-0 z-30 flex w-64 flex-col bg-sidebar text-sidebar-foreground">
-      <Link href="/buyers" className="mx-4 mt-4 block rounded-xl bg-white px-3 pt-2.5 pb-2 shadow-sm" aria-label="דף הבית">
+    <div className="flex h-full flex-col">
+      <Link href="/buyers" onClick={onNavigate} className="mx-4 mt-4 block rounded-xl bg-white px-3 pt-2.5 pb-2 shadow-sm" aria-label="דף הבית">
         <BrandLogo priority />
         <p className="mt-1 text-center text-[11px] font-medium text-slate-500">פסגת זאב, ירושלים</p>
       </Link>
@@ -67,7 +77,13 @@ export function Sidebar() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-(--anchor-width)">
             {QUICK_ADD.map(({ href, label, icon: Icon }) => (
-              <DropdownMenuItem key={href} onClick={() => router.push(href)}>
+              <DropdownMenuItem
+                key={href}
+                onClick={() => {
+                  router.push(href);
+                  onNavigate?.();
+                }}
+              >
                 <Icon />
                 {label}
               </DropdownMenuItem>
@@ -81,13 +97,17 @@ export function Sidebar() {
           items={MAIN.map((i) => (i.href === "/deals" && isAdmin(profile) ? { ...i, label: "עסקאות" } : i))}
           pathname={pathname}
           counts={counts}
+          onNavigate={onNavigate}
         />
-        {isAdmin(profile) && <NavGroup title="ניהול" items={ADMIN} pathname={pathname} counts={counts} />}
+        {isAdmin(profile) && (
+          <NavGroup title="ניהול" items={ADMIN} pathname={pathname} counts={counts} onNavigate={onNavigate} />
+        )}
       </nav>
 
       <div className="flex items-center gap-1 border-t border-sidebar-border px-2 py-2">
         <Link
           href="/account"
+          onClick={onNavigate}
           title="החשבון שלי"
           className={cn(
             "flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-sidebar-accent/60",
@@ -111,7 +131,7 @@ export function Sidebar() {
           <LogOutIcon className="size-4 rtl:-scale-x-100" />
         </button>
       </div>
-    </aside>
+    </div>
   );
 }
 
@@ -120,11 +140,13 @@ function NavGroup({
   items,
   pathname,
   counts,
+  onNavigate,
 }: {
   title?: string;
   items: NavItem[];
   pathname: string;
   counts: Record<string, number | undefined>;
+  onNavigate?: () => void;
 }) {
   return (
     <div className="flex flex-col gap-1">
@@ -136,6 +158,7 @@ function NavGroup({
           <Link
             key={href}
             href={href}
+            onClick={onNavigate}
             aria-current={active ? "page" : undefined}
             className={cn(
               "relative flex h-11 items-center gap-3 rounded-xl px-3 text-[15px] font-medium transition-colors",

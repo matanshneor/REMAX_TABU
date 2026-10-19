@@ -309,11 +309,11 @@ export function FinanceView() {
               </div>
             </div>
             <div className="mb-3 flex flex-wrap items-center gap-2">
-              <div className="relative w-64">
+              <div className="relative w-full sm:w-64">
                 <SearchIcon className="pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="חיפוש בהערות, קטגוריה, סוכן…" className="ps-8" />
               </div>
-              <NativeSelect value={category} onChange={(e) => setCategory(e.target.value)} className="w-48" aria-label="קטגוריה">
+              <NativeSelect value={category} onChange={(e) => setCategory(e.target.value)} className="w-full sm:w-48" aria-label="קטגוריה">
                 <option value="">כל הקטגוריות</option>
                 {categories.map((c) => (
                   <option key={c} value={c}>

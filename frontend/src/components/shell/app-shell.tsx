@@ -4,10 +4,14 @@ import { AuthProvider, useAuth } from "@/components/auth-provider";
 import { PendingApproval } from "@/components/auth/pending-approval";
 import { SignupApprovalGate } from "@/components/admin/signup-approval-gate";
 import { isAdmin } from "@/lib/permissions";
+import { MenuIcon } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GlobalSearch } from "./global-search";
 import { NotificationsBell } from "./notifications-bell";
-import { Sidebar } from "./sidebar";
+import { Sidebar, SidebarContent } from "./sidebar";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -23,8 +27,8 @@ function Shell({ children }: { children: React.ReactNode }) {
   if (loading || !profile) {
     return (
       <div className="flex min-h-screen">
-        <div className="fixed inset-y-0 start-0 w-64 bg-sidebar" />
-        <div className="ms-64 flex-1 p-8">
+        <div className="fixed inset-y-0 start-0 hidden w-64 bg-sidebar lg:block" />
+        <div className="flex-1 p-4 lg:ms-64 lg:p-8">
           <Skeleton className="mb-6 h-8 w-48" />
           <Skeleton className="h-96 w-full" />
         </div>
@@ -38,19 +42,41 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen">
       <Sidebar />
-      <div className="ms-64 flex min-h-screen flex-col">
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b bg-card/90 px-8 backdrop-blur">
+      <div className="flex min-h-screen flex-col lg:ms-64">
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-2 border-b bg-card/90 px-3 backdrop-blur sm:gap-4 lg:px-8">
+          <MobileNav />
           <GlobalSearch />
           <div className="ms-auto flex items-center gap-3">
             <Greeting name={profile.full_name} />
-            <span aria-hidden className="h-6 w-px bg-border" />
+            <span aria-hidden className="hidden h-6 w-px bg-border md:block" />
             <NotificationsBell />
           </div>
         </header>
-        <main className="flex-1 px-8 py-6">{children}</main>
+        <main className="min-w-0 flex-1 px-4 py-5 lg:px-8 lg:py-6">{children}</main>
       </div>
       {isAdmin(profile) && <SignupApprovalGate />}
     </div>
+  );
+}
+
+function MobileNav() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button variant="ghost" size="icon" className="shrink-0 lg:hidden" aria-label="תפריט" onClick={() => setOpen(true)}>
+        <MenuIcon className="size-5" />
+      </Button>
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent
+          side="right"
+          showCloseButton={false}
+          className="border-0 bg-sidebar p-0 text-sidebar-foreground data-[side=right]:w-72 data-[side=right]:max-w-[85vw]"
+        >
+          <SheetTitle className="sr-only">תפריט</SheetTitle>
+          <SidebarContent onNavigate={() => setOpen(false)} />
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }
 
@@ -58,7 +84,7 @@ function Greeting({ name }: { name: string }) {
   const hour = new Date().getHours();
   const hello = hour < 12 ? "בוקר טוב" : hour < 17 ? "צהריים טובים" : hour < 21 ? "ערב טוב" : "לילה טוב";
   return (
-    <p className="text-sm font-medium text-muted-foreground" suppressHydrationWarning>
+    <p className="hidden text-sm font-medium text-muted-foreground md:block" suppressHydrationWarning>
       {hello}, <span className="font-semibold text-foreground">{name.split(" ")[0]}</span> 👋
     </p>
   );

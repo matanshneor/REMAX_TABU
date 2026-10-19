@@ -35,7 +35,7 @@ export function AccountView() {
       <PageHeader title="החשבון שלי" />
 
       <Card icon={<UserIcon />} title="פרטים אישיים">
-        <dl className="mb-5 grid grid-cols-3 gap-3 text-sm">
+        <dl className="mb-5 grid gap-3 text-sm sm:grid-cols-3">
           <Info label="אימייל" value={<span dir="ltr">{profile.email}</span>} />
           <Info label="תפקיד" value={USER_ROLE[profile.role].label} />
           <Info label="הצטרפות" value={formatDate(profile.join_date)} />

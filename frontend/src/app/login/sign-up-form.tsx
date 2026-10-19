@@ -62,7 +62,7 @@ export function SignUpForm() {
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid gap-4 sm:grid-cols-2 sm:gap-3">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="su-name">שם מלא</Label>
           <Input id="su-name" className="h-10" autoComplete="name" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
@@ -76,7 +76,7 @@ export function SignUpForm() {
         <Label htmlFor="su-email">אימייל</Label>
         <Input id="su-email" type="email" dir="ltr" className="h-10 text-end" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid gap-4 sm:grid-cols-2 sm:gap-3">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="su-password">סיסמה</Label>
           <Input id="su-password" type="password" dir="ltr" className="h-10 text-end" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} />

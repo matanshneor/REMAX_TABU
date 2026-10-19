@@ -294,13 +294,13 @@ function QuickAdd() {
           placeholder="משימה חדשה… (Enter להוספה)"
           aria-label="משימה חדשה"
           autoFocus={focusNew}
-          className="h-8 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+          className="h-8 min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground md:text-sm"
         />
         <Button type="submit" disabled={!title.trim() || save.isPending}>
           הוסף
         </Button>
       </div>
-      <div className="flex items-center gap-2 border-t pt-2 ps-7">
+      <div className="flex flex-wrap items-center gap-2 border-t pt-2 ps-7">
         <span className="text-xs text-muted-foreground">מתי?</span>
         <QuickDate value={due} onChange={setDue} />
       </div>

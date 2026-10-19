@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Building2Icon, PlusIcon } from "lucide-react";
+import { Building2Icon, PlusIcon, SlidersHorizontalIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { CreateDialog } from "@/components/crm/create-dialog";
@@ -9,6 +9,7 @@ import { ExportButton } from "@/components/crm/export-button";
 import { EmptyState, ErrorState, PageHeader } from "@/components/crm/page-header";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAgentName, useSignedUrls } from "@/lib/data";
 import { createClient } from "@/lib/supabase/client";
@@ -47,6 +48,8 @@ export function PropertiesView() {
   const [creating, setCreating] = useNewParam();
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [sort, setSort] = useState<Sort>("updated");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filtering = JSON.stringify(filters) !== JSON.stringify(DEFAULT_FILTERS);
 
   const { data: properties = [], isLoading, error } = useQuery({
     queryKey: ["properties", "list"],
@@ -88,10 +91,24 @@ export function PropertiesView() {
       {!isLoading && !error && <PropertiesKpis properties={properties} />}
 
       <div className="flex gap-6">
-        <PropertyFiltersPanel value={filters} onChange={setFilters} cities={cities} />
+        {/* Desktop: filters beside the grid. Smaller screens: behind the "סינון" button. */}
+        <div className="hidden lg:block">
+          <PropertyFiltersPanel value={filters} onChange={setFilters} cities={cities} />
+        </div>
+        <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+          <SheetContent side="right" className="overflow-y-auto p-3 pt-12">
+            <SheetTitle className="sr-only">סינון מוכרים</SheetTitle>
+            <PropertyFiltersPanel value={filters} onChange={setFilters} cities={cities} />
+          </SheetContent>
+        </Sheet>
 
         <div className="min-w-0 flex-1">
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <Button variant="outline" className="lg:hidden" onClick={() => setFiltersOpen(true)}>
+              <SlidersHorizontalIcon />
+              סינון
+              {filtering && <span aria-label="יש סינון פעיל" className="size-2 rounded-full bg-primary" />}
+            </Button>
             <p className="text-sm text-muted-foreground">
               {isLoading ? "טוען…" : `${rows.length} תואמים לסינון`}
             </p>

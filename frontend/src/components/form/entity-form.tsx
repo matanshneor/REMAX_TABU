@@ -11,11 +11,12 @@ import { RelationSelect } from "./relation-select";
 import { TagsInput } from "./tags-input";
 import type { FieldDef, FormSection, FormValues } from "./types";
 
+// On phones a third of the row is too narrow, so small fields widen there.
 const SPAN: Record<number, string> = {
-  1: "col-span-1",
-  2: "col-span-2",
-  3: "col-span-3",
-  4: "col-span-4",
+  1: "col-span-3 sm:col-span-1",
+  2: "col-span-3 sm:col-span-2",
+  3: "col-span-6 sm:col-span-3",
+  4: "col-span-6 sm:col-span-4",
   6: "col-span-6",
 };
 

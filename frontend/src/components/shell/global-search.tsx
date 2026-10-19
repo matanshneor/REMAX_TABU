@@ -71,13 +71,13 @@ export function GlobalSearch() {
         onBlur={() => setOpen(false)}
         onKeyDown={onKeyDown}
         placeholder="חיפוש קונה, מוכר, טלפון, רחוב…"
-        className="h-10 w-full rounded-xl border border-input bg-muted/60 ps-9 pe-10 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:bg-background focus:ring-3 focus:ring-ring/30"
+        className="h-10 w-full rounded-xl border border-input bg-muted/60 ps-9 pe-3 text-base outline-none md:pe-10 md:text-sm transition-colors placeholder:text-muted-foreground focus:border-ring focus:bg-background focus:ring-3 focus:ring-ring/30"
         role="combobox"
         aria-expanded={showDropdown}
         aria-controls="global-search-results"
         aria-keyshortcuts="/"
       />
-      <kbd className="pointer-events-none absolute end-2.5 top-1/2 -translate-y-1/2 rounded-md border bg-background px-1.5 font-mono text-[11px] text-muted-foreground">
+      <kbd className="pointer-events-none absolute end-2.5 top-1/2 hidden -translate-y-1/2 rounded-md border md:block bg-background px-1.5 font-mono text-[11px] text-muted-foreground">
         /
       </kbd>
       {showDropdown && (

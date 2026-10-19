@@ -71,7 +71,7 @@ export function PropertyImages({ property, editable }: { property: Property; edi
             <button
               onClick={() => removeImage(path)}
               aria-label="הסר תמונה"
-              className="absolute top-1.5 end-1.5 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
+              className="absolute top-1.5 end-1.5 rounded-full bg-black/60 p-1 text-white transition-opacity pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100"
             >
               <XIcon className="size-3.5" />
             </button>

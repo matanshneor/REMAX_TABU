@@ -44,17 +44,17 @@ export function Panel({
     <>
       <Sheet open={open} onOpenChange={(o) => !o && guard.requestClose()}>
         <SheetContent side="left" className="gap-0 p-0 data-[side=left]:w-full data-[side=left]:sm:max-w-2xl">
-          <SheetHeader className="gap-2 border-b px-6 pt-5 pb-4">
-            <div className="flex items-start justify-between gap-3 pe-8">
+          <SheetHeader className="gap-2 border-b px-4 pt-5 pb-4 sm:px-6">
+            <div className="flex flex-wrap items-start justify-between gap-3 pe-8">
               <div className="min-w-0">
                 <SheetTitle className="truncate text-xl font-normal">{loading ? <Skeleton className="h-6 w-48" /> : title}</SheetTitle>
                 {subtitle && <SheetDescription className="mt-0.5">{subtitle}</SheetDescription>}
               </div>
-              {headerActions && <div className="flex shrink-0 items-center gap-2">{headerActions}</div>}
+              {headerActions && <div className="flex flex-wrap items-center gap-2">{headerActions}</div>}
             </div>
             {badges && <div className="flex flex-wrap items-center gap-1.5">{badges}</div>}
           </SheetHeader>
-          <div className="flex-1 overflow-y-auto px-6 py-5">
+          <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6">
             {loading ? (
               <div className="flex flex-col gap-3">
                 {Array.from({ length: 6 }, (_, i) => (
@@ -65,7 +65,7 @@ export function Panel({
               children
             )}
           </div>
-          {footer && !loading && <div className="flex items-center gap-2 border-t bg-muted/40 px-6 py-3">{footer}</div>}
+          {footer && !loading && <div className="flex flex-wrap items-center gap-2 border-t bg-muted/40 px-4 py-3 sm:px-6">{footer}</div>}
         </SheetContent>
       </Sheet>
       {guard.dialog}
