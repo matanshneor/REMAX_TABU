@@ -3,9 +3,11 @@
 import {
   Building2Icon,
   CircleHelpIcon,
+  ExternalLinkIcon,
   HandshakeIcon,
   ListChecksIcon,
   LogOutIcon,
+  MegaphoneIcon,
   PlusIcon,
   UserCheckIcon,
   UsersIcon,
@@ -26,13 +28,20 @@ import { isAdmin } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { useNavCounts } from "./nav-counts";
 
-type NavItem = { href: string; label: string; icon: React.ComponentType<{ className?: string }> };
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  /** Another site: opens in a new tab. */
+  external?: boolean;
+};
 
 const MAIN: NavItem[] = [
   { href: "/buyers", label: "קונים", icon: UsersIcon },
   { href: "/properties", label: "מוכרים", icon: Building2Icon },
   { href: "/tasks", label: "משימות", icon: ListChecksIcon },
   { href: "/deals", label: "העסקאות שלי", icon: HandshakeIcon },
+  { href: "https://matanshneor.github.io/Remax-Template/", label: "יצירת מודעת פרסום", icon: MegaphoneIcon, external: true },
   { href: "/help", label: "מדריך", icon: CircleHelpIcon },
 ];
 
@@ -153,7 +162,23 @@ function NavGroup({
   return (
     <div className="flex flex-col gap-1">
       {title && <p className="mb-1 px-3 text-xs font-medium text-sidebar-foreground/50">{title}</p>}
-      {items.map(({ href, label, icon: Icon }) => {
+      {items.map(({ href, label, icon: Icon, external }) => {
+        if (external) {
+          return (
+            <a
+              key={href}
+              href={href}
+              target="_blank"
+              rel="noopener"
+              onClick={onNavigate}
+              className="flex h-11 items-center gap-3 rounded-xl px-3 text-[15px] font-medium text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent/60 hover:text-white"
+            >
+              <Icon className="size-5" />
+              {label}
+              <ExternalLinkIcon aria-label="נפתח בלשונית חדשה" className="ms-auto me-1 size-3.5 opacity-60" />
+            </a>
+          );
+        }
         const active = pathname.startsWith(href);
         const count = counts[href];
         return (
