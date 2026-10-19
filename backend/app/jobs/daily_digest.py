@@ -1,14 +1,21 @@
 """Daily job: creates in-app notifications for upcoming deadlines.
 
 Run by a Railway cron service: `python -m app.jobs.daily_digest`
+Railway cron runs in UTC, so it fires at 05:00 and 06:00 UTC and the job only works
+on the run that falls at 08:00 in Israel — summer (UTC+3) or winter (UTC+2).
+Set DAILY_DIGEST_FORCE=1 to run it at any hour (manual runs).
 """
 
+import os
 from datetime import date, datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from app.supabase_client import get_service_client
 
 EXCLUSIVITY_WARNING_DAYS = 7
 EVICTION_WARNING_DAYS = 14
+ISRAEL = ZoneInfo("Asia/Jerusalem")
+RUN_HOUR = 8
 
 
 def property_label(p: dict) -> str:
@@ -93,7 +100,11 @@ def build_notifications(today: date) -> list[dict]:
 
 
 def main() -> None:
-    notifications = build_notifications(date.today())
+    now = datetime.now(ISRAEL)
+    if now.hour != RUN_HOUR and os.environ.get("DAILY_DIGEST_FORCE") != "1":
+        print(f"daily_digest: skipped, it is {now:%H:%M} in Israel (runs at {RUN_HOUR:02d}:00)")
+        return
+    notifications = build_notifications(now.date())
     if notifications:
         get_service_client().table("notifications").insert(notifications).execute()
     print(f"daily_digest: created {len(notifications)} notifications")

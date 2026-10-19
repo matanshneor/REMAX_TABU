@@ -91,11 +91,11 @@ npm run dev                  # http://localhost:3000
 |---|---|---|---|---|
 | frontend | `/frontend` | `npm run start -- -p $PORT` | `/login` | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_API_URL` |
 | backend | `/backend` | `uvicorn app.main:app --host 0.0.0.0 --port $PORT` | `/health` | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `CORS_ORIGINS` (כתובת ה-frontend) |
-| daily-digest | `/backend` | `python -m app.jobs.daily_digest` · Cron `0 5 * * *` | — | כמו backend |
+| daily-digest | `/backend` | `python -m app.jobs.daily_digest` · Cron `0 5,6 * * *` | — | כמו backend |
 
 אחרי ההעלאה, ב-Supabase תחת **Authentication → URL Configuration**, משנים את ה-Site URL לכתובת של ה-frontend ב-Railway. בלי זה, הקישורים במיילים של "שכחתי סיסמה" ושל הזמנת סוכן יפנו ל-localhost.
 
-המשימה היומית רצה כל יום ב-05:00 UTC (08:00 שעון ישראל בקיץ). היא יוצרת התראות על:
+המשימה היומית רצה כל יום ב-08:00 שעון ישראל, בקיץ ובחורף. ה-Cron מופעל ב-05:00 וב-06:00 UTC, והמשימה עובדת רק בהרצה שנופלת על 08:00 בישראל. היא יוצרת התראות על:
 - בלעדיות שמסתיימת בשבוע הקרוב.
 - מועדי פינוי בשבועיים הקרובים.
 - משימות באיחור.

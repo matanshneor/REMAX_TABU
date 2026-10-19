@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Heebo, Secular_One } from "next/font/google";
 import { Providers } from "@/components/providers";
 import "./globals.css";
@@ -18,6 +18,12 @@ const secularOne = Secular_One({
 export const metadata: Metadata = {
   title: "רימקס טאבו נכסים | CRM",
   description: "מערכת ניהול הקונים, הנכסים והמשימות של רימקס טאבו נכסים",
+  // Name under the icon when an iPhone adds the site to the home screen.
+  appleWebApp: { capable: true, title: "רימקס טאבו", statusBarStyle: "default" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
