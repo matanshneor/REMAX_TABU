@@ -9,7 +9,7 @@ export type SearchResult = { entity: string; id: string; title: string; subtitle
 export const ENTITY_META: Record<string, { label: string; href: string; icon: typeof UserIcon }> = {
   buyer: { label: "קונים", href: "/buyers", icon: UserIcon },
   property: { label: "מוכרים", href: "/properties", icon: Building2Icon },
-  candidate: { label: "מועמדים", href: "/candidates", icon: UserPlusIcon },
+  candidate: { label: "מועמדים", href: "/agents", icon: UserPlusIcon },
 };
 
 export const resultHref = (r: SearchResult) => `${ENTITY_META[r.entity]?.href ?? "/"}?open=${r.id}`;

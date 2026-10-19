@@ -5,7 +5,7 @@ import { CheckIcon, UserCheckIcon, UsersIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth-provider";
-import { EmptyState, ErrorState, PageHeader } from "@/components/crm/page-header";
+import { EmptyState, ErrorState, PageHeader, SectionHeader } from "@/components/crm/page-header";
 import { StatusBadge } from "@/components/crm/status-badge";
 import { WhatsAppButton } from "@/components/crm/whatsapp-button";
 import { Button } from "@/components/ui/button";
@@ -16,66 +16,67 @@ import { formatDate, formatRelative } from "@/lib/format";
 import { ACCOUNT_STATUS, USER_ROLE } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/client";
 import type { Enum, Profile } from "@/lib/types";
+import { CandidatesSection } from "./candidates-view";
 import { SimpleTable } from "./simple-table";
 
-/** Sign-up requests waiting for approval, and everyone who already has access. */
+/**
+ * The office team in one place: recruiting candidates on top, then sign-ups waiting
+ * for approval (only when there are any), then the office's agents.
+ */
 export function AgentsView() {
   const { data: all = [], isLoading, error } = useAllProfiles();
   const pending = all.filter((p) => p.status === "pending");
-  const others = all.filter((p) => p.status !== "pending");
+  // Active first; blocked accounts stay listed so they can be let back in.
+  const team = all
+    .filter((p) => p.status !== "pending")
+    .sort((a, b) => Number(a.status !== "active") - Number(b.status !== "active") || a.full_name.localeCompare(b.full_name, "he"));
 
   return (
     <>
-      <PageHeader title="סוכנים" count={others.filter((p) => p.status === "active").length} description="אישור נרשמים חדשים וצפייה בצוות המשרד" />
+      <PageHeader title="סוכנים" description="גיוס מועמדים וניהול צוות המשרד" />
 
-      {error ? (
-        <ErrorState error={error} />
-      ) : isLoading ? (
-        <Skeleton className="h-64 w-full" />
-      ) : (
-        <>
-          <section className="mb-8">
-            <h2 className="mb-3 flex items-center gap-2 font-semibold">
-              <UserCheckIcon className="size-4.5 text-muted-foreground" />
-              ממתינים לאישור
-              {pending.length > 0 && <StatusBadge map={ACCOUNT_STATUS} value="pending" />}
-            </h2>
-            {pending.length === 0 ? (
-              <p className="rounded-xl border border-dashed bg-card px-4 py-6 text-center text-sm text-muted-foreground">
-                אין בקשות הצטרפות חדשות
-              </p>
-            ) : (
-              <ul className="grid gap-3 md:grid-cols-2">
-                {pending.map((p) => (
-                  <PendingCard key={p.id} profile={p} />
-                ))}
-              </ul>
-            )}
-          </section>
+      <CandidatesSection />
 
-          <h2 className="mb-3 flex items-center gap-2 font-semibold">
-            <UsersIcon className="size-4.5 text-muted-foreground" />
-            כל החשבונות
-          </h2>
-          {others.length === 0 ? (
-            <EmptyState icon={<UsersIcon />} title="אין עדיין סוכנים" />
-          ) : (
-            <SimpleTable
-              rows={others}
-              onRowClick={() => {}}
-              columns={[
-                { header: "שם", cell: (p) => p.full_name || "—" },
-                { header: "טלפון", cell: (p) => <span dir="ltr">{p.phone || "—"}</span> },
-                { header: "אימייל", cell: (p) => <span dir="ltr">{p.email}</span> },
-                { header: "תפקיד", cell: (p) => <StatusBadge map={USER_ROLE} value={p.role} /> },
-                { header: "הצטרפות", cell: (p) => formatDate(p.join_date) },
-                { header: "סטטוס", cell: (p) => <StatusBadge map={ACCOUNT_STATUS} value={p.status} /> },
-                { header: "", cell: (p) => <StatusAction profile={p} />, className: "w-0 text-end" },
-              ]}
-            />
-          )}
-        </>
+      {pending.length > 0 && (
+        <section className="mb-10">
+          <SectionHeader icon={<UserCheckIcon />} title="ממתינים לאישור" count={pending.length} description="נרשמו לאתר ומחכים לאישור שלך" />
+          <ul className="grid gap-3 md:grid-cols-2">
+            {pending.map((p) => (
+              <PendingCard key={p.id} profile={p} />
+            ))}
+          </ul>
+        </section>
       )}
+
+      <section>
+        <SectionHeader
+          icon={<UsersIcon />}
+          title="סוכני המשרד"
+          count={team.filter((p) => p.status === "active").length}
+          description="כל מי שיש לו גישה למערכת"
+        />
+        {error ? (
+          <ErrorState error={error} />
+        ) : isLoading ? (
+          <Skeleton className="h-64 w-full rounded-xl" />
+        ) : team.length === 0 ? (
+          <EmptyState icon={<UsersIcon />} title="אין עדיין סוכנים" />
+        ) : (
+          <SimpleTable
+            rows={team}
+            onRowClick={() => {}}
+            columns={[
+              { header: "שם", cell: (p) => p.full_name || "—" },
+              { header: "טלפון", cell: (p) => <span dir="ltr">{p.phone || "—"}</span> },
+              { header: "אימייל", cell: (p) => <span dir="ltr">{p.email}</span> },
+              { header: "תפקיד", cell: (p) => <StatusBadge map={USER_ROLE} value={p.role} /> },
+              { header: "הצטרפות", cell: (p) => formatDate(p.join_date) },
+              { header: "סטטוס", cell: (p) => <StatusBadge map={ACCOUNT_STATUS} value={p.status} /> },
+              { header: "", cell: (p) => <StatusAction profile={p} />, className: "w-0 text-end" },
+            ]}
+          />
+        )}
+      </section>
     </>
   );
 }

@@ -7,7 +7,6 @@ import {
   LogOutIcon,
   PlusIcon,
   UserCheckIcon,
-  UserPlusIcon,
   UsersIcon,
   WalletIcon,
 } from "lucide-react";
@@ -38,7 +37,6 @@ const MAIN: NavItem[] = [
 const ADMIN: NavItem[] = [
   { href: "/finance", label: "הנהלת חשבונות", icon: WalletIcon },
   { href: "/agents", label: "סוכנים", icon: UserCheckIcon },
-  { href: "/candidates", label: "מועמדים", icon: UserPlusIcon },
 ];
 
 /** "?new=1" opens the page's "add" dialog (handled by each page). */

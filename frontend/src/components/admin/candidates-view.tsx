@@ -6,7 +6,7 @@ import { useState } from "react";
 import { CreateDialog } from "@/components/crm/create-dialog";
 import { ExportButton } from "@/components/crm/export-button";
 import { FileAttachment } from "@/components/crm/file-attachment";
-import { EmptyState, ErrorState, PageHeader } from "@/components/crm/page-header";
+import { EmptyState, ErrorState, SectionHeader } from "@/components/crm/page-header";
 import { Panel, SaveFooter } from "@/components/crm/panel";
 import { FilterChip } from "@/components/crm/segmented";
 import { StatusBadge } from "@/components/crm/status-badge";
@@ -36,7 +36,8 @@ const CANDIDATE_SECTIONS: FormSection[] = [
   },
 ];
 
-export function CandidatesView() {
+/** Recruiting: people interviewing to join the office. Lives at the top of the agents page. */
+export function CandidatesSection() {
   const [openId, setOpenId] = usePanelParam();
   const [creating, setCreating] = useState(false);
   const [status, setStatus] = useState<Enum<"candidate_status"> | "all">("all");
@@ -52,8 +53,9 @@ export function CandidatesView() {
   const rows = status === "all" ? all : all.filter((c) => c.status === status);
 
   return (
-    <>
-      <PageHeader
+    <section className="mb-10">
+      <SectionHeader
+        icon={<UserPlusIcon />}
         title="מועמדים"
         count={all.length}
         description="גיוס סוכנים חדשים למשרד"
@@ -112,7 +114,7 @@ export function CandidatesView() {
         onCreated={(c) => setOpenId(c.id)}
       />
       <CandidatePanel candidate={all.find((c) => c.id === openId) ?? null} onClose={() => setOpenId(null)} />
-    </>
+    </section>
   );
 }
 

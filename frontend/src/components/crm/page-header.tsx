@@ -38,6 +38,37 @@ export function PageHeader({
   );
 }
 
+/** A titled block inside a page that holds more than one list. */
+export function SectionHeader({
+  icon,
+  title,
+  count,
+  description,
+  actions,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  count?: number;
+  description?: string;
+  actions?: React.ReactNode;
+}) {
+  return (
+    <div className="mb-3 flex items-end justify-between gap-4">
+      <div>
+        <h2 className="flex items-center gap-2 text-lg font-semibold [&_svg]:size-5 [&_svg]:text-muted-foreground">
+          {icon}
+          {title}
+          {count != null && (
+            <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold text-secondary-foreground tabular-nums">{count}</span>
+          )}
+        </h2>
+        {description && <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>}
+      </div>
+      {actions && <div className="flex items-center gap-2">{actions}</div>}
+    </div>
+  );
+}
+
 export function EmptyState({ icon, title, hint }: { icon: React.ReactNode; title: string; hint?: string }) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed bg-card px-6 py-16 text-center">
