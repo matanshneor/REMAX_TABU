@@ -362,6 +362,10 @@ begin
   assert (select count(*) from public.notifications where kind = 'property_match' and recipient_id = '00000000-0000-0000-0000-00000000000a') = 2,
     'unassigned buyer needing a safe room must not match a seller without one';
 
+  -- The admin assigned buyer 2 to agent A earlier: A was told in the bell.
+  assert (select count(*) from public.notifications where kind = 'buyer_assigned' and recipient_id = '00000000-0000-0000-0000-0000000000a1') = 1,
+    'agent should be notified when the admin hands them a buyer';
+
   -- Phones are saved in one format, and search ignores dashes.
   insert into public.buyers (id, full_name, phone)
     values ('20000000-0000-0000-0000-0000000000f1', 'בדיקת טלפון', '+972 52 765 4321');

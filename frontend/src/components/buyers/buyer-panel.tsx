@@ -1,6 +1,6 @@
 "use client";
 
-import { HandIcon, PhoneIcon } from "lucide-react";
+import { PhoneIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { DealDialog, type DealPrefill } from "@/components/deals/deal-dialog";
@@ -14,7 +14,8 @@ import { LinkedTasks } from "@/components/tasks/linked-tasks";
 import { ReminderButton } from "@/components/tasks/reminder-button";
 import { ViewingsList } from "@/components/viewings/viewings-list";
 import { Button } from "@/components/ui/button";
-import { useAgentName, useDeleteRecord, useRecord, useSaveRecord } from "@/lib/data";
+import { NativeSelect } from "@/components/ui/native-select";
+import { useAgentName, useAgents, useDeleteRecord, useRecord, useSaveRecord } from "@/lib/data";
 import { formatRelative } from "@/lib/format";
 import { canEditBuyer, isAdmin } from "@/lib/permissions";
 import type { Buyer } from "@/lib/types";
@@ -26,6 +27,7 @@ import { DuplicatePhoneWarning } from "./duplicate-phone-warning";
 export function BuyerPanel({ id, onClose }: { id: string | null; onClose: () => void }) {
   const { profile } = useAuth();
   const agentName = useAgentName();
+  const { data: agents = [] } = useAgents();
   const { data: buyer, isLoading } = useRecord<Buyer>("buyers", id);
   const form = useFormValues(BUYER_SECTIONS, buyer, `${buyer?.id}:${buyer?.updated_at}`);
   const save = useSaveRecord("buyers");
@@ -62,9 +64,29 @@ export function BuyerPanel({ id, onClose }: { id: string | null; onClose: () => 
       subtitle={buyer && `עודכן ${formatRelative(buyer.updated_at)}`}
       badges={
         buyer && admin ? (
-          <span className="text-xs text-muted-foreground">
-            {buyer.owner_agent_id ? `סוכן: ${agentName(buyer.owner_agent_id)}` : "לא משויך לסוכן"}
-          </span>
+          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+            סוכן מטפל:
+            <NativeSelect
+              value={buyer.owner_agent_id ?? ""}
+              onChange={(e) => {
+                const owner = e.target.value || null;
+                save.mutate(
+                  { id: buyer.id, values: { owner_agent_id: owner } },
+                  { onSuccess: () => owner && owner !== profile?.id && toast.success(`הקונה הועבר ל${agentName(owner)}, ונשלחה התראה`) },
+                );
+              }}
+              disabled={save.isPending}
+              className="w-44"
+              aria-label="סוכן מטפל"
+            >
+              <option value="">לא משויך</option>
+              {agents.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.full_name || a.email}
+                </option>
+              ))}
+            </NativeSelect>
+          </label>
         ) : undefined
       }
       headerActions={
@@ -78,16 +100,6 @@ export function BuyerPanel({ id, onClose }: { id: string | null; onClose: () => 
             )}
             <WhatsAppButton phone={buyer.phone} />
             <ReminderButton buyerId={buyer.id} defaultTitle={`לחזור ל${buyer.full_name.split(" ")[0]}`} />
-            {!buyer.owner_agent_id && (
-              <Button
-                size="sm"
-                onClick={() => save.mutate({ id: buyer.id, values: { owner_agent_id: profile!.id } })}
-                disabled={save.isPending}
-              >
-                <HandIcon />
-                שייך אליי
-              </Button>
-            )}
           </>
         )
       }
