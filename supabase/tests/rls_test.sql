@@ -133,6 +133,13 @@ begin
   exception when insufficient_privilege then null;
   end;
 
+  -- Call log follows buyer visibility
+  begin
+    insert into public.buyer_notes (buyer_id, body) values ('20000000-0000-0000-0000-000000000001', 'פריצה');
+    raise exception 'FAIL: agent B logged a call on agent A''s buyer';
+  exception when insufficient_privilege then null;
+  end;
+
   -- Deals: an agent sees only their own and can't record deals
   assert (select count(*) from public.deals) = 0, 'agent B must not see agent A''s deals';
   begin
@@ -216,6 +223,15 @@ begin
   update public.buyers set notes = 'עדכון' where id = '20000000-0000-0000-0000-000000000001';
   get diagnostics n = row_count;
   assert n = 1, 'owning agent should edit own buyer';
+
+  insert into public.buyer_notes (buyer_id, body) values ('20000000-0000-0000-0000-000000000001', 'דיברנו, מחכה למשכנתא');
+  assert (select count(*) from public.buyer_notes) = 1, 'agent A should log and see calls on own buyer';
+  begin
+    insert into public.buyer_notes (buyer_id, author_id, body)
+      values ('20000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000b1', 'בשם מישהו אחר');
+    raise exception 'FAIL: agent A wrote a call log entry as someone else';
+  exception when insufficient_privilege then null;
+  end;
 
   assert (select count(*) from public.tasks) = 0, 'agent A must not see agent B''s tasks';
   update public.tasks set title = 'פריצה' where created_by = '00000000-0000-0000-0000-0000000000b1';
@@ -310,6 +326,41 @@ begin
   update public.profiles set status = 'active' where id = '00000000-0000-0000-0000-0000000000c1';
   get diagnostics n = row_count;
   assert n = 1, 'admin should approve a sign-up';
+
+  assert (select count(*) from public.buyer_notes) = 1, 'admin should see every call log entry';
+end $$;
+
+-- ---- Match notifications (as postgres, to read everyone's bell) ------------
+reset role;
+
+do $$
+begin
+  -- No requirements on the test buyers, so a new active seller fits every open buyer.
+  insert into public.properties (id, city, neighborhood, street, current_price, recruiting_agent_id)
+    values ('10000000-0000-0000-0000-000000000009', 'ירושלים', 'פסגת זאב מרכז', 'הבדיקה', 1000000, '00000000-0000-0000-0000-0000000000a1');
+  assert (select count(*) from public.notifications where kind = 'property_match' and recipient_id = '00000000-0000-0000-0000-0000000000a1') = 1,
+    'agent A should get one notification for a new matching seller';
+  assert (select title like '%2 מהקונים שלך%' from public.notifications where kind = 'property_match' and recipient_id = '00000000-0000-0000-0000-0000000000a1'),
+    'agent A has two matching buyers';
+  assert (select count(*) from public.notifications where kind = 'property_match' and recipient_id = '00000000-0000-0000-0000-0000000000b1') = 1,
+    'agent B should be notified about own matching buyer';
+  assert (select count(*) from public.notifications where kind = 'property_match' and recipient_id = '00000000-0000-0000-0000-00000000000a') = 1,
+    'admin should be notified about the unassigned matching buyer';
+
+  -- Still matching after a price change: nothing new.
+  update public.properties set current_price = 1100000 where id = '10000000-0000-0000-0000-000000000009';
+  assert (select count(*) from public.notifications where kind = 'property_match') = 3, 'no repeat while it already matched';
+
+  -- Off the market and back: it starts matching again.
+  update public.properties set status = 'frozen' where id = '10000000-0000-0000-0000-000000000009';
+  update public.properties set status = 'active' where id = '10000000-0000-0000-0000-000000000009';
+  assert (select count(*) from public.notifications where kind = 'property_match') = 6, 'back on the market notifies again';
+
+  -- A "must have" the seller lacks: no match.
+  update public.buyers set needs_safe_room = 'must' where id = '20000000-0000-0000-0000-000000000003';
+  insert into public.properties (city, current_price) values ('ירושלים', 900000);
+  assert (select count(*) from public.notifications where kind = 'property_match' and recipient_id = '00000000-0000-0000-0000-00000000000a') = 2,
+    'unassigned buyer needing a safe room must not match a seller without one';
 
   raise notice 'ALL RLS TESTS PASSED';
 end $$;

@@ -7,6 +7,7 @@ export type Enum<T extends keyof PublicSchema["Enums"]> = PublicSchema["Enums"][
 
 export type Profile = Row<"profiles">;
 export type Buyer = Row<"buyers">;
+export type BuyerNote = Row<"buyer_notes">;
 export type Property = Row<"properties">;
 export type OwnerDetails = Row<"property_owner_details">;
 export type Viewing = Row<"buyer_property_viewings">;

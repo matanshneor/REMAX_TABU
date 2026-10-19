@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      buyer_notes: {
+        Row: {
+          author_id: string | null
+          body: string
+          buyer_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          buyer_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          buyer_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buyer_notes_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buyer_notes_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "buyers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       buyer_property_viewings: {
         Row: {
           agent_id: string | null
@@ -709,6 +748,13 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_system: { Args: never; Returns: boolean }
       phone_key: { Args: { p: string }; Returns: string }
+      property_fits_buyer: {
+        Args: {
+          b: Database["public"]["Tables"]["buyers"]["Row"]
+          p: Database["public"]["Tables"]["properties"]["Row"]
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       account_status: "pending" | "active" | "rejected"

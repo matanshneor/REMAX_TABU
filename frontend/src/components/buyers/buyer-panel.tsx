@@ -20,6 +20,7 @@ import { canEditBuyer, isAdmin } from "@/lib/permissions";
 import type { Buyer } from "@/lib/types";
 import { usePanelParam } from "@/lib/use-panel-param";
 import { BUYER_SECTIONS } from "./buyer-fields";
+import { BuyerNotes } from "./buyer-notes";
 import { DuplicatePhoneWarning } from "./duplicate-phone-warning";
 
 export function BuyerPanel({ id, onClose }: { id: string | null; onClose: () => void }) {
@@ -122,6 +123,7 @@ export function BuyerPanel({ id, onClose }: { id: string | null; onClose: () => 
               <DuplicatePhoneWarning phone={String(form.values.phone ?? "")} excludeId={buyer.id} onOpen={setOpenId} />
             </div>
           )}
+          <BuyerNotes buyerId={buyer.id} />
           <LinkedTasks buyerId={buyer.id} title="המשימות שלי על הקונה" />
           <PropertyMatches buyer={buyer} />
           <ViewingsList buyerId={buyer.id} />
