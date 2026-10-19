@@ -245,7 +245,7 @@ select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000
 do $$
 declare n integer;
 begin
-  assert (select status = 'pending' and role = 'agent' and phone = '050-9999999' from public.profiles),
+  assert (select status = 'pending' and role = 'agent' and phone = '050-999-9999' from public.profiles),
     'sign-up should start as a pending agent';
   assert (select count(*) from public.profiles) = 1, 'pending user should see only own profile';
   assert (select count(*) from public.properties) = 0, 'pending user must not see properties';
@@ -361,6 +361,18 @@ begin
   insert into public.properties (city, current_price) values ('ירושלים', 900000);
   assert (select count(*) from public.notifications where kind = 'property_match' and recipient_id = '00000000-0000-0000-0000-00000000000a') = 2,
     'unassigned buyer needing a safe room must not match a seller without one';
+
+  -- Phones are saved in one format, and search ignores dashes.
+  insert into public.buyers (id, full_name, phone)
+    values ('20000000-0000-0000-0000-0000000000f1', 'בדיקת טלפון', '+972 52 765 4321');
+  assert (select phone from public.buyers where id = '20000000-0000-0000-0000-0000000000f1') = '052-765-4321', 'mobile should be formatted';
+  update public.buyers set phone = '026541234' where id = '20000000-0000-0000-0000-0000000000f1';
+  assert (select phone from public.buyers where id = '20000000-0000-0000-0000-0000000000f1') = '02-654-1234', 'landline should be formatted';
+  update public.buyers set phone = 'אחרי 18:00' where id = '20000000-0000-0000-0000-0000000000f1';
+  assert (select phone from public.buyers where id = '20000000-0000-0000-0000-0000000000f1') = 'אחרי 18:00', 'unrecognized text is kept as typed';
+  update public.buyers set phone = '0527654321' where id = '20000000-0000-0000-0000-0000000000f1';
+  assert (select count(*) from public.global_search('0527654321') where id = '20000000-0000-0000-0000-0000000000f1') = 1,
+    'search without dashes should find a formatted phone';
 
   raise notice 'ALL RLS TESTS PASSED';
 end $$;

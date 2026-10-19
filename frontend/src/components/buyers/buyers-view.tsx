@@ -14,7 +14,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAgentName, useAgents } from "@/lib/data";
-import { formatILSCompact } from "@/lib/format";
+import { formatILSCompact, formatRelative } from "@/lib/format";
 import { StatusBadge } from "@/components/crm/status-badge";
 import { BUYER_STATUS, isActiveBuyer, PISGAT_AREAS } from "@/lib/labels";
 import { isAdmin } from "@/lib/permissions";
@@ -29,7 +29,17 @@ import { DuplicatePhoneWarning } from "./duplicate-phone-warning";
 import { MatchBanner } from "./match-banner";
 
 /** Columns shown by default; the rest are in the buyer's card or behind "all columns". */
-const COMPACT_COLUMNS = new Set(["name", "status", "phone", "area", "rooms", "budget", "agent"]);
+const COMPACT_COLUMNS = new Set(["name", "status", "contact", "phone", "area", "rooms", "budget", "agent"]);
+
+/** An open buyer with no call logged for this long is marked as neglected. */
+const STALE_DAYS = 14;
+
+type BuyerRow = Buyer & { buyer_notes: { created_at: string }[] };
+
+/** Last call in the log, or when the buyer was added if nothing was logged yet. */
+const lastContact = (b: BuyerRow) => b.buyer_notes[0]?.created_at ?? b.created_at;
+const isStale = (b: BuyerRow) =>
+  isActiveBuyer(b) && Date.now() - new Date(lastContact(b)).getTime() > STALE_DAYS * 86_400_000;
 const SHOW_ALL_KEY = "buyers:show-all-columns";
 
 /** Admin-only filter: everyone, unassigned leads, or one agent's buyers. */
@@ -44,7 +54,7 @@ export function BuyersView() {
   const [creating, setCreating] = useNewParam();
   const [text, setText] = useState("");
   const [agentFilter, setAgentFilter] = useState<AgentFilter>("all");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | Enum<"buyer_status">>("active");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "stale" | Enum<"buyer_status">>("active");
 
   const {
     data: buyers = [],
@@ -52,8 +62,14 @@ export function BuyersView() {
     error,
   } = useQuery({
     queryKey: ["buyers", "list"],
-    queryFn: async (): Promise<Buyer[]> => {
-      const { data, error } = await createClient().from("buyers").select("*").order("updated_at", { ascending: false });
+    queryFn: async (): Promise<BuyerRow[]> => {
+      const { data, error } = await createClient()
+        .from("buyers")
+        .select("*, buyer_notes(created_at)")
+        .order("updated_at", { ascending: false })
+        // Only the latest call per buyer is needed.
+        .order("created_at", { referencedTable: "buyer_notes", ascending: false })
+        .limit(1, { referencedTable: "buyer_notes" });
       if (error) throw error;
       return data;
     },
@@ -91,9 +107,14 @@ export function BuyersView() {
 
   const filtered = useMemo(() => {
     const t = text.trim().toLowerCase();
+    // Phones are saved as 052-123-4567; typed digits should still find them.
+    const digits = t.replace(/\D/g, "");
     return byOwnership.filter((b) => {
-      if (statusFilter === "active" ? !isActiveBuyer(b) : statusFilter !== "all" && b.status !== statusFilter) return false;
+      if (statusFilter === "active" && !isActiveBuyer(b)) return false;
+      if (statusFilter === "stale" && !isStale(b)) return false;
+      if (!["all", "active", "stale"].includes(statusFilter) && b.status !== statusFilter) return false;
       if (!t) return true;
+      if (digits.length >= 3 && b.phone?.replace(/\D/g, "").includes(digits)) return true;
       return [b.full_name, b.phone, b.email, b.desired_city, ...b.preferred_neighborhoods]
         .filter(Boolean)
         .some((s) => s!.toLowerCase().includes(t));
@@ -153,6 +174,9 @@ export function BuyersView() {
         >
           {/* Default: only buyers still being worked on. Closed ones stay one click away. */}
           <option value="active">בטיפול ({byOwnership.filter(isActiveBuyer).length})</option>
+          <option value="stale">
+            מוזנחים — {STALE_DAYS}+ יום בלי שיחה ({byOwnership.filter(isStale).length})
+          </option>
           <option value="all">כולל סגורים ({byOwnership.length})</option>
           {Object.entries(BUYER_STATUS).map(([value, { label }]) => (
             <option key={value} value={value}>
@@ -294,10 +318,10 @@ type Column = {
   key: string;
   header: string;
   headClassName?: string;
-  className?: (b: Buyer) => string | undefined;
-  cell: (b: Buyer, agentName: AgentNameFn) => React.ReactNode;
+  className?: (b: BuyerRow) => string | undefined;
+  cell: (b: BuyerRow, agentName: AgentNameFn) => React.ReactNode;
   /** Makes the column sortable by clicking its header. */
-  sortValue?: (b: Buyer, agentName: AgentNameFn) => string | number | null;
+  sortValue?: (b: BuyerRow, agentName: AgentNameFn) => string | number | null;
 };
 
 type AgentNameFn = (id: string | null) => string;
@@ -338,6 +362,12 @@ const COLUMNS: Column[] = [
     header: "סטטוס",
     sortValue: (b) => Object.keys(BUYER_STATUS).indexOf(b.status),
     cell: (b) => <StatusBadge map={BUYER_STATUS} value={b.status} />,
+  },
+  {
+    key: "contact",
+    header: "שיחה אחרונה",
+    sortValue: (b) => new Date(lastContact(b)).getTime(),
+    cell: (b) => <LastContact buyer={b} />,
   },
   {
     key: "phone",
@@ -424,6 +454,20 @@ const COLUMNS: Column[] = [
     cell: (b, agentName) => (b.owner_agent_id ? agentName(b.owner_agent_id) : "לא משויך"),
   },
 ];
+
+function LastContact({ buyer }: { buyer: BuyerRow }) {
+  const logged = buyer.buyer_notes.length > 0;
+  const stale = isStale(buyer);
+  return (
+    <span
+      title={logged ? undefined : "עדיין לא נרשמה שיחה ביומן — נספר מיום ההוספה"}
+      className={cn("whitespace-nowrap text-xs", stale ? "font-semibold text-brand-red" : "text-muted-foreground")}
+    >
+      {stale && "● "}
+      {logged ? formatRelative(lastContact(buyer)) : "אין שיחות"}
+    </span>
+  );
+}
 
 function BuyerAvatar({ name }: { name: string }) {
   return (

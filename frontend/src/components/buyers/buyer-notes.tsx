@@ -43,6 +43,8 @@ export function BuyerNotes({ buyerId }: { buyerId: string }) {
     onSuccess: () => {
       setText("");
       qc.invalidateQueries({ queryKey: ["buyer_notes"] });
+      // The buyers table shows the last call.
+      qc.invalidateQueries({ queryKey: ["buyers", "list"] });
     },
     onError: (e) => toast.error(errorMessage(e)),
   });
@@ -52,7 +54,10 @@ export function BuyerNotes({ buyerId }: { buyerId: string }) {
       const { error } = await createClient().from("buyer_notes").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["buyer_notes"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["buyer_notes"] });
+      qc.invalidateQueries({ queryKey: ["buyers", "list"] });
+    },
     onError: (e) => toast.error(errorMessage(e)),
   });
 
