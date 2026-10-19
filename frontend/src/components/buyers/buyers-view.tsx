@@ -40,7 +40,7 @@ export function BuyersView() {
   const [creating, setCreating] = useNewParam();
   const [text, setText] = useState("");
   const [agentFilter, setAgentFilter] = useState<AgentFilter>("all");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | Enum<"buyer_status">>("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | Enum<"buyer_status">>("active");
 
   const {
     data: buyers = [],
@@ -136,8 +136,9 @@ export function BuyersView() {
           className="w-44"
           aria-label="סינון לפי סטטוס"
         >
-          <option value="all">כל הסטטוסים ({byOwnership.length})</option>
+          {/* Default: only buyers still being worked on. Closed ones stay one click away. */}
           <option value="active">בטיפול ({byOwnership.filter(isActiveBuyer).length})</option>
+          <option value="all">כולל סגורים ({byOwnership.length})</option>
           {Object.entries(BUYER_STATUS).map(([value, { label }]) => (
             <option key={value} value={value}>
               {label} ({byOwnership.filter((b) => b.status === value).length})
@@ -234,7 +235,7 @@ export function BuyersView() {
         </div>
       )}
 
-      {!isLoading && !error && <MatchBanner buyers={byOwnership} onOpen={setOpenId} />}
+      {!isLoading && !error && <MatchBanner buyers={byOwnership.filter(isActiveBuyer)} onOpen={setOpenId} />}
 
       <CreateDialog<Buyer>
         open={creating}

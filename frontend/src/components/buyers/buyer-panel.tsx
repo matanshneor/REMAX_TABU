@@ -45,7 +45,7 @@ export function BuyerPanel({ id, onClose }: { id: string | null; onClose: () => 
           if (!justBought) return;
           // A purchase through the office is a deal: offer to record it right away.
           if (admin) setDealPrefill({ buyer_id: buyer.id, agent_id: buyer.owner_agent_id ?? undefined });
-          else toast.info("מעולה! עדכנו את מנהל המשרד כדי שירשום את העסקה ואת העמלה.", { duration: 8000 });
+          else toast.success("מעולה! מנהל המשרד קיבל התראה לרשום את העסקה.", { duration: 8000 });
         },
       },
     );
