@@ -367,7 +367,19 @@ export function FinanceView() {
                       t.receipt_path ? (
                         <PaperclipIcon className="mx-auto size-4 text-muted-foreground" aria-label="יש קבלה" />
                       ) : needsReceipt(t) ? (
-                        <span className="text-xs font-medium text-brand-red">חסרה</span>
+                        // One click to the place where the receipt is attached.
+                        <Button
+                          size="xs"
+                          variant="outline"
+                          className="border-red-200 text-brand-red hover:bg-red-50"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenId(t.id);
+                          }}
+                        >
+                          <PaperclipIcon />
+                          צירוף קבלה
+                        </Button>
                       ) : null,
                     className: "text-center",
                   },

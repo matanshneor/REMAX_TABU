@@ -1,11 +1,11 @@
-import { ArrowDownIcon, LockIcon } from "lucide-react";
-import { Pill, StatusBadge } from "@/components/crm/status-badge";
+import { ArrowDownIcon, ImageOffIcon } from "lucide-react";
+import { StatusBadge } from "@/components/crm/status-badge";
 import { formatAddress, formatILS } from "@/lib/format";
 import { PROPERTY_STATUS } from "@/lib/labels";
 import type { Property } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Money } from "@/components/crm/money";
-import { PropertyPlaceholder } from "./property-placeholder";
+import { ExclusivityPill } from "./exclusivity-pill";
 
 const FEATURES: [keyof Property, string][] = [
   ["has_safe_room", "ממ״ד"],
@@ -49,26 +49,30 @@ export function PropertyCard({
         p.status !== "active" && "opacity-75",
       )}
     >
-      {/* Without photos the image area is shorter, so text-only listings don't waste space. */}
-      <div className={cn("relative bg-muted", hasImages ? "aspect-[16/10]" : "aspect-[16/7]")}>
-        {imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={imageUrl} alt="" className="size-full object-cover" />
-        ) : hasImages ? null : (
-          <PropertyPlaceholder />
-        )}
-        <div className="absolute inset-x-2 top-2 flex justify-between gap-1">
-          {p.is_exclusive ? (
-            <Pill tone="red" className="bg-brand-red text-white">
-              <LockIcon />
-              בלעדיות
-            </Pill>
-          ) : (
-            <span />
+      {hasImages ? (
+        <div className="relative aspect-[16/10] bg-muted">
+          {imageUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={imageUrl} alt="" className="size-full object-cover" />
           )}
-          {p.status !== "active" && <StatusBadge map={PROPERTY_STATUS} value={p.status} className="bg-white" />}
+          <div className="absolute inset-x-2 top-2 flex justify-between gap-1">
+            {p.is_exclusive ? <ExclusivityPill end={p.exclusivity_end} onImage /> : <span />}
+            {p.status !== "active" && <StatusBadge map={PROPERTY_STATUS} value={p.status} className="bg-white" />}
+          </div>
         </div>
-      </div>
+      ) : (
+        // No photos yet: a thin strip instead of a big empty picture, so the details come first.
+        <div className="flex items-center justify-between gap-2 border-b bg-secondary/50 px-3 py-2">
+          <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <ImageOffIcon className="size-3.5" />
+            אין תמונות
+          </span>
+          <span className="flex gap-1">
+            {p.is_exclusive && <ExclusivityPill end={p.exclusivity_end} />}
+            {p.status !== "active" && <StatusBadge map={PROPERTY_STATUS} value={p.status} className="bg-white" />}
+          </span>
+        </div>
+      )}
 
       <div className="flex flex-1 flex-col gap-1.5 p-3.5">
         <div className="flex items-baseline justify-between gap-2">
@@ -98,9 +102,13 @@ export function PropertyCard({
           </div>
         )}
         <div className="mt-auto flex items-center justify-between gap-2 border-t pt-2 text-xs text-muted-foreground">
-          <span className="truncate">
-            מוכר: <span className="font-medium text-foreground">{sellerName || "—"}</span>
-          </span>
+          {sellerName ? (
+            <span className="truncate">
+              מוכר: <span className="font-medium text-foreground">{sellerName}</span>
+            </span>
+          ) : (
+            <span className="font-medium text-amber-700">חסר מוכר</span>
+          )}
           <span className="shrink-0">{agentName}</span>
         </div>
       </div>

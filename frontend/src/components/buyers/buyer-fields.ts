@@ -1,5 +1,5 @@
 import type { FormSection } from "@/components/form/types";
-import { LEAD_SOURCES, PISGAT_AREAS, PROPERTY_TYPES, REQUIREMENT, toOptions } from "@/lib/labels";
+import { BUYER_STATUS, LEAD_SOURCES, PISGAT_AREAS, PROPERTY_TYPES, REQUIREMENT, toOptions } from "@/lib/labels";
 
 const REQUIREMENT_OPTIONS = toOptions(REQUIREMENT);
 
@@ -11,12 +11,13 @@ export const BUYER_SECTIONS: FormSection[] = [
       { name: "phone", label: "טלפון", type: "tel", placeholder: "050-0000000" },
       { name: "email", label: "אימייל", type: "email" },
       { name: "lead_source", label: "מקור ליד", type: "select", options: LEAD_SOURCES },
+      { name: "status", label: "סטטוס", type: "select", options: toOptions(BUYER_STATUS), required: true },
     ],
   },
   {
     title: "מה הקונה מחפש",
     fields: [
-      { name: "preferred_neighborhoods", label: "איזור בפסגה", type: "multi", options: PISGAT_AREAS, span: 6 },
+      { name: "preferred_neighborhoods", label: "אזור בפסגה", type: "multi", options: PISGAT_AREAS, span: 6 },
       { name: "min_rooms", label: "חדרים (מינימום)", type: "number", step: 0.5, span: 2 },
       { name: "max_budget", label: "תקציב מקסימלי", type: "currency", span: 2 },
       { name: "property_type", label: "סוג נכס", type: "select", options: PROPERTY_TYPES, span: 2 },
@@ -43,6 +44,7 @@ export const BUYER_SECTIONS: FormSection[] = [
 
 /** Defaults for a new buyer. */
 export const NEW_BUYER = {
+  status: "new",
   needs_balcony: "any",
   needs_elevator: "any",
   needs_safe_room: "any",

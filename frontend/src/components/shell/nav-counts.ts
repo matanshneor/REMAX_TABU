@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/components/auth-provider";
+import { ACTIVE_BUYER_STATUSES } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/client";
 
 /** Small counters for the sidebar. All are RLS-scoped to what the user can see. */
@@ -10,9 +11,13 @@ export function useNavCounts() {
   const supabase = createClient();
 
   const buyers = useQuery({
-    queryKey: ["buyers", "count"],
+    queryKey: ["buyers", "count", "active"],
     queryFn: async () => {
-      const { count, error } = await supabase.from("buyers").select("id", { count: "exact", head: true });
+      // Same "active" as the buyers page: still being worked on.
+      const { count, error } = await supabase
+        .from("buyers")
+        .select("id", { count: "exact", head: true })
+        .in("status", ACTIVE_BUYER_STATUSES);
       if (error) throw error;
       return count ?? 0;
     },

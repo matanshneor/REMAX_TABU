@@ -72,7 +72,8 @@ export function PropertiesView() {
       <PageHeader
         title="מוכרים"
         description="כל הנכסים במאגר, כולל נכסים שאינם בבלעדיות המשרד"
-        count={properties.length}
+        // Same number as the sidebar: listings that are on the market now.
+        count={properties.filter((p) => p.status === "active").length}
         actions={
           <>
             <ExportButton entity="properties" />

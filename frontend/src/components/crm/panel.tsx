@@ -66,9 +66,20 @@ export function Panel({
   );
 }
 
-export function PanelSection({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
+export function PanelSection({
+  title,
+  action,
+  children,
+  first,
+}: {
+  title: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+  /** At the top of the panel: a highlighted box instead of a divider line. */
+  first?: boolean;
+}) {
   return (
-    <section className="mt-8 border-t pt-5">
+    <section className={first ? "mb-6 rounded-xl border bg-secondary/40 p-4" : "mt-8 border-t pt-5"}>
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-semibold">{title}</h3>
         {action}

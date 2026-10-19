@@ -1,5 +1,6 @@
 "use client";
 
+import { isActiveBuyer } from "@/lib/labels";
 import { useQuery } from "@tanstack/react-query";
 import { SparklesIcon } from "lucide-react";
 import Link from "next/link";
@@ -32,6 +33,7 @@ export function BuyerMatches({ property }: { property: Property }) {
   const matches = useMemo(
     () =>
       buyers
+        .filter(isActiveBuyer) // a buyer who already bought isn't a match anymore
         .map((b) => ({ buyer: b, match: matchBuyerToProperty(b, property) }))
         .filter((m) => m.match.ok)
         .sort((a, b) => b.match.score - a.match.score)

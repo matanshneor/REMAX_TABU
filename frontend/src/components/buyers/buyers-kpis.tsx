@@ -5,6 +5,7 @@ import { EyeIcon, ListChecksIcon, UsersIcon } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { KpiBadge, KpiCard } from "@/components/crm/kpi-card";
 import { createClient } from "@/lib/supabase/client";
+import { isActiveBuyer } from "@/lib/labels";
 import type { Buyer } from "@/lib/types";
 
 const WEEK_MS = 7 * 86_400_000;
@@ -27,6 +28,7 @@ export function BuyersKpis({ buyers }: { buyers: Buyer[] }) {
       const weekAgo = Date.now() - WEEK_MS;
       return {
         total: buyers.length,
+        active: buyers.filter(isActiveBuyer).length,
         addedToday: buyers.filter((b) => new Date(b.created_at).getTime() >= today).length,
         newThisWeek: buyers.filter((b) => new Date(b.created_at).getTime() >= weekAgo).length,
       };
@@ -62,15 +64,15 @@ export function BuyersKpis({ buyers }: { buyers: Buyer[] }) {
     },
   });
 
-  const s = stats ?? { total: 0, addedToday: 0, newThisWeek: 0 };
+  const s = stats ?? { total: 0, active: 0, addedToday: 0, newThisWeek: 0 };
   const overdue = tasks?.overdue ?? 0;
 
   return (
     <div className="mb-5 grid grid-cols-2 gap-4 xl:grid-cols-4">
       <KpiCard
-        label="סה״כ קונים"
-        value={s.total}
-        note="בטיפול"
+        label="קונים בטיפול"
+        value={s.active}
+        note={`מתוך ${s.total} במאגר`}
         badge={
           s.addedToday > 0 ? (
             <KpiBadge tone="green">+{s.addedToday} היום</KpiBadge>

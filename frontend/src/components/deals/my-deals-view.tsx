@@ -63,18 +63,33 @@ export function MyDealsView() {
         <Skeleton className="h-96 rounded-xl" />
       ) : (
         <>
+          {/* Four cards of zeros say nothing before the first deal — show them only once there are deals. */}
+          {deals.length > 0 && (
           <div className="mb-5 grid grid-cols-2 gap-4 xl:grid-cols-4">
-            <KpiCard label={admin ? "לסוכנים החודש" : "הרווחתי החודש"} value={<Money value={stats?.monthEarned ?? 0} />} note={`${stats?.monthCount ?? 0} עסקאות`} icon={<CalendarIcon />} />
-            <KpiCard tone="navy" label={admin ? "לסוכנים השנה" : "הרווחתי השנה"} value={<Money value={stats?.yearEarned ?? 0} />} icon={<WalletIcon />} />
+            <KpiCard label={admin ? "עמלות לסוכנים החודש" : "הרווחתי החודש"} value={<Money value={stats?.monthEarned ?? 0} />} note={`${stats?.monthCount ?? 0} עסקאות`} icon={<CalendarIcon />} />
+            <KpiCard tone="navy" label={admin ? "עמלות לסוכנים השנה" : "הרווחתי השנה"} value={<Money value={stats?.yearEarned ?? 0} />} icon={<WalletIcon />} />
             <KpiCard label="עסקאות השנה" value={stats?.yearCount ?? 0} icon={<TrophyIcon />} />
             <KpiCard label="ממוצע לעסקה" value={<Money value={stats?.average ?? null} />} note={admin ? "חלק הסוכן" : "החלק שלי"} />
           </div>
+          )}
 
           {deals.length === 0 ? (
             <EmptyState
               icon={<HandshakeIcon />}
-              title="עדיין אין עסקאות"
-              hint={admin ? "לחץ על ״עסקה שנסגרה״ כדי לרשום את הראשונה." : "כשמנהל המשרד ירשום עסקה שסגרת, היא תופיע כאן עם העמלה שלך."}
+              title="עדיין לא נרשמו עסקאות"
+              hint={
+                admin
+                  ? "כשקונה סוגר על נכס, רושמים כאן את העסקה. המערכת מחשבת לבד את חלוקת העמלה בין הסוכן למשרד."
+                  : "כשמנהל המשרד ירשום עסקה שסגרת, היא תופיע כאן עם העמלה שלך."
+              }
+              action={
+                admin && (
+                  <Button size="lg" onClick={() => setDialog({ open: true, deal: null })}>
+                    <HandshakeIcon />
+                    רישום עסקה ראשונה
+                  </Button>
+                )
+              }
             />
           ) : (
             <DealsTable deals={deals} showAgent={admin} onOpen={admin ? (d) => setDialog({ open: true, deal: d }) : undefined} />
