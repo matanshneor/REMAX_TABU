@@ -15,7 +15,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAgentName, useAgents } from "@/lib/data";
 import { formatILSCompact } from "@/lib/format";
-import { PISGAT_AREAS } from "@/lib/labels";
+import { StatusBadge } from "@/components/crm/status-badge";
+import { BUYER_STATUS, isActiveBuyer, PISGAT_AREAS } from "@/lib/labels";
 import { isAdmin } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/client";
 import type { Buyer, Enum } from "@/lib/types";
@@ -39,6 +40,7 @@ export function BuyersView() {
   const [creating, setCreating] = useNewParam();
   const [text, setText] = useState("");
   const [agentFilter, setAgentFilter] = useState<AgentFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | Enum<"buyer_status">>("all");
 
   const {
     data: buyers = [],
@@ -71,12 +73,13 @@ export function BuyersView() {
   const filtered = useMemo(() => {
     const t = text.trim().toLowerCase();
     return byOwnership.filter((b) => {
+      if (statusFilter === "active" ? !isActiveBuyer(b) : statusFilter !== "all" && b.status !== statusFilter) return false;
       if (!t) return true;
       return [b.full_name, b.phone, b.email, b.desired_city, ...b.preferred_neighborhoods]
         .filter(Boolean)
         .some((s) => s!.toLowerCase().includes(t));
     });
-  }, [byOwnership, text]);
+  }, [byOwnership, text, statusFilter]);
 
   // Default order is "recently updated" (from the query); clicking a header sorts by that column.
   const rows = useMemo(() => {
@@ -97,7 +100,7 @@ export function BuyersView() {
     <>
       <PageHeader
         title={admin ? "כל הקונים במשרד" : "הקונים שלי"}
-        count={buyers.length}
+        count={buyers.filter(isActiveBuyer).length}
         description={
           admin
             ? "כל הלידים של המשרד, עם התאמה אוטומטית למוכרים בפסגת זאב"
@@ -122,10 +125,25 @@ export function BuyersView() {
           <Input
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="סינון לפי שם, טלפון, מייל או איזור…"
+            placeholder="סינון לפי שם, טלפון, מייל או אזור…"
             className="h-10 ps-9"
           />
         </div>
+
+        <NativeSelect
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+          className="w-44"
+          aria-label="סינון לפי סטטוס"
+        >
+          <option value="all">כל הסטטוסים ({byOwnership.length})</option>
+          <option value="active">בטיפול ({byOwnership.filter(isActiveBuyer).length})</option>
+          {Object.entries(BUYER_STATUS).map(([value, { label }]) => (
+            <option key={value} value={value}>
+              {label} ({byOwnership.filter((b) => b.status === value).length})
+            </option>
+          ))}
+        </NativeSelect>
 
         {admin && (
           <NativeSelect
@@ -287,6 +305,12 @@ const COLUMNS: Column[] = [
     ),
   },
   {
+    key: "status",
+    header: "סטטוס",
+    sortValue: (b) => Object.keys(BUYER_STATUS).indexOf(b.status),
+    cell: (b) => <StatusBadge map={BUYER_STATUS} value={b.status} />,
+  },
+  {
     key: "phone",
     header: "טלפון",
     className: () => "text-muted-foreground",
@@ -312,7 +336,7 @@ const COLUMNS: Column[] = [
   },
   {
     key: "area",
-    header: "איזור בפסגה",
+    header: "אזור בפסגה",
     headClassName: "w-16",
     cell: (b) => <AreaTags areas={b.preferred_neighborhoods} />,
   },

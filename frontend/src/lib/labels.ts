@@ -12,6 +12,19 @@ export const PROPERTY_STATUS: Labeled<Enum<"property_status">> = {
   sold: { label: "נמכר", tone: "purple" },
 };
 
+export const BUYER_STATUS: Labeled<Enum<"buyer_status">> = {
+  new: { label: "חדש", tone: "blue" },
+  hot: { label: "חם", tone: "red" },
+  warm: { label: "פושר", tone: "orange" },
+  bought_with_us: { label: "קנה דרכנו", tone: "green" },
+  bought_elsewhere: { label: "קנה במקום אחר", tone: "gray" },
+  irrelevant: { label: "לא רלוונטי", tone: "gray" },
+};
+
+/** Buyers still being worked on — the ones counted as "active". */
+export const ACTIVE_BUYER_STATUSES: Enum<"buyer_status">[] = ["new", "hot", "warm"];
+export const isActiveBuyer = (b: { status: Enum<"buyer_status"> }) => ACTIVE_BUYER_STATUSES.includes(b.status);
+
 export const CANDIDATE_STATUS: Labeled<Enum<"candidate_status">> = {
   new: { label: "חדש", tone: "blue" },
   interview_scheduled: { label: "נקבע ראיון", tone: "orange" },

@@ -62,3 +62,18 @@ export function toDateInput(value: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}`;
 }
+
+/**
+ * Old notifications carry raw ISO dates ("2026-10-24"). Show them the way the office reads
+ * dates: "24.10.26 (בעוד 5 ימים)".
+ */
+export function humanizeDatesInText(text: string): string {
+  return text.replace(/\b(\d{4})-(\d{2})-(\d{2})\b/g, (_, y: string, m: string, d: string) => {
+    const target = new Date(Number(y), Number(m) - 1, Number(d));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const days = Math.round((target.getTime() - today.getTime()) / 86_400_000);
+    const when = days === 0 ? "היום" : days === 1 ? "מחר" : days > 1 ? `בעוד ${days} ימים` : days === -1 ? "אתמול" : `לפני ${-days} ימים`;
+    return `${Number(d)}.${Number(m)}.${y.slice(2)} (${when})`;
+  });
+}

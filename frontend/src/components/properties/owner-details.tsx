@@ -17,7 +17,7 @@ import { OWNER_SECTIONS } from "./property-fields";
  * The seller (property owner). Every agent sees it; editing follows the property's rule
  * (anyone, unless the property is exclusive — then the recruiting agent and admin).
  */
-export function OwnerDetails({ propertyId, editable }: { propertyId: string; editable: boolean }) {
+export function OwnerDetails({ propertyId, editable, first }: { propertyId: string; editable: boolean; first?: boolean }) {
   const qc = useQueryClient();
   const key = ["property_owner_details", propertyId];
 
@@ -53,6 +53,7 @@ export function OwnerDetails({ propertyId, editable }: { propertyId: string; edi
 
   return (
     <PanelSection
+      first={first}
       title="פרטי המוכר"
       action={row?.owner_phone && !form.dirty && <WhatsAppButton phone={row.owner_phone} label="וואטסאפ למוכר" />}
     >

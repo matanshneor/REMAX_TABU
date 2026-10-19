@@ -69,7 +69,17 @@ export function SectionHeader({
   );
 }
 
-export function EmptyState({ icon, title, hint }: { icon: React.ReactNode; title: string; hint?: string }) {
+export function EmptyState({
+  icon,
+  title,
+  hint,
+  action,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  hint?: string;
+  action?: React.ReactNode;
+}) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed bg-card px-6 py-16 text-center">
       <div className="mb-1 flex size-10 items-center justify-center rounded-full bg-secondary text-secondary-foreground [&_svg]:size-5">
@@ -77,6 +87,7 @@ export function EmptyState({ icon, title, hint }: { icon: React.ReactNode; title
       </div>
       <p className="font-medium">{title}</p>
       {hint && <p className="max-w-sm text-sm text-muted-foreground">{hint}</p>}
+      {action && <div className="mt-2">{action}</div>}
     </div>
   );
 }

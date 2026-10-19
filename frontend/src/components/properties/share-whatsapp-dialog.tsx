@@ -19,7 +19,7 @@ export function ShareWhatsAppButton({ property }: { property: Property }) {
     <>
       <Button variant="outline" size="sm" className="text-[#128C7E] hover:text-[#075E54]" onClick={() => setOpen(true)}>
         <WhatsAppIcon />
-        שלח בוואטסאפ
+        שליחת הנכס בוואטסאפ
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-lg">{open && <ShareForm property={property} onDone={() => setOpen(false)} />}</DialogContent>

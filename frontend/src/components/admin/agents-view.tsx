@@ -1,7 +1,7 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
-import { CheckIcon, UserCheckIcon, UsersIcon, XIcon } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { BanIcon, CheckIcon, MessageCircleIcon, MoreHorizontalIcon, UserCheckIcon, UsersIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth-provider";
@@ -9,13 +9,21 @@ import { EmptyState, ErrorState, PageHeader, SectionHeader } from "@/components/
 import { StatusBadge } from "@/components/crm/status-badge";
 import { WhatsAppButton } from "@/components/crm/whatsapp-button";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { errorMessage, useAllProfiles } from "@/lib/data";
 import { formatDate, formatRelative } from "@/lib/format";
-import { ACCOUNT_STATUS, USER_ROLE } from "@/lib/labels";
+import { ACCOUNT_STATUS, ACTIVE_BUYER_STATUSES, USER_ROLE } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/client";
 import type { Enum, Profile } from "@/lib/types";
+import { openWhatsApp } from "@/lib/whatsapp";
 import { CandidatesSection } from "./candidates-view";
 import { SimpleTable } from "./simple-table";
 
@@ -25,6 +33,7 @@ import { SimpleTable } from "./simple-table";
  */
 export function AgentsView() {
   const { data: all = [], isLoading, error } = useAllProfiles();
+  const work = useAgentWork();
   const pending = all.filter((p) => p.status === "pending");
   // Active first; blocked accounts stay listed so they can be let back in.
   const team = all
@@ -71,6 +80,10 @@ export function AgentsView() {
               { header: "אימייל", cell: (p) => <span dir="ltr">{p.email}</span> },
               { header: "תפקיד", cell: (p) => <StatusBadge map={USER_ROLE} value={p.role} /> },
               { header: "הצטרפות", cell: (p) => formatDate(p.join_date) },
+              // Each number in its own column, so they can be read at a glance.
+              { header: "קונים בטיפול", cell: (p) => <WorkCount value={work.data && (work.data.buyers[p.id] ?? 0)} />, className: "text-center" },
+              { header: "נכסים פעילים", cell: (p) => <WorkCount value={work.data && (work.data.properties[p.id] ?? 0)} />, className: "text-center" },
+              { header: "עסקאות השנה", cell: (p) => <WorkCount value={work.data && (work.data.deals[p.id] ?? 0)} />, className: "text-center" },
               { header: "סטטוס", cell: (p) => <StatusBadge map={ACCOUNT_STATUS} value={p.status} /> },
               { header: "", cell: (p) => <StatusAction profile={p} />, className: "w-0 text-end" },
             ]}
@@ -114,7 +127,39 @@ function PendingCard({ profile }: { profile: Profile }) {
   );
 }
 
-/** Lets the admin block an agent, or let a rejected sign-up in after all. Never on themself. */
+function WorkCount({ value }: { value: number | undefined }) {
+  if (value === undefined) return <span className="text-muted-foreground">…</span>;
+  return <span className={value ? "font-semibold tabular-nums" : "text-muted-foreground tabular-nums"}>{value}</span>;
+}
+
+/** How much each agent is handling now: active buyers, active listings, deals closed this year. */
+function useAgentWork() {
+  return useQuery({
+    queryKey: ["agents", "work"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const year = String(new Date().getFullYear());
+      const [buyers, properties, deals] = await Promise.all([
+        supabase.from("buyers").select("owner_agent_id").in("status", ACTIVE_BUYER_STATUSES),
+        supabase.from("properties").select("recruiting_agent_id").eq("status", "active"),
+        supabase.from("deals").select("agent_id").gte("closed_on", `${year}-01-01`),
+      ]);
+      for (const r of [buyers, properties, deals]) if (r.error) throw r.error;
+      const tally = (ids: (string | null)[]) =>
+        ids.reduce<Record<string, number>>((acc, id) => (id ? { ...acc, [id]: (acc[id] ?? 0) + 1 } : acc), {});
+      return {
+        buyers: tally(buyers.data!.map((b) => b.owner_agent_id)),
+        properties: tally(properties.data!.map((p) => p.recruiting_agent_id)),
+        deals: tally(deals.data!.map((d) => d.agent_id)),
+      };
+    },
+  });
+}
+
+/**
+ * Actions for one agent, tucked into a ⋯ menu so "block" can't be hit by accident.
+ * Blocking still asks for confirmation. Never on the admin themself.
+ */
 function StatusAction({ profile }: { profile: Profile }) {
   const { profile: me } = useAuth();
   const setStatus = useSetStatus();
@@ -129,14 +174,35 @@ function StatusAction({ profile }: { profile: Profile }) {
   }
   return (
     <>
-      <Button size="sm" variant="ghost" className="text-muted-foreground" disabled={setStatus.busy} onClick={() => setConfirming(true)}>
-        חסימה
-      </Button>
+      <span onClick={(e) => e.stopPropagation()}>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={<Button size="icon-sm" variant="outline" aria-label={`פעולות עבור ${profile.full_name}`} disabled={setStatus.busy} />}
+          >
+            <MoreHorizontalIcon />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            {profile.phone && (
+              <>
+                <DropdownMenuItem onClick={() => openWhatsApp(profile.phone)}>
+                  <MessageCircleIcon />
+                  שליחת וואטסאפ
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
+            <DropdownMenuItem variant="destructive" onClick={() => setConfirming(true)}>
+              <BanIcon />
+              חסימת גישה…
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </span>
       <Dialog open={confirming} onOpenChange={setConfirming}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>לחסום את {profile.full_name}?</DialogTitle>
-            <DialogDescription>החשבון לא יוכל להיכנס למערכת. כל הנתונים נשמרים, ואפשר לאשר את החשבון מחדש בכל רגע.</DialogDescription>
+            <DialogTitle>לחסום את הגישה של {profile.full_name}?</DialogTitle>
+            <DialogDescription>לא תהיה יותר כניסה למערכת. הקונים והנכסים של הסוכן נשארים במערכת, ואפשר לאשר את החשבון מחדש בכל רגע.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirming(false)}>
@@ -149,7 +215,7 @@ function StatusAction({ profile }: { profile: Profile }) {
                 setStatus.run(profile, "rejected");
               }}
             >
-              חסימה
+              כן, לחסום
             </Button>
           </DialogFooter>
         </DialogContent>

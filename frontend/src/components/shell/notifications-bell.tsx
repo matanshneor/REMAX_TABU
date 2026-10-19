@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/components/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { formatRelative } from "@/lib/format";
+import { formatRelative, humanizeDatesInText } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 import type { Notification } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -104,7 +104,7 @@ export function NotificationsBell() {
                 <span className={cn("mt-1.5 size-2 shrink-0 rounded-full", n.is_read ? "bg-transparent" : "bg-primary")} />
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-medium">{n.title}</span>
-                  {n.body && <span className="mt-0.5 block text-xs text-muted-foreground">{n.body}</span>}
+                  {n.body && <span className="mt-0.5 block text-xs text-muted-foreground">{humanizeDatesInText(n.body)}</span>}
                   <span className="mt-1 block text-[11px] text-muted-foreground/80">{formatRelative(n.created_at)}</span>
                 </span>
               </button>

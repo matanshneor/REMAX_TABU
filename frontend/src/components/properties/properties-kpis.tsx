@@ -30,12 +30,12 @@ export function PropertiesKpis({ properties }: { properties: Property[] }) {
         progress={properties.length ? active.length / properties.length : 0}
       />
       <KpiCard
-        tone="red"
+        tone="navy"
         label="בבלעדיות המשרד"
         value={exclusive.length}
         note={endingSoon ? `${endingSoon} מסתיימות בקרוב` : "אין סיומים קרובים"}
         noteTone={endingSoon ? "red" : "muted"}
-        badge={<LockIcon className="size-5 text-brand-red/70" />}
+        badge={<LockIcon className="size-5 text-primary/70" />}
         progress={active.length ? exclusive.length / active.length : 0}
       />
     </div>

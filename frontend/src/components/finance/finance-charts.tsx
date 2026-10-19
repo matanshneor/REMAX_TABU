@@ -10,8 +10,15 @@ import type { MonthPoint, Slice } from "@/lib/finance";
  */
 export const SERIES = { income: "#2f63c0", expense: "#eb6834" } as const;
 
+/** Axis labels in words, so "160 א׳" isn't read as "Sunday": "₪160 אלף", "₪1.2 מיליון". */
 const compact = (n: number) =>
-  n >= 1_000_000 ? `${Number((n / 1_000_000).toFixed(1))} מ׳` : n >= 1_000 ? `${Math.round(n / 1_000)} א׳` : String(n);
+  n >= 1_000_000
+    ? `₪${Number((n / 1_000_000).toFixed(1))} מיליון`
+    : n >= 1_000
+      ? `₪${Math.round(n / 1_000)} אלף`
+      : n === 0
+        ? "0"
+        : `₪${n}`;
 
 const axisTick = { fill: "var(--muted-foreground)", fontSize: 11 };
 
@@ -79,7 +86,7 @@ export function MonthlyChart({ data, highlightKey }: { data: MonthPoint[]; highl
           <CartesianGrid vertical={false} stroke="var(--border)" />
           {/* RTL: time runs right → left, the value axis sits on the right */}
           <XAxis dataKey="label" reversed tickLine={false} axisLine={false} tick={axisTick} interval={0} />
-          <YAxis orientation="right" tickLine={false} axisLine={false} tick={axisTick} tickFormatter={compact} width={44} />
+          <YAxis orientation="right" tickLine={false} axisLine={false} tick={axisTick} tickFormatter={compact} width={72} />
           <Tooltip
             cursor={{ fill: "var(--muted)", opacity: 0.6 }}
             content={({ active, payload }) => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { PlusIcon, UserPlusIcon } from "lucide-react";
+import { PaperclipIcon, PlusIcon, UserPlusIcon } from "lucide-react";
 import { useState } from "react";
 import { CreateDialog } from "@/components/crm/create-dialog";
 import { ExportButton } from "@/components/crm/export-button";
@@ -98,7 +98,30 @@ export function CandidatesSection() {
             { header: "טלפון", cell: (c) => <span dir="ltr">{c.phone ?? "—"}</span> },
             { header: "סטטוס", cell: (c) => <StatusBadge map={CANDIDATE_STATUS} value={c.status} /> },
             { header: "מקור", cell: (c) => c.source ?? "—" },
-            { header: "קו״ח", cell: (c) => (c.cv_path ? "📎" : ""), className: "text-center" },
+            {
+              header: "קו״ח",
+              cell: (c) =>
+                c.cv_path ? (
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
+                    <PaperclipIcon className="size-3.5" />
+                    יש קובץ
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">לא הועלו</span>
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenId(c.id);
+                      }}
+                    >
+                      העלאה
+                    </Button>
+                  </span>
+                ),
+            },
             { header: "עודכן", cell: (c) => formatRelative(c.updated_at), className: "text-muted-foreground" },
           ]}
         />

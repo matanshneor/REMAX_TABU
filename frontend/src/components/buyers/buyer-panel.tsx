@@ -1,6 +1,9 @@
 "use client";
 
 import { HandIcon, PhoneIcon } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { DealDialog, type DealPrefill } from "@/components/deals/deal-dialog";
 import { useAuth } from "@/components/auth-provider";
 import { EntityForm } from "@/components/form/entity-form";
 import { useFormValues } from "@/components/form/use-form-values";
@@ -30,6 +33,23 @@ export function BuyerPanel({ id, onClose }: { id: string | null; onClose: () => 
   const [, setOpenId] = usePanelParam();
   const editable = buyer ? canEditBuyer(profile, buyer) : false;
   const admin = isAdmin(profile);
+  const [dealPrefill, setDealPrefill] = useState<DealPrefill | null>(null);
+
+  function saveChanges() {
+    if (!buyer) return;
+    const justBought = form.changes.status === "bought_with_us" && buyer.status !== "bought_with_us";
+    save.mutate(
+      { id: buyer.id, values: form.changes },
+      {
+        onSuccess: () => {
+          if (!justBought) return;
+          // A purchase through the office is a deal: offer to record it right away.
+          if (admin) setDealPrefill({ buyer_id: buyer.id, agent_id: buyer.owner_agent_id ?? undefined });
+          else toast.info("מעולה! עדכנו את מנהל המשרד כדי שירשום את העסקה ואת העמלה.", { duration: 8000 });
+        },
+      },
+    );
+  }
 
   return (
     <Panel
@@ -75,7 +95,7 @@ export function BuyerPanel({ id, onClose }: { id: string | null; onClose: () => 
             dirty={form.dirty}
             saving={save.isPending}
             disabled={!editable}
-            onSave={() => save.mutate({ id: buyer.id, values: form.changes })}
+            onSave={saveChanges}
             onReset={form.reset}
             onDelete={admin ? () => remove.mutate(buyer.id, { onSuccess: onClose }) : undefined}
           />
@@ -104,6 +124,9 @@ export function BuyerPanel({ id, onClose }: { id: string | null; onClose: () => 
           <LinkedTasks buyerId={buyer.id} title="המשימות שלי על הקונה" />
           <PropertyMatches buyer={buyer} />
           <ViewingsList buyerId={buyer.id} />
+          {admin && (
+            <DealDialog open={!!dealPrefill} prefill={dealPrefill ?? undefined} onOpenChange={(o) => !o && setDealPrefill(null)} />
+          )}
         </>
       )}
     </Panel>

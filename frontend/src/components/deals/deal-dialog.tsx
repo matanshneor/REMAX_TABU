@@ -25,36 +25,43 @@ export function DealDialog({
   open,
   onOpenChange,
   deal,
+  prefill,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** Edit this deal; omit to create a new one. */
   deal?: Deal | null;
+  /** Starting values for a new deal (e.g. from a buyer who just bought through us). */
+  prefill?: DealPrefill;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl">
-        {open && <DealForm deal={deal ?? null} onDone={() => onOpenChange(false)} />}
+        {open && <DealForm deal={deal ?? null} prefill={prefill} onDone={() => onOpenChange(false)} />}
       </DialogContent>
     </Dialog>
   );
 }
 
-function DealForm({ deal, onDone }: { deal: Deal | null; onDone: () => void }) {
+export type DealPrefill = Partial<Pick<Deal, "buyer_id" | "agent_id" | "property_id" | "notes">>;
+
+function DealForm({ deal, prefill, onDone }: { deal: Deal | null; prefill?: DealPrefill; onDone: () => void }) {
   const qc = useQueryClient();
   const { data: agents = [] } = useAgents();
-  const [agentId, setAgentId] = useState(deal?.agent_id ?? "");
+  const [agentId, setAgentId] = useState(deal?.agent_id ?? prefill?.agent_id ?? "");
   const [commission, setCommission] = useState(deal ? String(Math.round(Number(deal.commission_amount))) : "");
-  const [percent, setPercent] = useState(deal ? String(Number(deal.agent_percent)) : "");
+  const [percentInput, setPercent] = useState(deal ? String(Number(deal.agent_percent)) : "");
   const [saveAsDefault, setSaveAsDefault] = useState(false);
   const [closedOn, setClosedOn] = useState(deal?.closed_on ?? toDateInput(new Date()));
   const [dealPrice, setDealPrice] = useState(deal?.deal_price != null ? String(deal.deal_price) : "");
-  const [propertyId, setPropertyId] = useState(deal?.property_id ?? "");
-  const [buyerId, setBuyerId] = useState(deal?.buyer_id ?? "");
-  const [notes, setNotes] = useState(deal?.notes ?? "");
+  const [propertyId, setPropertyId] = useState(deal?.property_id ?? prefill?.property_id ?? "");
+  const [buyerId, setBuyerId] = useState(deal?.buyer_id ?? prefill?.buyer_id ?? "");
+  const [notes, setNotes] = useState(deal?.notes ?? prefill?.notes ?? "");
   const [pending, setPending] = useState(false);
 
   const agent = agents.find((a) => a.id === agentId);
+  // A prefilled agent shows their fixed percentage (once the agents list arrives) until it's edited.
+  const percent = percentInput === "" && !deal && agent ? String(Number(agent.commission_split)) : percentInput;
   const defaultPercent = agent ? Number(agent.commission_split) : null;
   const amount = Number(commission) || 0;
   const pct = Number(percent) || 0;

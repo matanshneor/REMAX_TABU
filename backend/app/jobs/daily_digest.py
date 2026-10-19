@@ -16,6 +16,14 @@ def property_label(p: dict) -> str:
     return ", ".join(x for x in (address, p.get("city")) if x)
 
 
+def he_date(iso: str, today: date) -> str:
+    """'2026-10-24' -> '24.10.26 (בעוד 5 ימים)' — the way people in the office read dates."""
+    d = date.fromisoformat(iso[:10])
+    days = (d - today).days
+    when = "היום" if days == 0 else "מחר" if days == 1 else f"בעוד {days} ימים"
+    return f"{d.day}.{d.month}.{d.year % 100:02d} ({when})"
+
+
 def build_notifications(today: date) -> list[dict]:
     client = get_service_client()
     notifications: list[dict] = []
@@ -40,7 +48,7 @@ def build_notifications(today: date) -> list[dict]:
                 "recipient_id": recipient,
                 "kind": "exclusivity_ending",
                 "title": "בלעדיות עומדת להסתיים",
-                "body": f"הבלעדיות על {property_label(p)} מסתיימת ב-{p['exclusivity_end']}",
+                "body": f"הבלעדיות על {property_label(p)} מסתיימת ב-{he_date(p['exclusivity_end'], today)}",
                 "link": f"/properties?open={p['id']}",
             })
 
@@ -59,7 +67,7 @@ def build_notifications(today: date) -> list[dict]:
                 "recipient_id": p["recruiting_agent_id"],
                 "kind": "eviction_upcoming",
                 "title": "מועד פינוי מתקרב",
-                "body": f"מועד הפינוי של {property_label(p)} הוא {p['eviction_date']}",
+                "body": f"מועד הפינוי של {property_label(p)} הוא {he_date(p['eviction_date'], today)}",
                 "link": f"/properties?open={p['id']}",
             })
 
