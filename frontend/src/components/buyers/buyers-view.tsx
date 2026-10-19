@@ -101,11 +101,7 @@ export function BuyersView() {
       <PageHeader
         title={admin ? "כל הקונים במשרד" : "הקונים שלי"}
         count={buyers.filter(isActiveBuyer).length}
-        description={
-          admin
-            ? "כל הלידים של המשרד, עם התאמה אוטומטית למוכרים בפסגת זאב"
-            : "רק אתה ומנהל המשרד רואים את הקונים שלך — עם התאמה אוטומטית למוכרים"
-        }
+        description={admin ? "כל הלידים של המשרד, עם התאמה אוטומטית למוכרים בפסגת זאב" : undefined}
         actions={
           <>
             <ExportButton entity="buyers" />
