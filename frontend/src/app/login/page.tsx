@@ -4,6 +4,9 @@ import { cn } from "@/lib/utils";
 import { LoginForm } from "./login-form";
 import { SignUpForm } from "./sign-up-form";
 
+// The mode comes from the URL (?mode=signup), so the page renders per request.
+export const instant = false;
+
 const MODES = [
   { value: "login", label: "כניסה", href: "/login" },
   { value: "signup", label: "הרשמה", href: "/login?mode=signup" },
