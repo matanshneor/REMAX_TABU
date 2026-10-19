@@ -4,6 +4,7 @@ import type { User } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { createContext, use, useCallback, useEffect, useState } from "react";
+import { browserSessionEnded } from "@/lib/remember-me";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/lib/types";
 
@@ -32,7 +33,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const profile = user
         ? (await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle()).data
         : null;
-      if (!user || !profile) {
+      // "Remember me" was unchecked and the browser has been closed since: sign out.
+      if (!user || !profile || browserSessionEnded()) {
         // A deleted account can leave a still-valid session cookie behind: the proxy would
         // send it back from /login to the app forever. Clear it before going to /login.
         const { data } = await supabase.auth.getSession();
