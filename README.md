@@ -15,23 +15,41 @@
    - להדביק אותו ב-SQL Editor בממשק של Supabase.
    - להריץ `supabase link --project-ref <id>` ואחר כך `supabase db push`.
 3. מריצים את `supabase/tests/rls_test.sql` ב-SQL Editor. אם בסוף מופיעה ההודעה `ALL RLS TESTS PASSED`, ההרשאות עובדות. הבדיקה לא משאירה נתונים בבסיס הנתונים.
-4. ב-**Authentication → Sign In / Providers** מכבים את האפשרות "Allow new users to sign up". ככה רק מנהל יכול להוסיף סוכנים, דרך Invite user.
+4. ב-**Authentication → Sign In / Providers** מדליקים את "Allow new users to sign up" ומכבים את "Confirm email". ככה סוכנים נרשמים בעצמם, וכל חשבון חדש ממתין לאישור המנהל.
 5. הופכים את עצמך למנהל, מ-SQL Editor:
    ```sql
-   update public.profiles set role = 'admin' where email = 'your@email.com';
+   update public.profiles set role = 'admin', status = 'active' where email = 'your@email.com';
    ```
 
 ### הוספת סוכן חדש
 
-1. ב-Supabase נכנסים ל-**Authentication → Users**, ולוחצים על **Add user → Send invitation**.
-2. מקלידים את האימייל של הסוכן.
-3. הסוכן מקבל מייל, לוחץ על הקישור ומגיע למסך "ברוך הבא! בחר סיסמה".
-4. הסוכן מעדכן בעצמו שם וטלפון במסך "החשבון שלי" (לחיצה על השם בתחתית התפריט).
+1. הסוכן נכנס לאתר, לוחץ על **הרשמה**, וממלא שם, טלפון, אימייל וסיסמה.
+2. המנהל מקבל התראה בפעמון. במסך **סוכנים** (בתפריט, תחת "ניהול") לוחצים **אישור** או **דחייה**.
+3. עד האישור הסוכן רואה רק מסך "החשבון ממתין לאישור", ובסיס הנתונים לא מחזיר לו שום מידע. אחרי האישור המערכת נפתחת לו מעצמה.
+
+חשבון שנוצר ידנית ב-Supabase (**Authentication → Users → Add user**) גם הוא מתחיל כ"ממתין", ומאשרים אותו באותו מסך.
+
+אישור או חסימה דרך SQL Editor:
+```sql
+update public.profiles set status = 'active' where email = 'agent@example.com';   -- אישור
+update public.profiles set status = 'rejected' where email = 'agent@example.com'; -- חסימה
+```
 
 כדי להפוך משתמש למנהל, מריצים ב-SQL Editor:
 ```sql
 update public.profiles set role = 'admin' where email = 'agent@example.com';
 ```
+
+### החלפת סיסמה למשתמש
+
+ב-SQL Editor מחליפים את המייל ואת הסיסמה, ולוחצים Run:
+```sql
+update auth.users
+set encrypted_password = extensions.crypt('הסיסמה-החדשה', extensions.gen_salt('bf')),
+    updated_at = now()
+where email = 'agent@example.com';
+```
+אם מופיע `UPDATE 1`, הסיסמה הוחלפה. אם מופיע `UPDATE 0`, המייל לא נמצא.
 
 ### מחיקת נתוני הדוגמה
 

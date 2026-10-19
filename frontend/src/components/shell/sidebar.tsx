@@ -6,6 +6,7 @@ import {
   ListChecksIcon,
   LogOutIcon,
   PlusIcon,
+  UserCheckIcon,
   UserPlusIcon,
   UsersIcon,
   WalletIcon,
@@ -36,6 +37,7 @@ const MAIN: NavItem[] = [
 
 const ADMIN: NavItem[] = [
   { href: "/finance", label: "הנהלת חשבונות", icon: WalletIcon },
+  { href: "/agents", label: "סוכנים", icon: UserCheckIcon },
   { href: "/candidates", label: "מועמדים", icon: UserPlusIcon },
 ];
 

@@ -45,8 +45,11 @@ export function NotificationsBell() {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "notifications", filter: `recipient_id=eq.${uid}` },
         (payload) => {
+          const n = payload.new as Notification;
           qc.invalidateQueries({ queryKey: KEY });
-          toast((payload.new as Notification).title);
+          // A new sign-up changes the agents screen and its sidebar counter.
+          if (n.kind === "signup_request") qc.invalidateQueries({ queryKey: ["profiles"] });
+          toast(n.title);
         },
       )
       .subscribe();

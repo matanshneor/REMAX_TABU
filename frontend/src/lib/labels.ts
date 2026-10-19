@@ -45,6 +45,12 @@ export const USER_ROLE: Labeled<Enum<"user_role">> = {
   admin: { label: "מנהל", tone: "purple" },
 };
 
+export const ACCOUNT_STATUS: Labeled<Enum<"account_status">> = {
+  pending: { label: "ממתין לאישור", tone: "orange" },
+  active: { label: "פעיל", tone: "green" },
+  rejected: { label: "נדחה", tone: "gray" },
+};
+
 export function toOptions<T extends string>(map: Labeled<T>): Option[] {
   return Object.entries<{ label: string }>(map).map(([value, { label }]) => ({ value, label }));
 }

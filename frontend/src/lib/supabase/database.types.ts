@@ -425,6 +425,7 @@ export type Database = {
           join_date: string
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
+          status: Database["public"]["Enums"]["account_status"]
           updated_at: string
         }
         Insert: {
@@ -436,6 +437,7 @@ export type Database = {
           join_date?: string
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          status?: Database["public"]["Enums"]["account_status"]
           updated_at?: string
         }
         Update: {
@@ -447,6 +449,7 @@ export type Database = {
           join_date?: string
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          status?: Database["public"]["Enums"]["account_status"]
           updated_at?: string
         }
         Relationships: []
@@ -702,11 +705,13 @@ export type Database = {
           title: string
         }[]
       }
+      is_active: { Args: never; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
       is_system: { Args: never; Returns: boolean }
       phone_key: { Args: { p: string }; Returns: string }
     }
     Enums: {
+      account_status: "pending" | "active" | "rejected"
       buyer_status:
         | "new"
         | "hot"
@@ -851,6 +856,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      account_status: ["pending", "active", "rejected"],
       buyer_status: [
         "new",
         "hot",

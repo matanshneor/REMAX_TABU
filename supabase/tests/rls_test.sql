@@ -11,7 +11,12 @@ insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-00000000000a', 'admin@test.local',   '{"full_name": "מנהל"}'),
   ('00000000-0000-0000-0000-0000000000a1', 'agent.a@test.local', '{"full_name": "סוכן א"}'),
   ('00000000-0000-0000-0000-0000000000b1', 'agent.b@test.local', '{"full_name": "סוכן ב"}');
+update public.profiles set status = 'active';
 update public.profiles set role = 'admin' where id = '00000000-0000-0000-0000-00000000000a';
+-- A self sign-up that tries to make itself admin through the form metadata.
+insert into auth.users (id, email, raw_user_meta_data) values
+  ('00000000-0000-0000-0000-0000000000c1', 'pending@test.local',
+   '{"full_name": "ממתין", "phone": "050-9999999", "role": "admin", "status": "active"}');
 
 insert into public.properties (id, city, street, recruiting_agent_id, is_exclusive, current_price) values
   ('10000000-0000-0000-0000-000000000001', 'תל אביב', 'דיזנגוף', '00000000-0000-0000-0000-0000000000a1', true,  3000000),
@@ -218,6 +223,48 @@ begin
   assert n = 0, 'agent A edited a task of agent B';
 end $$;
 
+-- ---- Pending sign-up --------------------------------------------------------
+select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000000c1", "role": "authenticated"}', true);
+
+do $$
+declare n integer;
+begin
+  assert (select status = 'pending' and role = 'agent' and phone = '050-9999999' from public.profiles),
+    'sign-up should start as a pending agent';
+  assert (select count(*) from public.profiles) = 1, 'pending user should see only own profile';
+  assert (select count(*) from public.properties) = 0, 'pending user must not see properties';
+  assert (select count(*) from public.property_owner_details) = 0, 'pending user must not see sellers';
+  assert (select count(*) from public.buyers) = 0, 'pending user must not see buyers';
+  assert (select count(*) from public.buyer_property_viewings) = 0, 'pending user must not see viewings';
+  assert (select count(*) from public.tasks) = 0, 'pending user must not see tasks';
+  assert (select count(*) from public.notifications) = 0, 'pending user must not see notifications';
+  assert (select count(*) from public.deals) = 0, 'pending user must not see deals';
+  assert (select count(*) from public.global_search('תל')) = 0, 'pending user search must find nothing';
+  assert (select count(*) from public.find_buyers_by_phone('0501234567')) = 0, 'pending user duplicate check must find nothing';
+
+  begin
+    insert into public.tasks (title) values ('משימה של ממתין');
+    raise exception 'FAIL: pending user created a task';
+  exception when insufficient_privilege then null;
+  end;
+
+  begin
+    insert into public.properties (city, recruiting_agent_id) values ('פריצה', '00000000-0000-0000-0000-0000000000c1');
+    raise exception 'FAIL: pending user created a property';
+  exception when insufficient_privilege then null;
+  end;
+
+  begin
+    update public.profiles set status = 'active' where id = '00000000-0000-0000-0000-0000000000c1';
+    raise exception 'FAIL: pending user approved themself';
+  exception when insufficient_privilege then null;
+  end;
+
+  update public.profiles set full_name = 'ממתין מעודכן' where id = '00000000-0000-0000-0000-0000000000c1';
+  get diagnostics n = row_count;
+  assert n = 1, 'pending user should edit own name';
+end $$;
+
 -- ---- Admin ------------------------------------------------------------------
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-00000000000a", "role": "authenticated"}', true);
 
@@ -257,6 +304,12 @@ begin
   delete from public.properties where id = '10000000-0000-0000-0000-000000000002';
   get diagnostics n = row_count;
   assert n = 1, 'admin should delete properties';
+
+  -- Sign-up approval
+  assert (select count(*) from public.notifications where kind = 'signup_request') = 1, 'admin should be notified of the sign-up';
+  update public.profiles set status = 'active' where id = '00000000-0000-0000-0000-0000000000c1';
+  get diagnostics n = row_count;
+  assert n = 1, 'admin should approve a sign-up';
 
   raise notice 'ALL RLS TESTS PASSED';
 end $$;

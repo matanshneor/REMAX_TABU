@@ -23,15 +23,28 @@ export function errorMessage(error: unknown): string {
   return e?.message || "אירעה שגיאה";
 }
 
+/** Approved agents only — the lists every screen picks from. */
 export function useAgents() {
   return useQuery({
     queryKey: ["profiles"],
     queryFn: async (): Promise<Profile[]> => {
-      const { data, error } = await createClient().from("profiles").select("*").order("full_name");
+      const { data, error } = await createClient().from("profiles").select("*").eq("status", "active").order("full_name");
       if (error) throw error;
       return data;
     },
     staleTime: 5 * 60_000,
+  });
+}
+
+/** Every account, including sign-ups waiting for approval (admin screen). */
+export function useAllProfiles() {
+  return useQuery({
+    queryKey: ["profiles", "all"],
+    queryFn: async (): Promise<Profile[]> => {
+      const { data, error } = await createClient().from("profiles").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
   });
 }
 

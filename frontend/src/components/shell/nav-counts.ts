@@ -44,9 +44,24 @@ export function useNavCounts() {
     },
   });
 
+  // Sign-ups waiting for the admin; only admins can see other people's pending profiles.
+  const pending = useQuery({
+    queryKey: ["profiles", "count", "pending"],
+    enabled: profile?.role === "admin",
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("profiles")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending");
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
   return {
     "/buyers": buyers.data,
     "/properties": properties.data,
     "/tasks": tasks.data,
+    "/agents": pending.data,
   } as Record<string, number | undefined>;
 }

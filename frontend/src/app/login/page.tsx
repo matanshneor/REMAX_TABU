@@ -1,15 +1,64 @@
+import Link from "next/link";
 import { BRAND, BrandLogo } from "@/components/brand-logo";
+import { cn } from "@/lib/utils";
 import { LoginForm } from "./login-form";
+import { SignUpForm } from "./sign-up-form";
 
-export default function LoginPage() {
+const MODES = [
+  { value: "login", label: "כניסה", href: "/login" },
+  { value: "signup", label: "הרשמה", href: "/login?mode=signup" },
+] as const;
+
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ mode?: string }> }) {
+  const signUp = (await searchParams).mode === "signup";
+
   return (
     <main className="grid min-h-screen lg:grid-cols-2">
       <div className="flex items-center justify-center bg-background p-8">
         <div className="w-full max-w-sm">
           <BrandLogo priority className="mb-10 w-56" />
-          <h1 className="text-2xl font-bold tracking-tight">כניסה למערכת</h1>
-          <p className="mt-1 mb-6 text-sm text-muted-foreground">התחבר עם האימייל והסיסמה שקיבלת מהמנהל.</p>
-          <LoginForm />
+
+          <nav aria-label="כניסה או הרשמה" className="mb-6 grid grid-cols-2 rounded-lg bg-muted p-1 text-sm">
+            {MODES.map((m) => {
+              const active = (m.value === "signup") === signUp;
+              return (
+                <Link
+                  key={m.value}
+                  href={m.href}
+                  replace
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "flex h-8 items-center justify-center rounded-md font-medium transition-colors",
+                    active ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {m.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {signUp ? (
+            <>
+              <h1 className="text-2xl font-bold tracking-tight">הרשמה למערכת</h1>
+              <p className="mt-1 mb-6 text-sm text-muted-foreground">
+                ממלאים פרטים, ומנהל המשרד מאשר את החשבון. אחרי האישור אפשר להתחיל לעבוד.
+              </p>
+              <SignUpForm />
+            </>
+          ) : (
+            <>
+              <h1 className="text-2xl font-bold tracking-tight">כניסה למערכת</h1>
+              <p className="mt-1 mb-6 text-sm text-muted-foreground">התחבר עם האימייל והסיסמה שלך.</p>
+              <LoginForm />
+              <p className="mt-6 text-center text-sm text-muted-foreground">
+                עוד אין לך חשבון?{" "}
+                <Link href="/login?mode=signup" replace className="font-medium text-primary hover:underline">
+                  להרשמה
+                </Link>
+              </p>
+            </>
+          )}
         </div>
       </div>
 

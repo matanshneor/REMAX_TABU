@@ -1,6 +1,7 @@
 "use client";
 
 import { AuthProvider, useAuth } from "@/components/auth-provider";
+import { PendingApproval } from "@/components/auth/pending-approval";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GlobalSearch } from "./global-search";
 import { NotificationsBell } from "./notifications-bell";
@@ -28,6 +29,9 @@ function Shell({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
+
+  // RLS hides all data from unapproved accounts; this just explains why.
+  if (profile.status !== "active") return <PendingApproval />;
 
   return (
     <div className="min-h-screen">
