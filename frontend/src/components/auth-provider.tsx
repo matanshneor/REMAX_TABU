@@ -28,12 +28,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const load = useCallback(
     async (user: User | null) => {
-      if (!user) {
+      const supabase = createClient();
+      const profile = user
+        ? (await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle()).data
+        : null;
+      if (!user || !profile) {
+        // A deleted account can leave a still-valid session cookie behind: the proxy would
+        // send it back from /login to the app forever. Clear it before going to /login.
+        const { data } = await supabase.auth.getSession();
+        if (data.session) await supabase.auth.signOut({ scope: "local" });
         setState({ user: null, profile: null, loading: false });
         router.replace("/login");
         return;
       }
-      const { data: profile } = await createClient().from("profiles").select("*").eq("id", user.id).maybeSingle();
       setState({ user, profile, loading: false });
     },
     [router],
