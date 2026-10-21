@@ -21,6 +21,7 @@ import { CANDIDATE_SOURCES, CANDIDATE_STATUS, toOptions } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/client";
 import type { Candidate, Enum } from "@/lib/types";
 import { usePanelParam } from "@/lib/use-panel-param";
+import { ScheduleInterviewButton, UpcomingInterviews } from "./schedule-interview";
 import { SimpleTable } from "./simple-table";
 
 const CANDIDATE_SECTIONS: FormSection[] = [
@@ -152,6 +153,7 @@ function CandidatePanel({ candidate, onClose }: { candidate: Candidate | null; o
       onClose={onClose}
       title={candidate?.full_name}
       badges={candidate && <StatusBadge map={CANDIDATE_STATUS} value={candidate.status} />}
+      headerActions={candidate && <ScheduleInterviewButton candidate={candidate} />}
       footer={
         candidate && (
           <SaveFooter
@@ -166,6 +168,7 @@ function CandidatePanel({ candidate, onClose }: { candidate: Candidate | null; o
     >
       {candidate && (
         <>
+          <UpcomingInterviews candidateId={candidate.id} />
           <EntityForm sections={CANDIDATE_SECTIONS} values={form.values} onChange={form.set} idPrefix="cand" />
           <FileAttachment
             title="קורות חיים"

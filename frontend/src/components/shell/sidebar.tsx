@@ -41,13 +41,13 @@ const MAIN: NavItem[] = [
   { href: "/buyers", label: "קונים", icon: UsersIcon },
   { href: "/properties", label: "מוכרים", icon: Building2Icon },
   { href: "/tasks", label: "משימות", icon: ListChecksIcon },
-  { href: "/deals", label: "העסקאות שלי", icon: HandshakeIcon },
   { href: "/team", label: "צוות המשרד", icon: UsersRoundIcon },
   { href: "https://matanshneor.github.io/Remax-Template/", label: "יצירת מודעת פרסום", icon: MegaphoneIcon, external: true },
   { href: "/help", label: "מדריך", icon: CircleHelpIcon },
 ];
 
 const ADMIN: NavItem[] = [
+  { href: "/deals", label: "עסקאות", icon: HandshakeIcon },
   { href: "/finance", label: "הנהלת חשבונות", icon: WalletIcon },
   { href: "/agents", label: "סוכנים", icon: UserCheckIcon },
 ];
@@ -107,7 +107,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       <nav className="flex flex-1 flex-col gap-6 px-3 pt-6">
         <NavGroup
-          items={MAIN.map((i) => (i.href === "/deals" && isAdmin(profile) ? { ...i, label: "עסקאות" } : i))}
+          items={MAIN}
           pathname={pathname}
           counts={counts}
           onNavigate={onNavigate}

@@ -4,9 +4,10 @@ import { EntityForm } from "@/components/form/entity-form";
 import { useFormValues } from "@/components/form/use-form-values";
 import { Panel, SaveFooter } from "@/components/crm/panel";
 import { Pill } from "@/components/crm/status-badge";
+import Link from "next/link";
 import { useDeleteRecord, useRecord, useSaveRecord } from "@/lib/data";
 import { formatDateTime, formatRelative } from "@/lib/format";
-import type { Task } from "@/lib/types";
+import type { Candidate, Task } from "@/lib/types";
 import { AddToCalendar } from "./add-to-calendar";
 import { TASK_SECTIONS } from "./task-fields";
 
@@ -16,6 +17,7 @@ export function TaskPanel({ id, onClose }: { id: string | null; onClose: () => v
   const form = useFormValues(TASK_SECTIONS, task, `${task?.id}:${task?.updated_at}`);
   const save = useSaveRecord("tasks");
   const remove = useDeleteRecord("tasks");
+  const { data: candidate } = useRecord<Candidate>("candidates", task?.candidate_id ?? null);
 
   return (
     <Panel
@@ -41,7 +43,22 @@ export function TaskPanel({ id, onClose }: { id: string | null; onClose: () => v
         )
       }
     >
-      {task && <EntityForm sections={TASK_SECTIONS} values={form.values} onChange={form.set} idPrefix="task" />}
+      {task && (
+        <>
+          {candidate && (
+            <Link
+              href={`/agents?open=${candidate.id}`}
+              className="mb-5 flex items-center justify-between rounded-lg border bg-secondary/40 px-3 py-2.5 text-sm hover:border-primary/40"
+            >
+              <span>
+                מועמד: <strong>{candidate.full_name}</strong>
+              </span>
+              <span className="text-xs text-primary">פתח כרטיס מועמד ←</span>
+            </Link>
+          )}
+          <EntityForm sections={TASK_SECTIONS} values={form.values} onChange={form.set} idPrefix="task" />
+        </>
+      )}
     </Panel>
   );
 }

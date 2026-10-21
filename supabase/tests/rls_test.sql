@@ -133,6 +133,13 @@ begin
   exception when insufficient_privilege then null;
   end;
 
+  -- Only the admin can tie a task to a recruiting candidate
+  begin
+    insert into public.tasks (title, candidate_id) values ('ריאיון', gen_random_uuid());
+    raise exception 'FAIL: agent linked a task to a candidate';
+  exception when insufficient_privilege then null;
+  end;
+
   -- Office team list: everyone reads it, only the admin edits it
   begin
     insert into public.office_agents (full_name) values ('סוכן מזויף');
@@ -305,8 +312,11 @@ begin
   delete from public.deals where id = '30000000-0000-0000-0000-000000000001';
   assert (select count(*) from public.financial_transactions where deal_id is not null) = 0, 'deal rows removed with the deal';
   assert (select count(*) from public.candidates) = 1, 'admin should see candidates';
+  insert into public.tasks (title, candidate_id, due_at)
+    select 'ריאיון עם מועמד', id, now() + interval '1 day' from public.candidates limit 1;
+  assert (select count(*) from public.tasks where candidate_id is not null) = 1, 'admin should schedule an interview task for a candidate';
   assert (select count(*) from public.global_search('מועמד')) = 1, 'admin search should find candidates';
-  assert (select count(*) from public.tasks) = 0, 'tasks are private — even the admin must not see agents'' tasks';
+  assert (select count(*) from public.tasks where assigned_to <> '00000000-0000-0000-0000-00000000000a') = 0, 'tasks are private — even the admin must not see agents'' tasks';
   assert (select count(*) from public.buyers) = 4, 'admin should see all buyers, including unassigned';
   assert (select count(*) from public.buyer_property_viewings) = 1, 'admin should see all viewings';
   assert (select full_name from public.find_buyers_by_phone('0501234567')) = 'קונה פנוי שני', 'admin sees duplicate details';

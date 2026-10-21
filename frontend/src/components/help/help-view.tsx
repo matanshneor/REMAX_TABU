@@ -3,7 +3,6 @@
 import {
   BellIcon,
   Building2Icon,
-  HandshakeIcon,
   KeyRoundIcon,
   ListChecksIcon,
   MessageSquareTextIcon,
@@ -136,16 +135,6 @@ const AGENT_TOPICS: Topic[] = [
     ),
   },
   {
-    id: "deals",
-    icon: <HandshakeIcon />,
-    title: "העסקאות שלי",
-    body: (
-      <p>
-        כשמנהל המשרד רושם עסקה שסגרת, היא מופיעה ב<B>״העסקאות שלי״</B>, עם העמלה שמגיעה לך מכל עסקה.
-      </p>
-    ),
-  },
-  {
     id: "team",
     icon: <UsersIcon />,
     title: "צוות המשרד",
@@ -211,7 +200,8 @@ const ADMIN_TOPICS: Topic[] = [
     body: (
       <p>
         בראש מסך <B>״סוכנים״</B> נמצאת טבלת המועמדים לגיוס: מוסיפים מועמד, מעדכנים סטטוס (נקבע ראיון, עבר ראיון ראשון, התקבל...)
-        ומצרפים קורות חיים.
+        ומצרפים קורות חיים. בכרטיס המועמד, הכפתור <B>״קביעת ריאיון / שיחה״</B> יוצר משימה ב״המשימות שלי״
+        עם המועד, ומעדכן את הסטטוס ל״נקבע ראיון״.
       </p>
     ),
   },
