@@ -7,6 +7,7 @@ import { Pill } from "@/components/crm/status-badge";
 import { useDeleteRecord, useRecord, useSaveRecord } from "@/lib/data";
 import { formatDateTime, formatRelative } from "@/lib/format";
 import type { Task } from "@/lib/types";
+import { AddToCalendar } from "./add-to-calendar";
 import { TASK_SECTIONS } from "./task-fields";
 
 /** Tasks are private, so whoever can open one owns it and may edit or delete it. */
@@ -25,6 +26,8 @@ export function TaskPanel({ id, onClose }: { id: string | null; onClose: () => v
       title={task?.title}
       subtitle={task && `נוצרה ${formatRelative(task.created_at)}`}
       badges={task && (task.is_done ? <Pill tone="green">בוצעה {formatDateTime(task.done_at)}</Pill> : <Pill tone="blue">פתוחה</Pill>)}
+      // Uses the saved due date, so it matches what's in the system.
+      headerActions={task && !task.is_done && <AddToCalendar task={task} />}
       footer={
         task && (
           <SaveFooter
