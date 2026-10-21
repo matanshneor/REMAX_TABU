@@ -133,6 +133,13 @@ begin
   exception when insufficient_privilege then null;
   end;
 
+  -- Office team list: everyone reads it, only the admin edits it
+  begin
+    insert into public.office_agents (full_name) values ('סוכן מזויף');
+    raise exception 'FAIL: agent added someone to the office team list';
+  exception when insufficient_privilege then null;
+  end;
+
   -- Call log follows buyer visibility
   begin
     insert into public.buyer_notes (buyer_id, body) values ('20000000-0000-0000-0000-000000000001', 'פריצה');
@@ -377,6 +384,20 @@ begin
   update public.buyers set phone = '0527654321' where id = '20000000-0000-0000-0000-0000000000f1';
   assert (select count(*) from public.global_search('0527654321') where id = '20000000-0000-0000-0000-0000000000f1') = 1,
     'search without dashes should find a formatted phone';
+
+  -- Office team list links accounts by phone or email, in either order.
+  insert into public.office_agents (id, full_name, phone)
+    values ('40000000-0000-0000-0000-000000000001', 'סוכן ב ברשימה', '0501234567');
+  assert (select profile_id from public.office_agents where id = '40000000-0000-0000-0000-000000000001')
+    = '00000000-0000-0000-0000-0000000000b1', 'a listed agent who already signed up should be linked by phone';
+  insert into public.office_agents (id, full_name, phone)
+    values ('40000000-0000-0000-0000-000000000002', 'סוכן עתידי', '052-000-1111');
+  assert (select profile_id is null from public.office_agents where id = '40000000-0000-0000-0000-000000000002'),
+    'an agent who has not signed up yet stays unlinked';
+  insert into auth.users (id, email, raw_user_meta_data) values
+    ('00000000-0000-0000-0000-0000000000d1', 'future@test.local', '{"full_name": "סוכן עתידי", "phone": "+972520001111"}');
+  assert (select profile_id from public.office_agents where id = '40000000-0000-0000-0000-000000000002')
+    = '00000000-0000-0000-0000-0000000000d1', 'signing up should link the agent to their row in the list';
 
   raise notice 'ALL RLS TESTS PASSED';
 end $$;

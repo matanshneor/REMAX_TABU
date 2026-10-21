@@ -6,6 +6,7 @@ export type Row<T extends TableName> = PublicSchema["Tables"][T]["Row"];
 export type Enum<T extends keyof PublicSchema["Enums"]> = PublicSchema["Enums"][T];
 
 export type Profile = Row<"profiles">;
+export type OfficeAgent = Row<"office_agents">;
 export type Buyer = Row<"buyers">;
 export type BuyerNote = Row<"buyer_notes">;
 export type Property = Row<"properties">;

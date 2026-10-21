@@ -11,6 +11,7 @@ import {
   PlusIcon,
   UserCheckIcon,
   UsersIcon,
+  UsersRoundIcon,
   WalletIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -41,6 +42,7 @@ const MAIN: NavItem[] = [
   { href: "/properties", label: "מוכרים", icon: Building2Icon },
   { href: "/tasks", label: "משימות", icon: ListChecksIcon },
   { href: "/deals", label: "העסקאות שלי", icon: HandshakeIcon },
+  { href: "/team", label: "צוות המשרד", icon: UsersRoundIcon },
   { href: "https://matanshneor.github.io/Remax-Template/", label: "יצירת מודעת פרסום", icon: MegaphoneIcon, external: true },
   { href: "/help", label: "מדריך", icon: CircleHelpIcon },
 ];
