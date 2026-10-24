@@ -45,17 +45,13 @@ function fold(line: string): string {
   return parts.join("\r\n ");
 }
 
-export function icsFile(e: CalendarEvent): string {
+function eventLines(e: CalendarEvent, stamp: Date, sequence = 0): string[] {
   const end = new Date(e.start.getTime() + e.duration * 60_000);
-  const lines = [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//RE/MAX Tabu//CRM//HE",
-    "CALSCALE:GREGORIAN",
-    "METHOD:PUBLISH",
+  return [
     "BEGIN:VEVENT",
     `UID:task-${e.id}@remax-tabu`,
-    `DTSTAMP:${utc(new Date())}`,
+    `DTSTAMP:${utc(stamp)}`,
+    `SEQUENCE:${sequence}`,
     `DTSTART:${utc(e.start)}`,
     `DTEND:${utc(end)}`,
     `SUMMARY:${escapeText(e.title)}`,
@@ -67,9 +63,33 @@ export function icsFile(e: CalendarEvent): string {
     `TRIGGER:-PT${ALARM_MINUTES}M`,
     "END:VALARM",
     "END:VEVENT",
+  ];
+}
+
+/**
+ * A whole calendar. With `name` it's a subscription feed: phones show it as its own calendar
+ * and are asked to re-fetch it hourly. `version` (e.g. the task's last update time) lets them
+ * notice an edited event.
+ */
+export function icsCalendar(events: (CalendarEvent & { version?: number })[], name?: string): string {
+  const now = new Date();
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//RE/MAX Tabu//CRM//HE",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    ...(name
+      ? [`X-WR-CALNAME:${escapeText(name)}`, "X-WR-TIMEZONE:Asia/Jerusalem", "REFRESH-INTERVAL;VALUE=DURATION:PT1H", "X-PUBLISHED-TTL:PT1H"]
+      : []),
+    ...events.flatMap((e) => eventLines(e, now, e.version ?? 0)),
     "END:VCALENDAR",
   ];
   return lines.map(fold).join("\r\n") + "\r\n";
+}
+
+export function icsFile(e: CalendarEvent): string {
+  return icsCalendar([e]);
 }
 
 /** Opens the phone's "add to calendar" screen (iPhone) or downloads the file to open. */

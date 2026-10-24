@@ -210,6 +210,32 @@ export type Database = {
           },
         ]
       }
+      calendar_feeds: {
+        Row: {
+          created_at: string
+          token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          token: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          token?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_feeds_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       candidates: {
         Row: {
           created_at: string
@@ -772,6 +798,17 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      calendar_feed: {
+        Args: { p_token: string }
+        Returns: {
+          description: string
+          due_at: string
+          id: string
+          related: string
+          title: string
+          updated_at: string
+        }[]
+      }
       can_manage_property: { Args: { p_property_id: string }; Returns: boolean }
       find_buyers_by_phone: {
         Args: { p_exclude?: string; p_phone: string }
@@ -795,6 +832,7 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_system: { Args: never; Returns: boolean }
       phone_key: { Args: { p: string }; Returns: string }
+      rotate_calendar_token: { Args: never; Returns: string }
       property_fits_buyer: {
         Args: {
           b: Database["public"]["Tables"]["buyers"]["Row"]

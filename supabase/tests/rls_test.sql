@@ -147,6 +147,16 @@ begin
   exception when insufficient_privilege then null;
   end;
 
+  -- Calendar feed: a personal link with only your own open, dated tasks
+  declare v_token text;
+  begin
+    v_token := public.rotate_calendar_token();
+    insert into public.tasks (title, due_at) values ('משימה ביומן של ב', now() + interval '2 days');
+    assert (select count(*) from public.calendar_feed(v_token)) = 1, 'the feed should list my dated open task';
+    assert (select count(*) from public.calendar_feed(v_token || 'x')) = 0, 'a wrong link must return nothing';
+    assert (select count(*) from public.calendar_feed('')) = 0, 'an empty link must return nothing';
+  end;
+
   -- Call log follows buyer visibility
   begin
     insert into public.buyer_notes (buyer_id, body) values ('20000000-0000-0000-0000-000000000001', 'פריצה');
@@ -238,6 +248,7 @@ begin
   exception when insufficient_privilege then null;
   end;
 
+  assert (select count(*) from public.calendar_feeds) = 0, 'agent A must not see agent B''s calendar link';
   assert (select count(*) from public.buyers) = 1, 'agent A should see only own buyer';
   assert (select agent_amount from public.deals) = 20000, 'agent A should see own deal with computed share';
   assert (select count(*) from public.buyer_property_viewings) = 1, 'agent A should see viewings of own buyer';

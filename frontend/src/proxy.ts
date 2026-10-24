@@ -8,6 +8,7 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     // Skip static assets, image optimization files and the app manifest (phones fetch it signed out).
-    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // The calendar feed is fetched by phone calendars, which never sign in (a token guards it).
+    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|api/calendar/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

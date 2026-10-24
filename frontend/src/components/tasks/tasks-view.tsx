@@ -16,6 +16,7 @@ import { canEditTask } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/client";
 import { useNewParam, usePanelParam } from "@/lib/use-panel-param";
 import { cn } from "@/lib/utils";
+import { CalendarSyncButton } from "./calendar-sync";
 import { QuickDate } from "./quick-date";
 import { TaskPanel } from "./task-panel";
 
@@ -130,7 +131,12 @@ export function TasksView() {
 
   return (
     <div className="mx-auto max-w-4xl">
-      <PageHeader title="המשימות שלי" count={openCount} description="רשימה אישית: רק אתה רואה את המשימות שלך" />
+      <PageHeader
+        title="המשימות שלי"
+        count={openCount}
+        description="רשימה אישית: רק אתה רואה את המשימות שלך"
+        actions={<CalendarSyncButton />}
+      />
 
       <QuickAdd />
 
