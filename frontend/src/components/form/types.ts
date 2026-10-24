@@ -15,6 +15,8 @@ export type FieldType =
   | "tags"
   | "multi"
   | "agent"
+  /** Someone from the office team list (signed up or not). */
+  | "team"
   | "buyer"
   | "property";
 

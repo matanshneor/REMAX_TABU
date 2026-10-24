@@ -11,7 +11,7 @@ import { LinkedTasks } from "@/components/tasks/linked-tasks";
 import { ReminderButton } from "@/components/tasks/reminder-button";
 import { ViewingsList } from "@/components/viewings/viewings-list";
 import { Button } from "@/components/ui/button";
-import { useAgentName, useDeleteRecord, useRecord, useSaveRecord } from "@/lib/data";
+import { useDeleteRecord, useRecord, useRecruiterName, useSaveRecord } from "@/lib/data";
 import { formatAddress, formatILS } from "@/lib/format";
 import { PROPERTY_STATUS } from "@/lib/labels";
 import { canEditProperty, canManageProperty, isAdmin } from "@/lib/permissions";
@@ -24,7 +24,7 @@ import { ShareWhatsAppButton } from "./share-whatsapp-dialog";
 
 export function PropertyPanel({ id, onClose }: { id: string | null; onClose: () => void }) {
   const { profile } = useAuth();
-  const agentName = useAgentName();
+  const recruiterName = useRecruiterName();
   const { data: property, isLoading } = useRecord<Property>("properties", id);
   const form = useFormValues(PROPERTY_SECTIONS, property, `${property?.id}:${property?.updated_at}`);
   const save = useSaveRecord("properties");
@@ -49,7 +49,7 @@ export function PropertyPanel({ id, onClose }: { id: string | null; onClose: () 
               <ExclusivityPill end={property.exclusivity_end} showDate />
             )}
             <span className="text-sm font-semibold tabular-nums">{formatILS(property.current_price)}</span>
-            <span className="text-xs text-muted-foreground">גויס ע״י {agentName(property.recruiting_agent_id)}</span>
+            <span className="text-xs text-muted-foreground">גויס ע״י {recruiterName(property.recruiter_id, property.recruiting_agent_id)}</span>
           </>
         )
       }
@@ -84,7 +84,7 @@ export function PropertyPanel({ id, onClose }: { id: string | null; onClose: () 
         <>
           {!editable && (
             <LockBanner>
-              הנכס בבלעדיות של <strong>{agentName(property.recruiting_agent_id)}</strong>. רק הסוכן המגייס והמנהל יכולים לערוך אותו.
+              הנכס בבלעדיות של <strong>{recruiterName(property.recruiter_id, property.recruiting_agent_id)}</strong>. רק הסוכן המגייס והמנהל יכולים לערוך אותו.
             </LockBanner>
           )}
           {/* Who to call comes first — it's what people open a property for. */}

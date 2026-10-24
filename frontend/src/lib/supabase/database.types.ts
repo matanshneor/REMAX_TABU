@@ -132,6 +132,7 @@ export type Database = {
           phone: string | null
           preferred_neighborhoods: string[]
           property_type: string | null
+          recruiter_id: string | null
           sold_apartment: boolean
           status: Database["public"]["Enums"]["buyer_status"]
           updated_at: string
@@ -159,6 +160,7 @@ export type Database = {
           phone?: string | null
           preferred_neighborhoods?: string[]
           property_type?: string | null
+          recruiter_id?: string | null
           sold_apartment?: boolean
           status?: Database["public"]["Enums"]["buyer_status"]
           updated_at?: string
@@ -186,6 +188,7 @@ export type Database = {
           phone?: string | null
           preferred_neighborhoods?: string[]
           property_type?: string | null
+          recruiter_id?: string | null
           sold_apartment?: boolean
           status?: Database["public"]["Enums"]["buyer_status"]
           updated_at?: string
@@ -556,6 +559,7 @@ export type Database = {
           previous_price: number | null
           property_type: string | null
           recruiting_agent_id: string | null
+          recruiter_id: string | null
           rooms: number | null
           size_sqm: number | null
           status: Database["public"]["Enums"]["property_status"]
@@ -588,6 +592,7 @@ export type Database = {
           previous_price?: number | null
           property_type?: string | null
           recruiting_agent_id?: string | null
+          recruiter_id?: string | null
           rooms?: number | null
           size_sqm?: number | null
           status?: Database["public"]["Enums"]["property_status"]
@@ -620,6 +625,7 @@ export type Database = {
           previous_price?: number | null
           property_type?: string | null
           recruiting_agent_id?: string | null
+          recruiter_id?: string | null
           rooms?: number | null
           size_sqm?: number | null
           status?: Database["public"]["Enums"]["property_status"]

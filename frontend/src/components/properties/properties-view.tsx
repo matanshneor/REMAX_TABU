@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAgentName, useSignedUrls } from "@/lib/data";
+import { useRecruiterName, useSignedUrls } from "@/lib/data";
+import { isAdmin } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/client";
 import type { Property } from "@/lib/types";
 import { useNewParam, usePanelParam } from "@/lib/use-panel-param";
@@ -21,6 +22,8 @@ import { PROPERTY_CREATE_SECTIONS, SELLER_CREATE_FIELDS } from "./property-field
 import { applyFilters, DEFAULT_FILTERS, PropertyFiltersPanel } from "./property-filters";
 import { MEDIA_BUCKET } from "./property-images";
 import { PropertyPanel } from "./property-panel";
+
+const AGENT_CREATE_SECTIONS = PROPERTY_CREATE_SECTIONS.map((s) => ({ ...s, fields: s.fields.filter((f) => f.name !== "recruiter_id") }));
 
 /** Saves the seller typed into the "new seller" form, once the property row exists. */
 async function saveSeller(property: Property, payload: Record<string, unknown>) {
@@ -43,7 +46,7 @@ const SORTERS: Record<Sort, (a: Property, b: Property) => number> = {
 
 export function PropertiesView() {
   const { profile } = useAuth();
-  const agentName = useAgentName();
+  const recruiterName = useRecruiterName();
   const [openId, setOpenId] = usePanelParam();
   const [creating, setCreating] = useNewParam();
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
@@ -141,7 +144,7 @@ export function PropertiesView() {
                   key={p.id}
                   property={p}
                   imageUrl={p.image_paths[0] ? urls[p.image_paths[0]] : undefined}
-                  agentName={agentName(p.recruiting_agent_id)}
+                  agentName={recruiterName(p.recruiter_id, p.recruiting_agent_id)}
                   sellerName={p.property_owner_details?.owner_name}
                   selected={openId === p.id}
                   onClick={() => setOpenId(p.id)}
@@ -157,8 +160,10 @@ export function PropertiesView() {
         onOpenChange={setCreating}
         title="מוכר חדש"
         table="properties"
-        sections={PROPERTY_CREATE_SECTIONS}
-        initial={{ status: "active", recruiting_agent_id: profile?.id, parking_spots: 0 }}
+        // Agents recruit for themselves; only the admin picks another recruiter from the team list.
+        sections={isAdmin(profile) ? PROPERTY_CREATE_SECTIONS : AGENT_CREATE_SECTIONS}
+        initial={{ status: "active", parking_spots: 0 }}
+        extra={{ recruiting_agent_id: profile?.id }}
         omitFromInsert={SELLER_CREATE_FIELDS}
         afterInsert={saveSeller}
         onCreated={(p) => setOpenId(p.id)}

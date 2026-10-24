@@ -1,6 +1,5 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { MailIcon, PhoneIcon, PlusIcon, SearchIcon, UsersRoundIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
@@ -15,10 +14,9 @@ import { useFormValues } from "@/components/form/use-form-values";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAllProfiles, useDeleteRecord, useSaveRecord } from "@/lib/data";
+import { useAllProfiles, useDeleteRecord, useSaveRecord, useTeam } from "@/lib/data";
 import type { Tone } from "@/lib/labels";
 import { isAdmin } from "@/lib/permissions";
-import { createClient } from "@/lib/supabase/client";
 import type { OfficeAgent, Profile } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -58,14 +56,7 @@ export function TeamView() {
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<OfficeAgent | null>(null);
 
-  const list = useQuery({
-    queryKey: ["office_agents"],
-    queryFn: async (): Promise<OfficeAgent[]> => {
-      const { data, error } = await createClient().from("office_agents").select("*");
-      if (error) throw error;
-      return data;
-    },
-  });
+  const list = useTeam();
   const accounts = useAllProfiles();
 
   const members = useMemo(() => {

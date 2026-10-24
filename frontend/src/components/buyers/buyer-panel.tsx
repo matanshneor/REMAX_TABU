@@ -15,7 +15,7 @@ import { ReminderButton } from "@/components/tasks/reminder-button";
 import { ViewingsList } from "@/components/viewings/viewings-list";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
-import { useAgentName, useAgents, useDeleteRecord, useRecord, useSaveRecord } from "@/lib/data";
+import { useDeleteRecord, useRecord, useRecruiterName, useSaveRecord, useTeam } from "@/lib/data";
 import { formatRelative } from "@/lib/format";
 import { canEditBuyer, isAdmin } from "@/lib/permissions";
 import type { Buyer } from "@/lib/types";
@@ -26,8 +26,8 @@ import { DuplicatePhoneWarning } from "./duplicate-phone-warning";
 
 export function BuyerPanel({ id, onClose }: { id: string | null; onClose: () => void }) {
   const { profile } = useAuth();
-  const agentName = useAgentName();
-  const { data: agents = [] } = useAgents();
+  const recruiterName = useRecruiterName();
+  const { data: team = [] } = useTeam();
   const { data: buyer, isLoading } = useRecord<Buyer>("buyers", id);
   const form = useFormValues(BUYER_SECTIONS, buyer, `${buyer?.id}:${buyer?.updated_at}`);
   const save = useSaveRecord("buyers");
@@ -65,14 +65,23 @@ export function BuyerPanel({ id, onClose }: { id: string | null; onClose: () => 
       badges={
         buyer && admin ? (
           <label className="flex items-center gap-2 text-xs text-muted-foreground">
-            סוכן מטפל:
+            סוכן מגייס (מטפל):
             <NativeSelect
-              value={buyer.owner_agent_id ?? ""}
+              value={buyer.recruiter_id ?? ""}
               onChange={(e) => {
-                const owner = e.target.value || null;
+                const member = team.find((t) => t.id === e.target.value) ?? null;
                 save.mutate(
-                  { id: buyer.id, values: { owner_agent_id: owner } },
-                  { onSuccess: () => owner && owner !== profile?.id && toast.success(`הקונה הועבר ל${agentName(owner)}, ונשלחה התראה`) },
+                  { id: buyer.id, values: { recruiter_id: member?.id ?? null } },
+                  {
+                    onSuccess: () => {
+                      if (!member || member.profile_id === profile?.id) return;
+                      toast.success(
+                        member.profile_id
+                          ? `הקונה הועבר ל${member.full_name}, ונשלחה התראה`
+                          : `${member.full_name} עוד לא נרשם. הקונה יעבור אליו אוטומטית כשיירשם`,
+                      );
+                    },
+                  },
                 );
               }}
               disabled={save.isPending}
@@ -80,9 +89,9 @@ export function BuyerPanel({ id, onClose }: { id: string | null; onClose: () => 
               aria-label="סוכן מטפל"
             >
               <option value="">לא משויך</option>
-              {agents.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.full_name || a.email}
+              {team.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.profile_id ? t.full_name : `${t.full_name} (עוד לא נרשם)`}
                 </option>
               ))}
             </NativeSelect>
@@ -120,7 +129,7 @@ export function BuyerPanel({ id, onClose }: { id: string | null; onClose: () => 
         <>
           {!editable && (
             <LockBanner>
-              הקונה משויך ל<strong>{agentName(buyer.owner_agent_id)}</strong>. רק הסוכן המטפל והמנהל יכולים לערוך את הפרטים.
+              הקונה משויך ל<strong>{recruiterName(buyer.recruiter_id, buyer.owner_agent_id)}</strong>. רק הסוכן המטפל והמנהל יכולים לערוך את הפרטים.
             </LockBanner>
           )}
           <EntityForm

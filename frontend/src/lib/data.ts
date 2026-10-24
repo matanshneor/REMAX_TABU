@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { toast } from "sonner";
 import { createClient } from "./supabase/client";
-import type { Profile, TableName } from "./types";
+import type { OfficeAgent, Profile, TableName } from "./types";
 
 type DbError = { code?: string; message: string };
 
@@ -53,6 +53,30 @@ export function useAgentName() {
   return useCallback(
     (id: string | null | undefined) => (id && data?.find((a) => a.id === id)?.full_name) || "—",
     [data],
+  );
+}
+
+/** The office team list ("צוות המשרד"), including agents who haven't signed up. */
+export function useTeam() {
+  return useQuery({
+    queryKey: ["office_agents"],
+    queryFn: async (): Promise<OfficeAgent[]> => {
+      const { data, error } = await createClient().from("office_agents").select("*").order("full_name");
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 5 * 60_000,
+  });
+}
+
+/** Recruiter's name from the team list, falling back to the account (rows from before the list). */
+export function useRecruiterName() {
+  const { data: team } = useTeam();
+  const agentName = useAgentName();
+  return useCallback(
+    (recruiterId: string | null | undefined, accountId?: string | null) =>
+      (recruiterId && team?.find((t) => t.id === recruiterId)?.full_name) || (accountId ? agentName(accountId) : "—"),
+    [team, agentName],
   );
 }
 

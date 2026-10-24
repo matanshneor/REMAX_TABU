@@ -409,6 +409,30 @@ begin
   assert (select profile_id from public.office_agents where id = '40000000-0000-0000-0000-000000000002')
     = '00000000-0000-0000-0000-0000000000d1', 'signing up should link the agent to their row in the list';
 
+  -- Recruiter from the team list: before sign-up only the admin holds the work, after it moves over.
+  insert into public.office_agents (id, full_name, phone)
+    values ('40000000-0000-0000-0000-000000000003', 'מגייס שעוד לא נרשם', '052-999-1212');
+  insert into public.buyers (id, full_name, recruiter_id)
+    values ('20000000-0000-0000-0000-0000000000e1', 'קונה של מגייס', '40000000-0000-0000-0000-000000000003');
+  insert into public.properties (id, city, recruiter_id, recruiting_agent_id)
+    values ('10000000-0000-0000-0000-0000000000e1', 'ירושלים', '40000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-00000000000a');
+  assert (select owner_agent_id is null from public.buyers where id = '20000000-0000-0000-0000-0000000000e1'),
+    'a buyer of an agent who has not signed up stays with the admin only';
+  assert (select recruiting_agent_id is null from public.properties where id = '10000000-0000-0000-0000-0000000000e1'),
+    'the chosen recruiter decides the seller''s account, not the default';
+  insert into auth.users (id, email, raw_user_meta_data) values
+    ('00000000-0000-0000-0000-0000000000e1', 'recruiter@test.local', '{"full_name": "מגייס", "phone": "0529991212"}');
+  assert (select owner_agent_id from public.buyers where id = '20000000-0000-0000-0000-0000000000e1')
+    = '00000000-0000-0000-0000-0000000000e1', 'signing up should hand the agent their buyers';
+  assert (select recruiting_agent_id from public.properties where id = '10000000-0000-0000-0000-0000000000e1')
+    = '00000000-0000-0000-0000-0000000000e1', 'signing up should hand the agent their sellers';
+  assert (select count(*) from public.notifications where kind = 'buyer_assigned' and recipient_id = '00000000-0000-0000-0000-0000000000e1') = 1,
+    'the agent should be told about the buyers that moved to them';
+  insert into public.buyers (id, full_name, owner_agent_id)
+    values ('20000000-0000-0000-0000-0000000000e2', 'קונה של סוכן ב', '00000000-0000-0000-0000-0000000000b1');
+  assert (select recruiter_id from public.buyers where id = '20000000-0000-0000-0000-0000000000e2')
+    = '40000000-0000-0000-0000-000000000001', 'setting the account should show the agent''s team row as recruiter';
+
   raise notice 'ALL RLS TESTS PASSED';
 end $$;
 

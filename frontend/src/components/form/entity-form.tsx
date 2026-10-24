@@ -148,6 +148,7 @@ function Field({
       );
       break;
     case "agent":
+    case "team":
     case "buyer":
     case "property":
       control = <RelationSelect id={id} kind={field.type} value={str} onChange={onChange} disabled={disabled} />;

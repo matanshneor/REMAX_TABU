@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, Columns3Icon, PlusIcon, SearchIcon, UsersIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { CreateDialog } from "@/components/crm/create-dialog";
 import { ExportButton } from "@/components/crm/export-button";
@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useAgentName, useAgents } from "@/lib/data";
+import { useRecruiterName, useTeam } from "@/lib/data";
 import { formatILSCompact, formatRelative } from "@/lib/format";
 import { StatusBadge } from "@/components/crm/status-badge";
 import { BUYER_STATUS, isActiveBuyer, PISGAT_AREAS } from "@/lib/labels";
@@ -48,8 +48,10 @@ type AgentFilter = "all" | "unassigned" | (string & {});
 export function BuyersView() {
   const { profile } = useAuth();
   const admin = isAdmin(profile);
-  const agentName = useAgentName();
-  const { data: agents = [] } = useAgents();
+  const recruiterName = useRecruiterName();
+  // The agent column and filter use the team list, so agents who haven't signed up appear too.
+  const agentName = useCallback((b: BuyerRow) => recruiterName(b.recruiter_id, b.owner_agent_id), [recruiterName]);
+  const { data: team = [] } = useTeam();
   const [openId, setOpenId] = usePanelParam();
   const [creating, setCreating] = useNewParam();
   const [text, setText] = useState("");
@@ -82,8 +84,8 @@ export function BuyersView() {
         agentFilter === "all"
           ? true
           : agentFilter === "unassigned"
-            ? !b.owner_agent_id
-            : b.owner_agent_id === agentFilter,
+            ? !isAssigned(b)
+            : b.recruiter_id === agentFilter,
       ),
     [buyers, agentFilter],
   );
@@ -193,10 +195,10 @@ export function BuyersView() {
             aria-label="סינון לפי סוכן"
           >
             <option value="all">כל הסוכנים ({buyers.length})</option>
-            <option value="unassigned">לא משויכים ({buyers.filter((b) => !b.owner_agent_id).length})</option>
-            {agents.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.full_name || a.email} ({buyers.filter((b) => b.owner_agent_id === a.id).length})
+            <option value="unassigned">לא משויכים ({buyers.filter((b) => !isAssigned(b)).length})</option>
+            {team.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.full_name} ({buyers.filter((b) => b.recruiter_id === t.id).length})
               </option>
             ))}
           </NativeSelect>
@@ -294,9 +296,10 @@ export function BuyersView() {
         onOpenChange={setCreating}
         title="קונה חדש"
         table="buyers"
-        sections={BUYER_SECTIONS}
+        // The admin can hand the new buyer to anyone on the team; agents keep what they enter.
+        sections={admin ? ADMIN_CREATE_SECTIONS : BUYER_SECTIONS}
         initial={NEW_BUYER}
-        // Whoever enters a buyer owns it (also the DB default).
+        // Whoever enters a buyer owns it (also the DB default); a chosen recruiter overrides it.
         extra={{ owner_agent_id: profile?.id }}
         onCreated={(b) => setOpenId(b.id)}
         renderExtra={(values) => (
@@ -324,7 +327,15 @@ type Column = {
   sortValue?: (b: BuyerRow, agentName: AgentNameFn) => string | number | null;
 };
 
-type AgentNameFn = (id: string | null) => string;
+type AgentNameFn = (b: BuyerRow) => string;
+
+/** Assigned to someone on the team (signed up or not). */
+const isAssigned = (b: BuyerRow) => !!(b.recruiter_id || b.owner_agent_id);
+
+const ADMIN_CREATE_SECTIONS = [
+  { fields: [{ name: "recruiter_id", label: "סוכן מגייס (מטפל)", type: "team" as const, span: 6 as const }] },
+  ...BUYER_SECTIONS,
+];
 
 /** Ascending/descending compare; empty values always go last. */
 function compareValues(a: string | number | null, b: string | number | null, dir: 1 | -1): number {
@@ -449,9 +460,9 @@ const COLUMNS: Column[] = [
     // Admin only (filtered out for agents)
     key: "agent",
     header: "סוכן",
-    className: (b) => (b.owner_agent_id ? undefined : "font-medium text-brand-red"),
-    sortValue: (b, agentName) => (b.owner_agent_id ? agentName(b.owner_agent_id) : null),
-    cell: (b, agentName) => (b.owner_agent_id ? agentName(b.owner_agent_id) : "לא משויך"),
+    className: (b) => (isAssigned(b) ? undefined : "font-medium text-brand-red"),
+    sortValue: (b, agentName) => (isAssigned(b) ? agentName(b) : null),
+    cell: (b, agentName) => (isAssigned(b) ? agentName(b) : "לא משויך"),
   },
 ];
 

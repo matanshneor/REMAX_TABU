@@ -2,17 +2,18 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { NativeSelect } from "@/components/ui/native-select";
-import { useAgents } from "@/lib/data";
+import { useAgents, useTeam } from "@/lib/data";
 import { formatAddress } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 
-type Kind = "agent" | "buyer" | "property";
+type Kind = "agent" | "team" | "buyer" | "property";
 
 function useRelationOptions(kind: Kind) {
   const agents = useAgents();
+  const team = useTeam();
   const others = useQuery({
     queryKey: [kind === "buyer" ? "buyers" : "properties", "options"],
-    enabled: kind !== "agent",
+    enabled: kind === "buyer" || kind === "property",
     staleTime: 60_000,
     queryFn: async () => {
       const supabase = createClient();
@@ -31,6 +32,8 @@ function useRelationOptions(kind: Kind) {
   });
 
   if (kind === "agent") return (agents.data ?? []).map((a) => ({ value: a.id, label: a.full_name || a.email }));
+  if (kind === "team")
+    return (team.data ?? []).map((t) => ({ value: t.id, label: t.profile_id ? t.full_name : `${t.full_name} (עוד לא נרשם)` }));
   return others.data ?? [];
 }
 

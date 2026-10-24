@@ -2,7 +2,7 @@ import type { FormSection } from "@/components/form/types";
 import { PISGAT_AREAS, PROPERTY_STATUS, PROPERTY_TYPES, toOptions } from "@/lib/labels";
 
 /** Only the recruiting agent / admin may change these (enforced by a DB trigger). */
-export const MANAGER_ONLY_FIELDS = ["recruiting_agent_id", "is_exclusive", "exclusivity_start", "exclusivity_end"];
+export const MANAGER_ONLY_FIELDS = ["recruiter_id", "is_exclusive", "exclusivity_start", "exclusivity_end"];
 
 export const PROPERTY_SECTIONS: FormSection[] = [
   {
@@ -49,7 +49,7 @@ export const PROPERTY_SECTIONS: FormSection[] = [
     title: "סטטוס ובלעדיות",
     fields: [
       { name: "status", label: "סטטוס", type: "select", options: toOptions(PROPERTY_STATUS), required: true, span: 2 },
-      { name: "recruiting_agent_id", label: "סוכן מגייס", type: "agent", span: 2 },
+      { name: "recruiter_id", label: "סוכן מגייס", type: "team", span: 2 },
       { name: "is_exclusive", label: "בלעדיות", type: "boolean", span: 2 },
       { name: "exclusivity_start", label: "תחילת בלעדיות", type: "date" },
       { name: "exclusivity_end", label: "סיום בלעדיות", type: "date" },
