@@ -231,6 +231,13 @@ begin
 
   assert (select count(*) from public.property_owner_details) = 2, 'recruiting agent should see own owner details';
 
+  begin
+    update public.properties set recruiting_agent_id = '00000000-0000-0000-0000-0000000000b1'
+      where id = '10000000-0000-0000-0000-000000000001';
+    raise exception 'FAIL: the recruiting agent changed who recruited the seller (admin only)';
+  exception when insufficient_privilege then null;
+  end;
+
   assert (select count(*) from public.buyers) = 1, 'agent A should see only own buyer';
   assert (select agent_amount from public.deals) = 20000, 'agent A should see own deal with computed share';
   assert (select count(*) from public.buyer_property_viewings) = 1, 'agent A should see viewings of own buyer';
@@ -434,6 +441,30 @@ begin
     = '40000000-0000-0000-0000-000000000001', 'setting the account should show the agent''s team row as recruiter';
 
   raise notice 'ALL RLS TESTS PASSED';
+end $$;
+
+-- ---- Hand-over when a signed-up agent fixes their own phone -----------------
+do $$
+begin
+  insert into public.office_agents (id, full_name, phone)
+    values ('40000000-0000-0000-0000-000000000004', 'סוכן עם טלפון אחר', '052-777-1111');
+  insert into public.properties (id, city, recruiter_id)
+    values ('10000000-0000-0000-0000-0000000000f4', 'ירושלים', '40000000-0000-0000-0000-000000000004');
+  insert into auth.users (id, email, raw_user_meta_data) values
+    ('00000000-0000-0000-0000-0000000000f4', 'otherphone@test.local', '{"full_name": "סוכן", "phone": "052-777-0000"}');
+  update public.profiles set status = 'active' where id = '00000000-0000-0000-0000-0000000000f4';
+end $$;
+
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000000f4", "role": "authenticated"}', true);
+update public.profiles set phone = '0527771111' where id = '00000000-0000-0000-0000-0000000000f4';
+reset role;
+
+do $$
+begin
+  assert (select recruiting_agent_id from public.properties where id = '10000000-0000-0000-0000-0000000000f4')
+    = '00000000-0000-0000-0000-0000000000f4', 'fixing your phone should still hand you the sellers recruited for you';
+  raise notice 'HAND-OVER TEST PASSED';
 end $$;
 
 rollback;

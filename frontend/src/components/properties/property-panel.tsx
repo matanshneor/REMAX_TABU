@@ -95,7 +95,14 @@ export function PropertyPanel({ id, onClose }: { id: string | null; onClose: () 
             values={form.values}
             onChange={form.set}
             readOnly={!editable}
-            lockedFields={manager ? ["previous_price"] : ["previous_price", ...MANAGER_ONLY_FIELDS]}
+            // Only the admin picks the recruiter; the recruiting agent still manages exclusivity.
+            lockedFields={
+              isAdmin(profile)
+                ? ["previous_price"]
+                : manager
+                  ? ["previous_price", "recruiter_id"]
+                  : ["previous_price", ...MANAGER_ONLY_FIELDS]
+            }
             idPrefix="property"
           />
           <LinkedTasks propertyId={property.id} title="המשימות שלי על הנכס" />
