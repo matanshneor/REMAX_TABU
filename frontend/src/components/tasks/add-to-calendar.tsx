@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useRecord } from "@/lib/data";
-import { downloadIcs, googleCalendarUrl, taskEvent } from "@/lib/calendar";
+import { googleCalendarUrl, taskEvent } from "@/lib/calendar";
 import { formatAddress } from "@/lib/format";
 import type { Buyer, Property, Task } from "@/lib/types";
 
@@ -36,7 +36,8 @@ export function AddToCalendar({ task }: { task: TaskForCalendar }) {
         הוסף ליומן
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuItem onClick={() => downloadIcs(event())}>לוח השנה בטלפון (אייפון ועוד)</DropdownMenuItem>
+        {/* A real address (not a generated file), so the iPhone opens its "add event" screen directly. */}
+        <DropdownMenuItem render={<a href={`/api/calendar/task/${task.id}.ics`} />}>יומן האייפון / Outlook</DropdownMenuItem>
         <DropdownMenuItem onClick={() => window.open(googleCalendarUrl(event()), "_blank", "noopener")}>Google Calendar</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

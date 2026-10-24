@@ -1,5 +1,5 @@
-// "Add to calendar" for a single task: an .ics file (iPhone, Outlook, most phone calendars)
-// or a Google Calendar link. It's a one-time copy: later changes in the CRM don't follow it.
+// Calendar events for tasks: .ics (one task for the iPhone / Outlook "add event" screen, or a
+// subscription feed of all of a user's tasks) and Google Calendar links. It's a one-time copy: later changes in the CRM don't follow it.
 
 export type CalendarEvent = {
   id: string;
@@ -86,23 +86,6 @@ export function icsCalendar(events: (CalendarEvent & { version?: number })[], na
     "END:VCALENDAR",
   ];
   return lines.map(fold).join("\r\n") + "\r\n";
-}
-
-export function icsFile(e: CalendarEvent): string {
-  return icsCalendar([e]);
-}
-
-/** Opens the phone's "add to calendar" screen (iPhone) or downloads the file to open. */
-export function downloadIcs(e: CalendarEvent) {
-  const blob = new Blob([icsFile(e)], { type: "text/calendar;charset=utf-8" });
-  const href = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = href;
-  a.download = "task.ics";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(href), 10_000);
 }
 
 export function googleCalendarUrl(e: CalendarEvent): string {

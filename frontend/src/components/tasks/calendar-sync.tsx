@@ -77,6 +77,10 @@ function CalendarSync() {
           <section className="flex flex-col gap-2">
             <h3 className="font-semibold">אייפון</h3>
             <p className="text-muted-foreground">פותחים את החלון הזה בטלפון, לוחצים על הכפתור, ובמסך שנפתח לוחצים ״הירשם״ (Subscribe).</p>
+            <p className="text-muted-foreground">
+              כדי שמשימות חדשות יופיעו מהר יותר: באייפון נכנסים ל<b>הגדרות ← יומן ← חשבונות ← אחזור נתונים חדשים</b>, ובוחרים{" "}
+              <b>כל 15 דקות</b>.
+            </p>
             <Button className="h-10" render={<a href={webcalUrl} />} nativeButton={false}>
               <CalendarSyncIcon />
               הוסף ליומן באייפון
@@ -112,7 +116,7 @@ function CalendarSync() {
           </section>
 
           <p className="rounded-lg bg-secondary/60 px-3 py-2">
-            ⏱️ היומן מתעדכן לבד: באייפון בערך כל שעה, בגוגל לפעמים רק אחרי כמה שעות. משימה שסומנה ״בוצעה״ יורדת מהיומן. שינוי
+            ⏱️ היומן מתעדכן לבד: באייפון כל 15 דקות עד שעה (לפי ההגדרה למעלה), בגוגל לפעמים רק אחרי כמה שעות. משימה שסומנה ״בוצעה״ יורדת מהיומן. שינוי
             נעשה רק באתר, לא ביומן.
           </p>
           <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
