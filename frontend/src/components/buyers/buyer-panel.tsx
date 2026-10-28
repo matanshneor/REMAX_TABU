@@ -39,7 +39,7 @@ export function BuyerPanel({ id, onClose }: { id: string | null; onClose: () => 
   const [dealPrefill, setDealPrefill] = useState<DealPrefill | null>(null);
 
   function saveChanges() {
-    if (!buyer) return;
+    if (!buyer || !form.validate()) return;
     const justBought = form.changes.status === "bought_with_us" && buyer.status !== "bought_with_us";
     save.mutate(
       { id: buyer.id, values: form.changes },
@@ -60,6 +60,7 @@ export function BuyerPanel({ id, onClose }: { id: string | null; onClose: () => 
       open={!!id}
       onClose={onClose}
       loading={isLoading || !buyer}
+      missing={!!id && !isLoading && !buyer}
       title={buyer?.full_name}
       subtitle={buyer && `עודכן ${formatRelative(buyer.updated_at)}`}
       badges={

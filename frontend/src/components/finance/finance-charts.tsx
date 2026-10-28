@@ -89,7 +89,7 @@ export function MonthlyChart({ data, highlightKey }: { data: MonthPoint[]; highl
         <BarChart data={data} barGap={2} barCategoryGap="22%" margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
           <CartesianGrid vertical={false} stroke="var(--border)" />
           {/* RTL: time runs right → left, the value axis sits on the right */}
-          <XAxis dataKey="label" reversed tickLine={false} axisLine={false} tick={axisTick} interval={0} />
+          <XAxis dataKey="label" reversed tickLine={false} axisLine={false} tick={axisTick} interval="preserveStartEnd" minTickGap={8} />
           <YAxis orientation="right" tickLine={false} axisLine={false} tick={axisTick} tickFormatter={compact} width={72} />
           <Tooltip
             cursor={{ fill: "var(--muted)", opacity: 0.6 }}

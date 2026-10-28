@@ -4,6 +4,7 @@ import type { User } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { createContext, use, useCallback, useEffect, useState } from "react";
+import { PROFILE_COLUMNS } from "@/lib/data";
 import { browserSessionEnded } from "@/lib/remember-me";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/lib/types";
@@ -18,6 +19,16 @@ type AuthState = {
 
 const AuthContext = createContext<AuthState | null>(null);
 
+/** The signed-in profile, retried a few times so a brief network drop doesn't sign the user out. */
+async function fetchProfile(id: string) {
+  const supabase = createClient();
+  for (let attempt = 1; ; attempt++) {
+    const result = await supabase.from("profiles").select(PROFILE_COLUMNS).eq("id", id).maybeSingle();
+    if (!result.error || attempt === 4) return result;
+    await new Promise((resolve) => setTimeout(resolve, attempt * 2000));
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const qc = useQueryClient();
@@ -30,9 +41,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const load = useCallback(
     async (user: User | null) => {
       const supabase = createClient();
-      const profile = user
-        ? (await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle()).data
-        : null;
+      const result = user ? await fetchProfile(user.id) : null;
+      // A dropped connection is not a deleted account: keep the session (the app keeps loading).
+      if (result?.error) return;
+      const profile = result?.data ?? null;
       // "Remember me" was unchecked and the browser has been closed since: sign out.
       if (!user || !profile || browserSessionEnded()) {
         // A deleted account can leave a still-valid session cookie behind: the proxy would

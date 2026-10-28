@@ -22,7 +22,7 @@ export const PROPERTY_SECTIONS: FormSection[] = [
     fields: [
       { name: "rooms", label: "חדרים", type: "number", step: 0.5, span: 2 },
       { name: "size_sqm", label: "גודל (מ״ר)", type: "number", span: 2 },
-      { name: "floor", label: "קומה", type: "number", span: 1 },
+      { name: "floor", label: "קומה", type: "number", span: 1, min: -1 },
       { name: "total_floors", label: "מתוך", type: "number", span: 1 },
     ],
   },

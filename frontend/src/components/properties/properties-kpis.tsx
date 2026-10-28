@@ -3,6 +3,7 @@
 import { Building2Icon, LockIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { KpiCard } from "@/components/crm/kpi-card";
+import { exclusivityDaysLeft } from "./exclusivity-pill";
 import type { Property } from "@/lib/types";
 
 const SOON_DAYS = 14;
@@ -15,8 +16,11 @@ export function PropertiesKpis({ properties }: { properties: Property[] }) {
   const { data: endingSoon = 0 } = useQuery({
     queryKey: ["properties", "kpi", "exclusivity-ending", exclusive.map((p) => `${p.id}:${p.exclusivity_end}`).join(",")],
     queryFn: () => {
-      const limit = Date.now() + SOON_DAYS * 86_400_000;
-      return exclusive.filter((p) => p.exclusivity_end && new Date(p.exclusivity_end).getTime() <= limit).length;
+      // Same rule as the pill on each card: ends today or within SOON_DAYS (already ended doesn't count).
+      return exclusive.filter((p) => {
+        const days = exclusivityDaysLeft(p.exclusivity_end);
+        return days != null && days >= 0 && days <= SOON_DAYS;
+      }).length;
     },
   });
 

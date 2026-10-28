@@ -12,8 +12,9 @@ from zoneinfo import ZoneInfo
 
 from app.supabase_client import get_service_client
 
-EXCLUSIVITY_WARNING_DAYS = 7
-EVICTION_WARNING_DAYS = 14
+# Reminders go out on these days before the date (not every day), so the bell doesn't flood.
+EXCLUSIVITY_REMINDER_DAYS = (7, 1)
+EVICTION_REMINDER_DAYS = (14, 7, 1)
 ISRAEL = ZoneInfo("Asia/Jerusalem")
 RUN_HOUR = 8
 
@@ -35,21 +36,24 @@ def build_notifications(today: date) -> list[dict]:
     client = get_service_client()
     notifications: list[dict] = []
 
-    admin_ids = [
-        r["id"] for r in client.table("profiles").select("id").eq("role", "admin").execute().data
-    ]
+    # Only approved accounts get notifications (not pending, rejected or blocked ones).
+    active = client.table("profiles").select("id, role").eq("status", "active").execute().data
+    active_ids = {r["id"] for r in active}
+    admin_ids = [r["id"] for r in active if r["role"] == "admin"]
+
+    def on_reminder_days(days: tuple[int, ...]) -> list[str]:
+        return [(today + timedelta(days=d)).isoformat() for d in days]
 
     exclusivity_ending = (
         client.table("properties")
         .select("id, street, house_number, city, recruiting_agent_id, exclusivity_end")
         .eq("is_exclusive", True)
-        .gte("exclusivity_end", today.isoformat())
-        .lte("exclusivity_end", (today + timedelta(days=EXCLUSIVITY_WARNING_DAYS)).isoformat())
+        .in_("exclusivity_end", on_reminder_days(EXCLUSIVITY_REMINDER_DAYS))
         .execute()
         .data
     )
     for p in exclusivity_ending:
-        recipients = {p["recruiting_agent_id"], *admin_ids} - {None}
+        recipients = ({p["recruiting_agent_id"], *admin_ids} - {None}) & active_ids
         for recipient in recipients:
             notifications.append({
                 "recipient_id": recipient,
@@ -63,13 +67,12 @@ def build_notifications(today: date) -> list[dict]:
         client.table("properties")
         .select("id, street, house_number, city, recruiting_agent_id, eviction_date")
         .eq("status", "active")
-        .gte("eviction_date", today.isoformat())
-        .lte("eviction_date", (today + timedelta(days=EVICTION_WARNING_DAYS)).isoformat())
+        .in_("eviction_date", on_reminder_days(EVICTION_REMINDER_DAYS))
         .execute()
         .data
     )
     for p in evictions:
-        if p["recruiting_agent_id"]:
+        if p["recruiting_agent_id"] in active_ids:
             notifications.append({
                 "recipient_id": p["recruiting_agent_id"],
                 "kind": "eviction_upcoming",
@@ -78,16 +81,21 @@ def build_notifications(today: date) -> list[dict]:
                 "link": f"/properties?open={p['id']}",
             })
 
+    # Tasks that became overdue since the previous run: each one is announced once.
+    now = datetime.now(timezone.utc)
     overdue_tasks = (
         client.table("tasks")
         .select("id, title, assigned_to")
         .eq("is_done", False)
-        .lt("due_at", datetime.now(timezone.utc).isoformat())
+        .lt("due_at", now.isoformat())
+        .gte("due_at", (now - timedelta(days=1)).isoformat())
         .not_.is_("assigned_to", "null")
         .execute()
         .data
     )
     for t in overdue_tasks:
+        if t["assigned_to"] not in active_ids:
+            continue
         notifications.append({
             "recipient_id": t["assigned_to"],
             "kind": "task_overdue",

@@ -25,6 +25,7 @@ export function TaskPanel({ id, onClose }: { id: string | null; onClose: () => v
       open={!!id}
       onClose={onClose}
       loading={isLoading || !task}
+      missing={!!id && !isLoading && !task}
       title={task?.title}
       subtitle={task && `נוצרה ${formatRelative(task.created_at)}`}
       badges={task && (task.is_done ? <Pill tone="green">בוצעה {formatDateTime(task.done_at)}</Pill> : <Pill tone="blue">פתוחה</Pill>)}
@@ -35,7 +36,7 @@ export function TaskPanel({ id, onClose }: { id: string | null; onClose: () => v
           <SaveFooter
             dirty={form.dirty}
             saving={save.isPending}
-            onSave={() => save.mutate({ id: task.id, values: form.changes })}
+            onSave={() => form.validate() && save.mutate({ id: task.id, values: form.changes })}
             onReset={form.reset}
             onDelete={() => remove.mutate(task.id, { onSuccess: onClose })}
             deleteLabel="מחק משימה"

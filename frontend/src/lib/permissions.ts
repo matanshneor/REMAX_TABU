@@ -1,6 +1,6 @@
 // Mirrors the RLS policies so the UI can show locks up front.
 // The database is the source of truth; these only drive what the UI offers.
-import type { Buyer, Profile, Property, Task, Viewing } from "./types";
+import type { Buyer, Profile, Property, Task } from "./types";
 
 export const isAdmin = (me: Profile | null) => me?.role === "admin";
 
@@ -23,6 +23,3 @@ export function canEditTask(me: Profile | null, t: Pick<Task, "assigned_to">) {
   return t.assigned_to === me?.id;
 }
 
-export function canEditViewing(me: Profile | null, v: Pick<Viewing, "agent_id">) {
-  return isAdmin(me) || v.agent_id === me?.id;
-}

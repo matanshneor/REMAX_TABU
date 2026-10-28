@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { authErrorMessage } from "@/lib/auth-errors";
 import { createClient } from "@/lib/supabase/client";
 
 const MIN_PASSWORD = 8;
@@ -40,7 +41,7 @@ export function SignUpForm() {
       },
     });
     setPending(false);
-    if (error) return setError(signUpError(error));
+    if (error) return setError(authErrorMessage(error));
     // An existing email comes back as a user with no identities (so emails can't be probed).
     if (data.user && !data.user.identities?.length) return setError("האימייל הזה כבר רשום במערכת. נסה להתחבר.");
     if (!data.session) return setCheckEmail(true);
@@ -93,22 +94,4 @@ export function SignUpForm() {
       </Button>
     </form>
   );
-}
-
-function signUpError(error: { code?: string; status?: number; message: string }) {
-  switch (error.code) {
-    case "user_already_exists":
-    case "email_exists":
-      return "האימייל הזה כבר רשום במערכת. נסה להתחבר.";
-    case "signup_disabled":
-      return "ההרשמה סגורה כרגע. פנה למנהל המשרד.";
-    case "weak_password":
-      return "הסיסמה חלשה מדי. בחר סיסמה ארוכה יותר.";
-    case "email_address_invalid":
-      return "כתובת האימייל אינה תקינה";
-    case "over_email_send_rate_limit":
-    case "over_request_rate_limit":
-      return "נשלחו יותר מדי בקשות. נסה שוב בעוד כמה דקות.";
-  }
-  return error.status === 429 ? "נשלחו יותר מדי בקשות. נסה שוב בעוד כמה דקות." : error.message;
 }

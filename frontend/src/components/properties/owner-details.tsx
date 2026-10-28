@@ -62,7 +62,7 @@ export function OwnerDetails({ propertyId, editable, first }: { propertyId: stri
           <EntityForm sections={OWNER_SECTIONS} values={form.values} onChange={form.set} readOnly={!editable} idPrefix="owner" />
           {form.dirty && (
             <div className="mt-3 flex gap-2">
-              <Button size="sm" onClick={() => save.mutate()} disabled={save.isPending}>
+              <Button size="sm" onClick={() => form.validate() && save.mutate()} disabled={save.isPending}>
                 שמור פרטי מוכר
               </Button>
               <Button size="sm" variant="ghost" onClick={form.reset}>

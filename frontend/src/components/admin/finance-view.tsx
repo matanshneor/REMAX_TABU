@@ -451,7 +451,7 @@ function TransactionPanel({ tx, onClose }: { tx: Transaction | null; onClose: ()
           <SaveFooter
             dirty={form.dirty}
             saving={save.isPending}
-            onSave={() => save.mutate({ id: tx.id, values: form.changes })}
+            onSave={() => form.validate() && save.mutate({ id: tx.id, values: form.changes })}
             onReset={form.reset}
             onDelete={() => remove.mutate(tx.id, { onSuccess: onClose })}
           />

@@ -159,7 +159,7 @@ function CandidatePanel({ candidate, onClose }: { candidate: Candidate | null; o
           <SaveFooter
             dirty={form.dirty}
             saving={save.isPending}
-            onSave={() => save.mutate({ id: candidate.id, values: form.changes })}
+            onSave={() => form.validate() && save.mutate({ id: candidate.id, values: form.changes })}
             onReset={form.reset}
             onDelete={() => remove.mutate(candidate.id, { onSuccess: onClose })}
           />

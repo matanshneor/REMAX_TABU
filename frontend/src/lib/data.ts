@@ -4,23 +4,24 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { toast } from "sonner";
 import { createClient } from "./supabase/client";
+import { errorMessage, NO_PERMISSION } from "./errors";
 import type { OfficeAgent, Profile, TableName } from "./types";
 
-type DbError = { code?: string; message: string };
+export { errorMessage };
 
-const NO_PERMISSION = "אין לך הרשאה לבצע פעולה זו";
+/** Every profile column except commission_split, which only agent_commission_rates() returns. */
+export const PROFILE_COLUMNS = "id, full_name, phone, email, role, join_date, created_at, updated_at, status";
 
-/** Turns Supabase/Postgres errors into a Hebrew message. */
-export function errorMessage(error: unknown): string {
-  const e = error as DbError;
-  if (e?.code === "42501") {
-    // Our triggers raise Hebrew messages; RLS violations come back in English.
-    return /[֐-׿]/.test(e.message) ? e.message : NO_PERMISSION;
-  }
-  if (e?.code === "PGRST116") return NO_PERMISSION;
-  if (e?.code === "23505") return "הרשומה כבר קיימת";
-  if (e?.code === "23514") return "אחד הערכים אינו תקין";
-  return e?.message || "אירעה שגיאה";
+/** Saving a team row can hand buyers and sellers to the linked agent: refresh those lists too. */
+const ALSO_REFRESH: Partial<Record<TableName, TableName[]>> = { office_agents: ["buyers", "properties"] };
+
+function refreshTable(qc: ReturnType<typeof useQueryClient>, table: TableName) {
+  for (const key of [table, ...(ALSO_REFRESH[table] ?? [])]) qc.invalidateQueries({ queryKey: [key] });
+}
+
+/** Columns the generic hooks read back (profiles can't select commission_split). */
+function columnsOf(table: TableName) {
+  return table === "profiles" ? PROFILE_COLUMNS : "*";
 }
 
 /** Approved agents only — the lists every screen picks from. */
@@ -28,7 +29,7 @@ export function useAgents() {
   return useQuery({
     queryKey: ["profiles"],
     queryFn: async (): Promise<Profile[]> => {
-      const { data, error } = await createClient().from("profiles").select("*").eq("status", "active").order("full_name");
+      const { data, error } = await createClient().from("profiles").select(PROFILE_COLUMNS).eq("status", "active").order("full_name");
       if (error) throw error;
       return data;
     },
@@ -41,9 +42,21 @@ export function useAllProfiles() {
   return useQuery({
     queryKey: ["profiles", "all"],
     queryFn: async (): Promise<Profile[]> => {
-      const { data, error } = await createClient().from("profiles").select("*").order("created_at", { ascending: false });
+      const { data, error } = await createClient().from("profiles").select(PROFILE_COLUMNS).order("created_at", { ascending: false });
       if (error) throw error;
       return data;
+    },
+  });
+}
+
+/** Each agent's fixed commission % (the admin gets everyone, an agent only their own). */
+export function useCommissionRates() {
+  return useQuery({
+    queryKey: ["profiles", "rates"],
+    queryFn: async (): Promise<Map<string, number>> => {
+      const { data, error } = await createClient().rpc("agent_commission_rates");
+      if (error) throw error;
+      return new Map(data.map((r) => [r.id, Number(r.commission_split)]));
     },
   });
 }
@@ -94,12 +107,12 @@ export function useSaveRecord<T extends Values = Values>(table: TableName, optio
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const from = createClient().from(table) as any;
       const query = id ? from.update(values).eq("id", id) : from.insert(values);
-      const { data, error } = await query.select().single();
+      const { data, error } = await query.select(columnsOf(table)).single();
       if (error) throw error;
       return data as T;
     },
     onSuccess: (_data, { id }) => {
-      qc.invalidateQueries({ queryKey: [table] });
+      refreshTable(qc, table);
       if (!options?.silent) toast.success(id ? "השינויים נשמרו" : "נוצר בהצלחה");
     },
     onError: (error) => toast.error(errorMessage(error)),
@@ -117,7 +130,7 @@ export function useDeleteRecord(table: TableName) {
       if (!data?.length) throw { code: "42501", message: NO_PERMISSION };
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [table] });
+      refreshTable(qc, table);
       toast.success("נמחק");
     },
     onError: (error) => toast.error(errorMessage(error)),
@@ -131,7 +144,7 @@ export function useRecord<T>(table: TableName, id: string | null) {
     queryFn: async (): Promise<T | null> => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const from = createClient().from(table) as any;
-      const { data, error } = await from.select("*").eq("id", id).maybeSingle();
+      const { data, error } = await from.select(columnsOf(table)).eq("id", id).maybeSingle();
       if (error) throw error;
       return data as T | null;
     },

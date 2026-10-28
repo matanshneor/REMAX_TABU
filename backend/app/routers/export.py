@@ -16,8 +16,6 @@ ExportEntity = Literal[
     "property_owner_details",
     "buyers",
     "buyer_property_viewings",
-    "profiles",
-    "tasks",
     "financial_transactions",
     "candidates",
 ]

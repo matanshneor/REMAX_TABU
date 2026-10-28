@@ -21,13 +21,14 @@ export function ExportButton({ entity }: { entity: string }) {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/export/${entity}`, {
         headers: { Authorization: `Bearer ${data.session?.access_token}` },
       });
-      if (!res.ok) throw new Error((await res.json().catch(() => null))?.detail ?? res.statusText);
+      if (!res.ok) throw new Error(String(res.status));
       const url = URL.createObjectURL(await res.blob());
       const a = Object.assign(document.createElement("a"), { href: url, download: `${entity}.csv` });
       a.click();
-      URL.revokeObjectURL(url);
-    } catch (e) {
-      toast.error(`הייצוא נכשל: ${(e as Error).message}. ודא ששרת ה-backend פועל.`);
+      // Safari and Firefox start the download a moment later: keep the file until then.
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch {
+      toast.error("הייצוא נכשל. נסו שוב בעוד דקה.");
     } finally {
       setBusy(false);
     }

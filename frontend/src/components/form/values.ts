@@ -56,3 +56,17 @@ export function changedPayload(
 export function missingRequired(sections: FormSection[], values: FormValues): FieldDef | undefined {
   return allFields(sections).find((f) => f.required && (values[f.name] === "" || values[f.name] == null));
 }
+
+/** What's wrong with the form, in Hebrew, or undefined when it can be saved. */
+export function formProblem(sections: FormSection[], values: FormValues): string | undefined {
+  const missing = missingRequired(sections, values);
+  if (missing) return `יש למלא את השדה "${missing.label}"`;
+  for (const f of allFields(sections)) {
+    if (!NUMERIC.has(f.type) || values[f.name] === "" || values[f.name] == null) continue;
+    const n = Number(values[f.name]);
+    if (Number.isNaN(n)) return `בשדה "${f.label}" צריך להיות מספר`;
+    const min = f.min ?? 0;
+    if (n < min) return min === 0 ? `השדה "${f.label}" לא יכול להיות שלילי` : `בשדה "${f.label}" המספר הנמוך ביותר הוא ${min}`;
+  }
+  return undefined;
+}

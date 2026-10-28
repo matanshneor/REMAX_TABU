@@ -45,6 +45,7 @@ export function AccountView() {
           <Button
             disabled={!form.dirty || save.isPending}
             onClick={() =>
+              form.validate() &&
               save.mutate(
                 { id: profile.id, values: form.changes },
                 // The signed-in profile lives in AuthProvider; the agents list is the shared cache.

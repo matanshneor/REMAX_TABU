@@ -29,10 +29,12 @@ def get_current_user(
 
     user = response.user
     profile = (
-        client.table("profiles").select("role").eq("id", user.id).maybe_single().execute()
+        client.table("profiles").select("role, status").eq("id", user.id).maybe_single().execute()
     )
     if profile is None or not profile.data:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "לא נמצא פרופיל משתמש")
+    if profile.data["status"] != "active":
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "החשבון אינו מאושר")
 
     return CurrentUser(id=user.id, email=user.email, role=profile.data["role"])
 

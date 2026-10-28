@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/components/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { errorMessage } from "@/lib/errors";
 import { formatRelative, humanizeDatesInText } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 import type { Notification } from "@/lib/types";
@@ -62,7 +63,8 @@ export function NotificationsBell() {
 
   async function markRead(ids: string[]) {
     if (!ids.length) return;
-    await createClient().from("notifications").update({ is_read: true }).in("id", ids);
+    const { error } = await createClient().from("notifications").update({ is_read: true }).in("id", ids);
+    if (error) toast.error(errorMessage(error));
     qc.invalidateQueries({ queryKey: KEY });
   }
 

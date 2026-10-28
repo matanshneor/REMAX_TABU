@@ -424,8 +424,11 @@ begin
     'an agent who has not signed up yet stays unlinked';
   insert into auth.users (id, email, raw_user_meta_data) values
     ('00000000-0000-0000-0000-0000000000d1', 'future@test.local', '{"full_name": "סוכן עתידי", "phone": "+972520001111"}');
+  assert (select profile_id is null from public.office_agents where id = '40000000-0000-0000-0000-000000000002'),
+    'a pending sign-up must not link to the team list yet';
+  update public.profiles set status = 'active' where id = '00000000-0000-0000-0000-0000000000d1';
   assert (select profile_id from public.office_agents where id = '40000000-0000-0000-0000-000000000002')
-    = '00000000-0000-0000-0000-0000000000d1', 'signing up should link the agent to their row in the list';
+    = '00000000-0000-0000-0000-0000000000d1', 'approval should link the agent to their row in the list';
 
   -- Recruiter from the team list: before sign-up only the admin holds the work, after it moves over.
   insert into public.office_agents (id, full_name, phone)
@@ -440,10 +443,13 @@ begin
     'the chosen recruiter decides the seller''s account, not the default';
   insert into auth.users (id, email, raw_user_meta_data) values
     ('00000000-0000-0000-0000-0000000000e1', 'recruiter@test.local', '{"full_name": "מגייס", "phone": "0529991212"}');
+  assert (select owner_agent_id is null from public.buyers where id = '20000000-0000-0000-0000-0000000000e1'),
+    'a pending sign-up must not receive recruited buyers';
+  update public.profiles set status = 'active' where id = '00000000-0000-0000-0000-0000000000e1';
   assert (select owner_agent_id from public.buyers where id = '20000000-0000-0000-0000-0000000000e1')
-    = '00000000-0000-0000-0000-0000000000e1', 'signing up should hand the agent their buyers';
+    = '00000000-0000-0000-0000-0000000000e1', 'approval should hand the agent their buyers';
   assert (select recruiting_agent_id from public.properties where id = '10000000-0000-0000-0000-0000000000e1')
-    = '00000000-0000-0000-0000-0000000000e1', 'signing up should hand the agent their sellers';
+    = '00000000-0000-0000-0000-0000000000e1', 'approval should hand the agent their sellers';
   assert (select count(*) from public.notifications where kind = 'buyer_assigned' and recipient_id = '00000000-0000-0000-0000-0000000000e1') = 1,
     'the agent should be told about the buyers that moved to them';
   insert into public.buyers (id, full_name, owner_agent_id)
@@ -476,6 +482,68 @@ begin
   assert (select recruiting_agent_id from public.properties where id = '10000000-0000-0000-0000-0000000000f4')
     = '00000000-0000-0000-0000-0000000000f4', 'fixing your phone should still hand you the sellers recruited for you';
   raise notice 'HAND-OVER TEST PASSED';
+end $$;
+
+-- ---- Hand-over fixes (2026-10-28) -------------------------------------------
+do $$
+begin
+  -- Removing a team row keeps the buyers and sellers on the agent's account.
+  insert into public.office_agents (id, full_name, phone)
+    values ('40000000-0000-0000-0000-000000000005', 'סוכן א ברשימה', '053-111-2222');
+  update public.office_agents set profile_id = '00000000-0000-0000-0000-0000000000a1'
+   where id = '40000000-0000-0000-0000-000000000005';
+  insert into public.buyers (id, full_name, owner_agent_id)
+    values ('20000000-0000-0000-0000-0000000000a5', 'קונה של סוכן א', '00000000-0000-0000-0000-0000000000a1');
+  assert (select recruiter_id from public.buyers where id = '20000000-0000-0000-0000-0000000000a5')
+    = '40000000-0000-0000-0000-000000000005', 'the buyer should show the agent''s team row';
+  delete from public.office_agents where id = '40000000-0000-0000-0000-000000000005';
+  assert (select owner_agent_id from public.buyers where id = '20000000-0000-0000-0000-0000000000a5')
+    = '00000000-0000-0000-0000-0000000000a1', 'removing the team row must keep the buyer with the agent';
+  assert (select recruiting_agent_id from public.properties where id = '10000000-0000-0000-0000-000000000001')
+    = '00000000-0000-0000-0000-0000000000a1', 'removing the team row must keep the seller with the agent';
+
+  -- A pending user typing a colleague's phone gets nothing.
+  insert into public.office_agents (id, full_name, phone)
+    values ('40000000-0000-0000-0000-000000000006', 'עמית שלא נרשם', '054-333-4444');
+  insert into public.buyers (id, full_name, recruiter_id)
+    values ('20000000-0000-0000-0000-0000000000a6', 'קונה של העמית', '40000000-0000-0000-0000-000000000006');
+  insert into auth.users (id, email, raw_user_meta_data) values
+    ('00000000-0000-0000-0000-0000000000c2', 'pending2@test.local', '{"full_name": "ממתין שני"}');
+end $$;
+
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000000c2", "role": "authenticated"}', true);
+update public.profiles set phone = '0543334444' where id = '00000000-0000-0000-0000-0000000000c2';
+
+-- Commission %: agents can't read it, not even their own row directly; the RPC shows only their own.
+select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-0000000000a1", "role": "authenticated"}', true);
+do $$
+begin
+  begin
+    perform commission_split from public.profiles;
+    raise exception 'an agent must not read commission_split';
+  exception when insufficient_privilege then null;
+  end;
+  assert (select count(*) from public.profiles) >= 3, 'agents still see the team''s names';
+  assert (select count(*) from public.agent_commission_rates()) = 1, 'an agent sees only their own rate';
+end $$;
+select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-00000000000a", "role": "authenticated"}', true);
+do $$
+begin
+  assert (select count(*) from public.agent_commission_rates()) >= 3, 'the admin sees every rate';
+end $$;
+update public.profiles set commission_split = 60 where id = '00000000-0000-0000-0000-0000000000a1';
+reset role;
+
+do $$
+begin
+  assert (select profile_id is null from public.office_agents where id = '40000000-0000-0000-0000-000000000006'),
+    'a pending user must not link by typing a colleague''s phone';
+  assert (select owner_agent_id is null from public.buyers where id = '20000000-0000-0000-0000-0000000000a6'),
+    'a pending user must not receive a colleague''s buyers';
+  assert (select commission_split from public.profiles where id = '00000000-0000-0000-0000-0000000000a1') = 60,
+    'the admin can still change an agent''s rate';
+  raise notice 'HAND-OVER FIX TESTS PASSED';
 end $$;
 
 rollback;

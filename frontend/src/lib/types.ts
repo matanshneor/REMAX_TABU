@@ -5,7 +5,8 @@ export type TableName = keyof PublicSchema["Tables"];
 export type Row<T extends TableName> = PublicSchema["Tables"][T]["Row"];
 export type Enum<T extends keyof PublicSchema["Enums"]> = PublicSchema["Enums"][T];
 
-export type Profile = Row<"profiles">;
+/** commission_split is hidden from the table (admin reads it via useCommissionRates). */
+export type Profile = Omit<Row<"profiles">, "commission_split">;
 export type OfficeAgent = Row<"office_agents">;
 export type Buyer = Row<"buyers">;
 export type BuyerNote = Row<"buyer_notes">;

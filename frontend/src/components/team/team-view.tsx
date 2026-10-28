@@ -224,7 +224,7 @@ function EditPanel({ row, onClose }: { row: OfficeAgent | null; onClose: () => v
           <SaveFooter
             dirty={form.dirty}
             saving={save.isPending}
-            onSave={() => save.mutate({ id: row.id, values: form.changes }, { onSuccess: onClose })}
+            onSave={() => form.validate() && save.mutate({ id: row.id, values: form.changes }, { onSuccess: onClose })}
             onReset={form.reset}
             onDelete={() => remove.mutate(row.id, { onSuccess: onClose })}
             deleteLabel="הסר מהרשימה"

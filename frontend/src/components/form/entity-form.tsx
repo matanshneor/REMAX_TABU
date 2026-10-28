@@ -169,7 +169,7 @@ function Field({
             disabled={disabled}
             placeholder={field.placeholder}
             step={field.step}
-            min={field.type === "number" ? 0 : undefined}
+            min={field.type === "number" ? (field.min ?? 0) : undefined}
             list={listId}
             dir={["tel", "email", "url"].includes(field.type) ? "ltr" : undefined}
             className={cn(["tel", "email", "url"].includes(field.type) && "text-end")}

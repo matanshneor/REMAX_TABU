@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { authErrorMessage } from "@/lib/auth-errors";
 import { createClient } from "@/lib/supabase/client";
 
 const MIN_LENGTH = 8;
@@ -46,9 +47,7 @@ export function SetPasswordForm({
     const { error } = await supabase.auth.updateUser({ password });
     setPending(false);
     if (error) {
-      return setError(
-        error.code === "weak_password" ? "הסיסמה חלשה מדי — נסה סיסמה ארוכה יותר עם אותיות ומספרים" : error.message,
-      );
+      return setError(authErrorMessage(error));
     }
     setCurrent("");
     setPassword("");

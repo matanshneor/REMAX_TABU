@@ -30,6 +30,8 @@ export type FieldDef = {
   span?: 1 | 2 | 3 | 4 | 6;
   placeholder?: string;
   step?: number;
+  /** Lowest value a number field accepts (default 0; floors go down to -1). */
+  min?: number;
   /** Datalist suggestions for free-text fields. */
   suggestions?: Option[];
 };

@@ -1,3 +1,5 @@
+import { errorMessage } from "@/lib/errors";
+
 /** The RE/MAX slash: a red and a blue diagonal bar. The site's one signature mark. */
 export function BrandSlash({ className = "" }: { className?: string }) {
   return (
@@ -95,7 +97,7 @@ export function EmptyState({
 export function ErrorState({ error }: { error: unknown }) {
   return (
     <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
-      שגיאה בטעינת הנתונים: {(error as Error)?.message ?? "לא ידוע"}
+      שגיאה בטעינת הנתונים: {errorMessage(error)}
     </div>
   );
 }

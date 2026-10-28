@@ -4,32 +4,34 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
-import { errorMessage, useAgents } from "@/lib/data";
+import { errorMessage, useAgents, useCommissionRates } from "@/lib/data";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/lib/types";
 
 /** Each agent's fixed commission percentage — pre-filled when recording a deal. */
 export function AgentRates() {
   const { data: agents = [] } = useAgents();
+  const { data: rates } = useCommissionRates();
+  if (!rates) return null;
   return (
     <ul className="flex flex-col divide-y">
       {agents.map((a) => (
-        <AgentRate key={`${a.id}:${a.commission_split}`} agent={a} />
+        <AgentRate key={`${a.id}:${rates.get(a.id)}`} agent={a} rate={rates.get(a.id) ?? 50} />
       ))}
     </ul>
   );
 }
 
-function AgentRate({ agent }: { agent: Profile }) {
+function AgentRate({ agent, rate }: { agent: Profile; rate: number }) {
   const qc = useQueryClient();
-  const [value, setValue] = useState(String(Number(agent.commission_split)));
+  const [value, setValue] = useState(String(rate));
 
   async function save() {
     const pct = Number(value);
-    if (pct === Number(agent.commission_split)) return;
+    if (pct === rate) return;
     if (!(pct > 0 && pct <= 100)) {
       toast.error("האחוז צריך להיות בין 1 ל-100");
-      setValue(String(Number(agent.commission_split)));
+      setValue(String(rate));
       return;
     }
     const { error } = await createClient().from("profiles").update({ commission_split: pct }).eq("id", agent.id);

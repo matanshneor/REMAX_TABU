@@ -10,6 +10,27 @@ import { PropertyPlaceholder } from "./property-placeholder";
 
 export const MEDIA_BUCKET = "property-media";
 
+const MAX_SIDE = 2000;
+const MAX_BYTES = 20 * 1024 * 1024;
+
+/** Phone photos are large: shrink to 2000px JPEG before upload (keeps the original if the browser can't). */
+async function shrinkImage(file: File): Promise<File> {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.85));
+    if (!blob || blob.size >= file.size) return file;
+    return new File([blob], file.name.replace(/\.[^.]*$/, "") + ".jpg", { type: "image/jpeg" });
+  } catch {
+    return file;
+  }
+}
+
 export function PropertyImages({ property, editable }: { property: Property; editable: boolean }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -18,11 +39,26 @@ export function PropertyImages({ property, editable }: { property: Property; edi
 
   async function onFiles(files: FileList | null) {
     if (!files?.length) return;
+    const images = [...files].filter((f) => f.type.startsWith("image/"));
+    if (images.length < files.length) toast.error("אפשר להעלות רק תמונות");
+    if (!images.length) return;
     setUploading(true);
     try {
-      const paths = await Promise.all([...files].map((f) => uploadFile(MEDIA_BUCKET, property.id, f)));
-      await save.mutateAsync({ id: property.id, values: { image_paths: [...property.image_paths, ...paths] } });
-      toast.success(paths.length > 1 ? `${paths.length} תמונות הועלו` : "התמונה הועלתה");
+      // Each photo on its own: one failure doesn't lose the others.
+      const results = await Promise.allSettled(
+        images.map(async (f) => {
+          const small = await shrinkImage(f);
+          if (small.size > MAX_BYTES) throw new Error("too big");
+          return uploadFile(MEDIA_BUCKET, property.id, small);
+        }),
+      );
+      const paths = results.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
+      const failed = results.length - paths.length;
+      if (paths.length) {
+        await save.mutateAsync({ id: property.id, values: { image_paths: [...property.image_paths, ...paths] } });
+        toast.success(paths.length > 1 ? `${paths.length} תמונות הועלו` : "התמונה הועלתה");
+      }
+      if (failed) toast.error(failed > 1 ? `${failed} תמונות לא הועלו — נסו שוב` : "תמונה אחת לא הועלתה — נסו שוב");
     } catch (e) {
       toast.error(errorMessage(e));
     } finally {
@@ -32,7 +68,16 @@ export function PropertyImages({ property, editable }: { property: Property; edi
   }
 
   function removeImage(path: string) {
-    save.mutate({ id: property.id, values: { image_paths: property.image_paths.filter((p) => p !== path) } });
+    const before = property.image_paths;
+    save.mutate(
+      { id: property.id, values: { image_paths: before.filter((p) => p !== path) } },
+      {
+        onSuccess: () =>
+          toast("התמונה הוסרה", {
+            action: { label: "ביטול", onClick: () => save.mutate({ id: property.id, values: { image_paths: before } }) },
+          }),
+      },
+    );
   }
 
   const fileInput = (

@@ -39,6 +39,7 @@ export function PropertyPanel({ id, onClose }: { id: string | null; onClose: () 
       open={!!id}
       onClose={onClose}
       loading={isLoading || !property}
+      missing={!!id && !isLoading && !property}
       title={property && `${formatAddress(property)}`}
       subtitle={property && [property.neighborhood, property.city].filter(Boolean).join(", ")}
       badges={
@@ -73,7 +74,7 @@ export function PropertyPanel({ id, onClose }: { id: string | null; onClose: () 
             dirty={form.dirty}
             saving={save.isPending}
             disabled={!editable}
-            onSave={() => save.mutate({ id: property.id, values: form.changes })}
+            onSave={() => form.validate() && save.mutate({ id: property.id, values: form.changes })}
             onReset={form.reset}
             onDelete={isAdmin(profile) ? () => remove.mutate(property.id, { onSuccess: onClose }) : undefined}
           />

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { authErrorMessage } from "@/lib/auth-errors";
 import { rememberedEmail, saveLoginChoice } from "@/lib/remember-me";
 import { createClient } from "@/lib/supabase/client";
 
@@ -38,7 +39,7 @@ export function LoginForm() {
     setError(null);
     const { error } = await createClient().auth.signInWithPassword({ email, password });
     if (error) {
-      setError(error.code === "invalid_credentials" ? "אימייל או סיסמה שגויים" : error.message);
+      setError(authErrorMessage(error));
       setPending(false);
       return;
     }

@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
-import { errorMessage, useAgents } from "@/lib/data";
+import { errorMessage, useAgents, useCommissionRates } from "@/lib/data";
 import { toDateInput } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 import type { Deal } from "@/lib/types";
@@ -48,6 +48,7 @@ export type DealPrefill = Partial<Pick<Deal, "buyer_id" | "agent_id" | "property
 function DealForm({ deal, prefill, onDone }: { deal: Deal | null; prefill?: DealPrefill; onDone: () => void }) {
   const qc = useQueryClient();
   const { data: agents = [] } = useAgents();
+  const { data: rates } = useCommissionRates();
   const [agentId, setAgentId] = useState(deal?.agent_id ?? prefill?.agent_id ?? "");
   const [commission, setCommission] = useState(deal ? String(Math.round(Number(deal.commission_amount))) : "");
   const [percentInput, setPercent] = useState(deal ? String(Number(deal.agent_percent)) : "");
@@ -60,18 +61,18 @@ function DealForm({ deal, prefill, onDone }: { deal: Deal | null; prefill?: Deal
   const [pending, setPending] = useState(false);
 
   const agent = agents.find((a) => a.id === agentId);
-  // A prefilled agent shows their fixed percentage (once the agents list arrives) until it's edited.
-  const percent = percentInput === "" && !deal && agent ? String(Number(agent.commission_split)) : percentInput;
-  const defaultPercent = agent ? Number(agent.commission_split) : null;
+  const defaultPercent = rates?.get(agentId) ?? null;
+  // A prefilled agent shows their fixed percentage (once the rates arrive) until it's edited.
+  const percent = percentInput === "" && !deal && defaultPercent != null ? String(defaultPercent) : percentInput;
   const amount = Number(commission) || 0;
   const pct = Number(percent) || 0;
   const agentShare = Math.round(amount * pct) / 100;
 
   function pickAgent(id: string) {
     setAgentId(id);
-    const a = agents.find((x) => x.id === id);
     // Pre-fill the agent's fixed percentage (still editable for this deal).
-    if (a) setPercent(String(Number(a.commission_split)));
+    const rate = rates?.get(id);
+    if (rate != null) setPercent(String(rate));
     setSaveAsDefault(false);
   }
 
@@ -96,11 +97,13 @@ function DealForm({ deal, prefill, onDone }: { deal: Deal | null; prefill?: Deal
     const { error } = deal
       ? await supabase.from("deals").update(values).eq("id", deal.id)
       : await supabase.from("deals").insert(values);
-    if (!error && saveAsDefault) {
-      await supabase.from("profiles").update({ commission_split: pct }).eq("id", agentId);
-    }
+    const rateError =
+      !error && saveAsDefault
+        ? (await supabase.from("profiles").update({ commission_split: pct }).eq("id", agentId)).error
+        : null;
     setPending(false);
     if (error) return toast.error(errorMessage(error));
+    if (rateError) toast.error(`העסקה נשמרה, אבל האחוז הקבוע לא עודכן: ${errorMessage(rateError)}`);
 
     for (const key of ["deals", "financial_transactions", "profiles"]) qc.invalidateQueries({ queryKey: [key] });
     toast.success(deal ? "העסקה עודכנה" : "העסקה נרשמה — ההכנסה והתשלום לסוכן נוספו להנהלת החשבונות");

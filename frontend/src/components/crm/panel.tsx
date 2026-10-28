@@ -23,6 +23,7 @@ export function Panel({
   badges,
   headerActions,
   loading,
+  missing = false,
   children,
   footer,
   dirty = false,
@@ -34,6 +35,8 @@ export function Panel({
   badges?: React.ReactNode;
   headerActions?: React.ReactNode;
   loading?: boolean;
+  /** The record wasn't found (deleted, or no longer yours): say so instead of loading forever. */
+  missing?: boolean;
   children: React.ReactNode;
   footer?: React.ReactNode;
   /** Unsaved edits: closing asks first instead of throwing them away. */
@@ -47,7 +50,7 @@ export function Panel({
           <SheetHeader className="gap-2 border-b px-4 pt-5 pb-4 sm:px-6">
             <div className="flex flex-wrap items-start justify-between gap-3 pe-8">
               <div className="min-w-0">
-                <SheetTitle className="truncate text-xl font-normal">{loading ? <Skeleton className="h-6 w-48" /> : title}</SheetTitle>
+                <SheetTitle className="truncate text-xl font-normal">{missing ? "הרשומה לא נמצאה" : loading ? <Skeleton className="h-6 w-48" /> : title}</SheetTitle>
                 {subtitle && <SheetDescription className="mt-0.5">{subtitle}</SheetDescription>}
               </div>
               {headerActions && <div className="flex flex-wrap items-center gap-2">{headerActions}</div>}
@@ -55,7 +58,11 @@ export function Panel({
             {badges && <div className="flex flex-wrap items-center gap-1.5">{badges}</div>}
           </SheetHeader>
           <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6">
-            {loading ? (
+            {missing ? (
+              <p className="py-10 text-center text-sm text-muted-foreground">
+                הרשומה לא נמצאה — ייתכן שנמחקה או שהועברה לסוכן אחר.
+              </p>
+            ) : loading ? (
               <div className="flex flex-col gap-3">
                 {Array.from({ length: 6 }, (_, i) => (
                   <Skeleton key={i} className="h-8 w-full" />
@@ -65,7 +72,7 @@ export function Panel({
               children
             )}
           </div>
-          {footer && !loading && <div className="flex flex-wrap items-center gap-2 border-t bg-muted/40 px-4 py-3 sm:px-6">{footer}</div>}
+          {footer && !loading && !missing && <div className="flex flex-wrap items-center gap-2 border-t bg-muted/40 px-4 py-3 sm:px-6">{footer}</div>}
         </SheetContent>
       </Sheet>
       {guard.dialog}

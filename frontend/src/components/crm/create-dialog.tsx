@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { EntityForm } from "@/components/form/entity-form";
 import type { FormSection, FormValues } from "@/components/form/types";
 import { useFormValues } from "@/components/form/use-form-values";
-import { missingRequired, toPayload } from "@/components/form/values";
+import { toPayload } from "@/components/form/values";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { errorMessage, useSaveRecord } from "@/lib/data";
@@ -108,11 +108,7 @@ function CreateForm({
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    const missing = missingRequired(sections, form.values);
-    if (missing) {
-      toast.error(`יש למלא את השדה "${missing.label}"`);
-      return;
-    }
+    if (!form.validate()) return;
     const payload = toPayload(sections, form.values);
     const values = Object.fromEntries(Object.entries(payload).filter(([k]) => !omitFromInsert.includes(k)));
     save.mutate(

@@ -794,6 +794,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      agent_commission_rates: {
+        Args: never
+        Returns: {
+          commission_split: number
+          id: string
+        }[]
+      }
       app_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]

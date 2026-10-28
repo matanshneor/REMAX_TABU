@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { toast } from "sonner";
 import type { FormSection, FormValues } from "./types";
-import { changedPayload, toFormValues } from "./values";
+import { changedPayload, formProblem, toFormValues } from "./values";
 
 /** Form state seeded from a DB row; re-seeds when `seedKey` changes (e.g. row id + updated_at). */
 export function useFormValues(sections: FormSection[], row: Record<string, unknown> | null | undefined, seedKey: string) {
@@ -23,5 +24,12 @@ export function useFormValues(sections: FormSection[], row: Record<string, unkno
   const reset = useCallback(() => setState({ key: seedKey, values: initial }), [seedKey, initial]);
   const changes = useMemo(() => changedPayload(sections, initial, values), [sections, initial, values]);
 
-  return { values, set, reset, changes, dirty: Object.keys(changes).length > 0 };
+  /** Shows what's wrong (missing required field, negative number) and returns false, or true when it can be saved. */
+  const validate = () => {
+    const problem = formProblem(sections, values);
+    if (problem) toast.error(problem);
+    return !problem;
+  };
+
+  return { values, set, reset, changes, validate, dirty: Object.keys(changes).length > 0 };
 }

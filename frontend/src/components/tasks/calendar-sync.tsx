@@ -37,7 +37,7 @@ function CalendarSync() {
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
 
-  const { data: token, isLoading } = useQuery({
+  const { data: token, isLoading, isError } = useQuery({
     queryKey: KEY,
     enabled: !!profile,
     queryFn: async (): Promise<string | null> => {
@@ -68,7 +68,10 @@ function CalendarSync() {
         </DialogDescription>
       </DialogHeader>
 
-      {isLoading ? null : !token ? (
+      {isLoading ? null : isError ? (
+        // Don't offer "create link" here: it would replace a link a phone is already subscribed to.
+        <p className="text-sm text-destructive">לא הצלחנו לטעון את הקישור שלך. סגרו את החלון ונסו שוב.</p>
+      ) : !token ? (
         <Button className="h-10" onClick={() => makeLink(false)} disabled={busy}>
           {busy ? "יוצר…" : "צור קישור אישי"}
         </Button>
