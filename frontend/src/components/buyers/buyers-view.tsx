@@ -6,17 +6,20 @@ import { useCallback, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { CreateDialog } from "@/components/crm/create-dialog";
 import { ExportButton } from "@/components/crm/export-button";
+import { FilterBar, FilterChip, FilterDivider } from "@/components/crm/filter-bar";
 import { EmptyState, ErrorState, PageHeader } from "@/components/crm/page-header";
 import { WhatsAppButton } from "@/components/crm/whatsapp-button";
 import { Button } from "@/components/ui/button";
+import { CurrencyInput } from "@/components/form/currency-input";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useRecruiterName, useTeam } from "@/lib/data";
 import { formatILSCompact, formatRelative } from "@/lib/format";
 import { StatusBadge } from "@/components/crm/status-badge";
-import { BUYER_STATUS, isActiveBuyer, PISGAT_AREAS } from "@/lib/labels";
+import { BUYER_STATUS, isActiveBuyer, LEAD_SOURCES, PISGAT_AREAS, PROPERTY_TYPES } from "@/lib/labels";
 import { isAdmin } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/client";
 import type { Buyer, Enum } from "@/lib/types";
@@ -45,6 +48,42 @@ const SHOW_ALL_KEY = "buyers:show-all-columns";
 /** Admin-only filter: everyone, unassigned leads, or one agent's buyers. */
 type AgentFilter = "all" | "unassigned" | (string & {});
 
+/** Filters behind "עוד סינונים". */
+type MoreFilters = {
+  area: string;
+  type: string;
+  budgetMin: string;
+  budgetMax: string;
+  roomsMin: string;
+  source: string;
+  safeRoom: boolean;
+  balcony: boolean;
+  elevator: boolean;
+  mortgage: boolean;
+  sold: boolean;
+};
+const NO_MORE_FILTERS: MoreFilters = {
+  area: "",
+  type: "",
+  budgetMin: "",
+  budgetMax: "",
+  roomsMin: "",
+  source: "",
+  safeRoom: false,
+  balcony: false,
+  elevator: false,
+  mortgage: false,
+  sold: false,
+};
+/** On/off filters: "needs ..." means the buyer marked it as a must. */
+const MORE_TOGGLES: [keyof MoreFilters, string][] = [
+  ["safeRoom", "חייב ממ״ד"],
+  ["balcony", "חייב מרפסת"],
+  ["elevator", "חייב מעלית"],
+  ["mortgage", "משכנתא מאושרת"],
+  ["sold", "מכר דירה"],
+];
+
 export function BuyersView() {
   const { profile } = useAuth();
   const admin = isAdmin(profile);
@@ -57,6 +96,16 @@ export function BuyersView() {
   const [text, setText] = useState("");
   const [agentFilter, setAgentFilter] = useState<AgentFilter>("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "stale" | Enum<"buyer_status">>("active");
+  const [more, setMore] = useState(NO_MORE_FILTERS);
+  const setMoreFilter = <K extends keyof MoreFilters>(k: K, v: MoreFilters[K]) => setMore((m) => ({ ...m, [k]: v }));
+  const moreCount = (Object.keys(NO_MORE_FILTERS) as (keyof MoreFilters)[]).filter((k) => more[k] !== NO_MORE_FILTERS[k]).length;
+  const filtering = text !== "" || agentFilter !== "all" || statusFilter !== "active" || moreCount > 0;
+  function resetFilters() {
+    setText("");
+    setAgentFilter("all");
+    setStatusFilter("active");
+    setMore(NO_MORE_FILTERS);
+  }
 
   const {
     data: buyers = [],
@@ -111,17 +160,30 @@ export function BuyersView() {
     const t = text.trim().toLowerCase();
     // Phones are saved as 052-123-4567; typed digits should still find them.
     const digits = t.replace(/\D/g, "");
+    const num = (v: string) => (v === "" ? null : Number(v));
+    const [budgetMin, budgetMax, roomsMin] = [num(more.budgetMin), num(more.budgetMax), num(more.roomsMin)];
     return byOwnership.filter((b) => {
       if (statusFilter === "active" && !isActiveBuyer(b)) return false;
       if (statusFilter === "stale" && !isStale(b)) return false;
       if (!["all", "active", "stale"].includes(statusFilter) && b.status !== statusFilter) return false;
+      if (more.area && !b.preferred_neighborhoods.includes(more.area)) return false;
+      if (more.type && b.property_type !== more.type) return false;
+      if (budgetMin != null && (b.max_budget ?? 0) < budgetMin) return false;
+      if (budgetMax != null && (b.max_budget ?? Infinity) > budgetMax) return false;
+      if (roomsMin != null && (b.min_rooms ?? 0) < roomsMin) return false;
+      if (more.source && b.lead_source !== more.source) return false;
+      if (more.safeRoom && b.needs_safe_room !== "must") return false;
+      if (more.balcony && b.needs_balcony !== "must") return false;
+      if (more.elevator && b.needs_elevator !== "must") return false;
+      if (more.mortgage && !b.mortgage_approved) return false;
+      if (more.sold && !b.sold_apartment) return false;
       if (!t) return true;
       if (digits.length >= 3 && b.phone?.replace(/\D/g, "").includes(digits)) return true;
       return [b.full_name, b.phone, b.email, b.desired_city, ...b.preferred_neighborhoods]
         .filter(Boolean)
         .some((s) => s!.toLowerCase().includes(t));
     });
-  }, [byOwnership, text, statusFilter]);
+  }, [byOwnership, text, statusFilter, more]);
 
   // Default order is "recently updated" (from the query); clicking a header sorts by that column.
   const rows = useMemo(() => {
@@ -157,14 +219,66 @@ export function BuyersView() {
 
       {!isLoading && !error && <BuyersKpis buyers={byOwnership} />}
 
-      <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border bg-card p-3 shadow-xs">
-        <div className="relative basis-full sm:basis-0 sm:flex-1">
+      <FilterBar
+        moreCount={moreCount}
+        onReset={filtering ? resetFilters : undefined}
+        end={
+          <Button variant="outline" onClick={toggleShowAll} aria-pressed={showAll}>
+            <Columns3Icon />
+            {showAll ? "פחות עמודות" : "כל העמודות"}
+          </Button>
+        }
+        more={
+          <>
+            <NativeSelect value={more.area} onChange={(e) => setMoreFilter("area", e.target.value)} aria-label="אזור" className="w-32">
+              <option value="">כל האזורים</option>
+              {PISGAT_AREAS.map((a) => (
+                <option key={a.value} value={a.value}>
+                  {a.value}
+                </option>
+              ))}
+            </NativeSelect>
+            <NativeSelect value={more.type} onChange={(e) => setMoreFilter("type", e.target.value)} aria-label="סוג נכס" className="w-28">
+              <option value="">כל הסוגים</option>
+              {PROPERTY_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </NativeSelect>
+            <div className="flex items-center gap-1">
+              <CurrencyInput value={more.budgetMin} onChange={(v) => setMoreFilter("budgetMin", v)} placeholder="תקציב מ-" aria-label="תקציב מינימלי" className="w-28" />
+              <span className="text-muted-foreground">–</span>
+              <CurrencyInput value={more.budgetMax} onChange={(v) => setMoreFilter("budgetMax", v)} placeholder="עד" aria-label="תקציב מקסימלי" className="w-24" />
+            </div>
+            <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              חדרים מ-
+              <Input type="number" min={0} step={0.5} value={more.roomsMin} onChange={(e) => setMoreFilter("roomsMin", e.target.value)} className="w-16" />
+            </Label>
+            <NativeSelect value={more.source} onChange={(e) => setMoreFilter("source", e.target.value)} aria-label="מקור ליד" className="w-36">
+              <option value="">כל מקורות הליד</option>
+              {LEAD_SOURCES.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </NativeSelect>
+            <FilterDivider />
+            {MORE_TOGGLES.map(([k, label]) => (
+              <FilterChip key={k} on={!!more[k]} onClick={() => setMoreFilter(k, !more[k])}>
+                {label}
+              </FilterChip>
+            ))}
+          </>
+        }
+      >
+        <div className="relative basis-full sm:min-w-52 sm:basis-0 sm:flex-1">
           <SearchIcon className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="סינון לפי שם, טלפון, מייל או אזור…"
-            className="h-10 ps-9"
+            placeholder="חיפוש שם, טלפון, מייל או אזור…"
+            className="ps-9"
           />
         </div>
 
@@ -191,7 +305,7 @@ export function BuyersView() {
           <NativeSelect
             value={agentFilter}
             onChange={(e) => setAgentFilter(e.target.value)}
-            className="w-full sm:w-52"
+            className="w-full sm:w-44"
             aria-label="סינון לפי סוכן"
           >
             <option value="all">כל הסוכנים ({buyers.length})</option>
@@ -203,12 +317,7 @@ export function BuyersView() {
             ))}
           </NativeSelect>
         )}
-
-        <Button variant="outline" onClick={toggleShowAll} aria-pressed={showAll} className="h-10 w-full sm:w-auto">
-          <Columns3Icon />
-          {showAll ? "תצוגה מצומצמת" : "הצג את כל העמודות"}
-        </Button>
-      </div>
+      </FilterBar>
 
       {error ? (
         <ErrorState error={error} />
