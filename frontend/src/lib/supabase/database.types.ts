@@ -574,6 +574,7 @@ export type Database = {
           exclusivity_end: string | null
           exclusivity_start: string | null
           floor: number | null
+          garden_count: number | null
           garden_sqm: number | null
           has_balcony: boolean
           has_garden: boolean
@@ -612,6 +613,7 @@ export type Database = {
           exclusivity_end?: string | null
           exclusivity_start?: string | null
           floor?: number | null
+          garden_count?: number | null
           garden_sqm?: number | null
           has_balcony?: boolean
           has_garden?: boolean
@@ -650,6 +652,7 @@ export type Database = {
           exclusivity_end?: string | null
           exclusivity_start?: string | null
           floor?: number | null
+          garden_count?: number | null
           garden_sqm?: number | null
           has_balcony?: boolean
           has_garden?: boolean

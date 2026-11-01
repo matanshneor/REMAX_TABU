@@ -24,14 +24,16 @@ export function openWhatsApp(phone: string | null | undefined, text?: string) {
   if (url) window.open(url, "_blank", "noopener");
 }
 
-/** The property's features as short phrases: "ממ״ד", "2 מרפסות (20 מ״ר)", "גינה 80 מ״ר"... */
+/** The property's features as short phrases: "ממ״ד", "2 מרפסות (20 מ״ר)", "גינה (80 מ״ר)"... */
 export function propertyFeatures(p: Property): string[] {
-  const sqm = (n: number | null) => (n ? ` ${n} מ״ר` : "");
-  const balconies = (p.balcony_count ?? 0) > 1 ? `${p.balcony_count} מרפסות` : "מרפסת";
+  const counted = (count: number | null, one: string, many: string, sqm: number | null) => {
+    const what = (count ?? 0) > 1 ? `${count} ${many}` : one;
+    return sqm ? `${what} (${sqm} מ״ר)` : what;
+  };
   return [
     p.has_safe_room && "ממ״ד",
-    p.has_balcony && (p.balcony_sqm ? `${balconies} (${p.balcony_sqm} מ״ר)` : balconies),
-    p.has_garden && `גינה${sqm(p.garden_sqm)}`,
+    p.has_balcony && counted(p.balcony_count, "מרפסת", "מרפסות", p.balcony_sqm),
+    p.has_garden && counted(p.garden_count, "גינה", "גינות", p.garden_sqm),
     p.parking_spots > 0 && (p.parking_spots > 1 ? `${p.parking_spots} חניות` : "חניה"),
     p.has_elevator && "מעלית",
     p.has_storage && "מחסן",
