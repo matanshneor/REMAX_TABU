@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, Columns3Icon, PlusIcon, SearchIcon, UsersIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
-import { CreateDialog } from "@/components/crm/create-dialog";
 import { ExportButton } from "@/components/crm/export-button";
 import { FilterBar, FilterChip, FilterDivider } from "@/components/crm/filter-bar";
 import { EmptyState, ErrorState, PageHeader } from "@/components/crm/page-header";
@@ -19,16 +18,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useRecruiterName, useTeam } from "@/lib/data";
 import { formatILSCompact, formatRelative } from "@/lib/format";
 import { StatusBadge } from "@/components/crm/status-badge";
-import { BUYER_STATUS, isActiveBuyer, LEAD_SOURCES, PISGAT_AREAS, PROPERTY_TYPES } from "@/lib/labels";
+import { BUYER_STATUS, isActiveBuyer, PISGAT_AREAS, PROPERTY_TYPES, sourceOptions } from "@/lib/labels";
 import { isAdmin } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/client";
 import type { Buyer, Enum } from "@/lib/types";
 import { useNewParam, usePanelParam } from "@/lib/use-panel-param";
 import { cn } from "@/lib/utils";
-import { BUYER_SECTIONS, NEW_BUYER } from "./buyer-fields";
 import { BuyerPanel } from "./buyer-panel";
 import { BuyersKpis } from "./buyers-kpis";
-import { DuplicatePhoneWarning } from "./duplicate-phone-warning";
 import { MatchBanner } from "./match-banner";
 
 /** Columns shown by default; the rest are in the buyer's card or behind "all columns". */
@@ -209,7 +206,12 @@ export function BuyersView() {
         actions={
           <>
             <ExportButton entity="buyers" />
-            <Button onClick={() => setCreating(true)}>
+            <Button
+              onClick={() => {
+                setOpenId(null);
+                setCreating(true);
+              }}
+            >
               <PlusIcon />
               קונה חדש
             </Button>
@@ -257,7 +259,7 @@ export function BuyersView() {
             </Label>
             <NativeSelect value={more.source} onChange={(e) => setMoreFilter("source", e.target.value)} aria-label="מקור ליד" className="w-36">
               <option value="">כל מקורות הליד</option>
-              {LEAD_SOURCES.map((o) => (
+              {sourceOptions(buyers.map((b) => b.lead_source)).map((o) => (
                 <option key={o.value} value={o.value}>
                   {o.label}
                 </option>
@@ -400,28 +402,18 @@ export function BuyersView() {
 
       {!isLoading && !error && <MatchBanner buyers={byOwnership.filter(isActiveBuyer)} onOpen={setOpenId} />}
 
-      <CreateDialog<Buyer>
-        open={creating}
-        onOpenChange={setCreating}
-        title="קונה חדש"
-        table="buyers"
-        // The admin can hand the new buyer to anyone on the team; agents keep what they enter.
-        sections={admin ? ADMIN_CREATE_SECTIONS : BUYER_SECTIONS}
-        initial={NEW_BUYER}
-        // Whoever enters a buyer owns it (also the DB default); a chosen recruiter overrides it.
-        extra={{ owner_agent_id: profile?.id }}
-        onCreated={(b) => setOpenId(b.id)}
-        renderExtra={(values) => (
-          <DuplicatePhoneWarning
-            phone={String(values.phone ?? "")}
-            onOpen={(id) => {
-              setCreating(false);
-              setOpenId(id);
-            }}
-          />
-        )}
+      <BuyerPanel
+        id={openId}
+        creating={creating}
+        onClose={() => {
+          setCreating(false);
+          setOpenId(null);
+        }}
+        onCreated={(id) => {
+          setCreating(false);
+          setOpenId(id);
+        }}
       />
-      <BuyerPanel id={openId} onClose={() => setOpenId(null)} />
     </>
   );
 }
@@ -440,11 +432,6 @@ type AgentNameFn = (b: BuyerRow) => string;
 
 /** Assigned to someone on the team (signed up or not). */
 const isAssigned = (b: BuyerRow) => !!(b.recruiter_id || b.owner_agent_id);
-
-const ADMIN_CREATE_SECTIONS = [
-  { fields: [{ name: "recruiter_id", label: "סוכן מגייס (מטפל)", type: "team" as const, span: 6 as const }] },
-  ...BUYER_SECTIONS,
-];
 
 /** Ascending/descending compare; empty values always go last. */
 function compareValues(a: string | number | null, b: string | number | null, dir: 1 | -1): number {

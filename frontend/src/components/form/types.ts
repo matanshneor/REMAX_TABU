@@ -34,6 +34,8 @@ export type FieldDef = {
   min?: number;
   /** Datalist suggestions for free-text fields. */
   suggestions?: Option[];
+  /** Select only: adds this choice (e.g. "אחר") which opens a text box; the typed text is saved as the value. */
+  other?: string;
 };
 
 export type FormSection = {

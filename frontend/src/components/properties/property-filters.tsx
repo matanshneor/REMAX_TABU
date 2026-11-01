@@ -7,13 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Switch } from "@/components/ui/switch";
-import { PROPERTY_STATUS, PROPERTY_TYPES } from "@/lib/labels";
+import { type Option, PROPERTY_STATUS, PROPERTY_TYPES } from "@/lib/labels";
 import type { Enum, Property } from "@/lib/types";
 
 export type PropertyFilters = {
   city: string;
   neighborhood: string;
   type: string;
+  source: string;
   status: Enum<"property_status"> | "";
   priceMin: string;
   priceMax: string;
@@ -34,6 +35,7 @@ export const DEFAULT_FILTERS: PropertyFilters = {
   city: "",
   neighborhood: "",
   type: "",
+  source: "",
   status: "active",
   priceMin: "",
   priceMax: "",
@@ -60,6 +62,7 @@ export function applyFilters<T extends Property>(list: T[], f: PropertyFilters, 
       has(p.city, f.city) &&
       has(p.neighborhood, f.neighborhood) &&
       (!f.type || p.property_type === f.type) &&
+      (!f.source || p.lead_source === f.source) &&
       (!f.status || p.status === f.status) &&
       (pMin == null || (p.current_price ?? 0) >= pMin) &&
       (pMax == null || (p.current_price ?? Infinity) <= pMax) &&
@@ -92,10 +95,13 @@ export function PropertyFiltersPanel({
   value,
   onChange,
   cities,
+  sources,
 }: {
   value: PropertyFilters;
   onChange: (next: PropertyFilters) => void;
   cities: string[];
+  /** Lead sources to filter by: the fixed list plus any typed-in ones. */
+  sources: Option[];
 }) {
   const set = <K extends keyof PropertyFilters>(k: K, v: PropertyFilters[K]) => onChange({ ...value, [k]: v });
   const dirty = JSON.stringify(value) !== JSON.stringify(DEFAULT_FILTERS);
@@ -147,6 +153,17 @@ export function PropertyFiltersPanel({
         </NativeSelect>
       </Group>
 
+      <Group label="מקור">
+        <NativeSelect value={value.source} onChange={(e) => set("source", e.target.value)}>
+          <option value="">הכל</option>
+          {sources.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </NativeSelect>
+      </Group>
+
       <Group label="מחיר">
         <div className="flex items-center gap-1.5">
           <CurrencyInput value={value.priceMin} onChange={(v) => set("priceMin", v)} placeholder="מ-" aria-label="מחיר מינימלי" />
@@ -190,17 +207,20 @@ export function PropertyFiltersPanel({
 }
 
 /** Filters that live behind "עוד סינונים" in the bar: shown on the button when any is on. */
-const MORE_FILTERS: (keyof PropertyFilters)[] = ["roomsMin", "sizeMin", ...TOGGLES.map(([k]) => k), "exclusiveOnly", "mineOnly"];
+const MORE_FILTERS: (keyof PropertyFilters)[] = ["source", "roomsMin", "sizeMin", ...TOGGLES.map(([k]) => k), "exclusiveOnly", "mineOnly"];
 
 /** Desktop: the filters in a bar above the grid, so the listings use the full width. */
 export function PropertyFiltersBar({
   value,
   onChange,
   cities,
+  sources,
 }: {
   value: PropertyFilters;
   onChange: (next: PropertyFilters) => void;
   cities: string[];
+  /** Lead sources to filter by: the fixed list plus any typed-in ones. */
+  sources: Option[];
 }) {
   const set = <K extends keyof PropertyFilters>(k: K, v: PropertyFilters[K]) => onChange({ ...value, [k]: v });
   const dirty = JSON.stringify(value) !== JSON.stringify(DEFAULT_FILTERS);
@@ -216,6 +236,14 @@ export function PropertyFiltersBar({
       onReset={dirty ? () => onChange(DEFAULT_FILTERS) : undefined}
       more={
         <>
+          <NativeSelect value={value.source} onChange={(e) => set("source", e.target.value)} aria-label="מקור" className="w-36">
+            <option value="">כל המקורות</option>
+            {sources.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </NativeSelect>
           <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
             חדרים מ-
             <Input type="number" min={0} step={0.5} value={value.roomsMin} onChange={(e) => set("roomsMin", e.target.value)} className="w-16" />

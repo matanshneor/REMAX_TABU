@@ -15,6 +15,8 @@ export function usePanelParam(): [string | null, (id: string | null) => void] {
       const next = new URLSearchParams(params.toString());
       if (id) next.set("open", id);
       else next.delete("open");
+      // Opening a record (e.g. the one just created) ends "new" mode too.
+      next.delete("new");
       const qs = next.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
@@ -25,7 +27,7 @@ export function usePanelParam(): [string | null, (id: string | null) => void] {
 }
 
 /**
- * `?new=1` (from the sidebar's quick-add menu) opens the page's "add" dialog.
+ * `?new=1` (e.g. from a link) opens the page's "add" form.
  * Returns [isOpen, setOpen]; closing also clears the parameter.
  */
 export function useNewParam(): [boolean, (open: boolean) => void] {

@@ -1,5 +1,5 @@
 import type { FormSection } from "@/components/form/types";
-import { PISGAT_AREAS, PROPERTY_STATUS, PROPERTY_TYPES, toOptions } from "@/lib/labels";
+import { LEAD_SOURCES, OTHER_SOURCE, PISGAT_AREAS, PROPERTY_STATUS, PROPERTY_TYPES, toOptions } from "@/lib/labels";
 
 /** Only the recruiting agent / admin may change these (enforced by a DB trigger). */
 export const MANAGER_ONLY_FIELDS = ["recruiter_id", "is_exclusive", "exclusivity_start", "exclusivity_end"];
@@ -76,9 +76,10 @@ export const PROPERTY_SECTIONS: FormSection[] = [
     fields: [
       { name: "status", label: "סטטוס", type: "select", options: toOptions(PROPERTY_STATUS), required: true, span: 2 },
       { name: "recruiter_id", label: "סוכן מגייס", type: "team", span: 2 },
+      { name: "lead_source", label: "מקור", type: "select", options: LEAD_SOURCES, other: OTHER_SOURCE, placeholder: "לדוגמה: חבר של משה", span: 2 },
       { name: "is_exclusive", label: "בלעדיות", type: "boolean", span: 2 },
-      { name: "exclusivity_start", label: "תחילת בלעדיות", type: "date" },
-      { name: "exclusivity_end", label: "סיום בלעדיות", type: "date" },
+      { name: "exclusivity_start", label: "תחילת בלעדיות", type: "date", span: 2 },
+      { name: "exclusivity_end", label: "סיום בלעדיות", type: "date", span: 2 },
     ],
   },
   {
@@ -90,21 +91,26 @@ export const PROPERTY_SECTIONS: FormSection[] = [
 /** Seller fields in the "new seller" form; saved to property_owner_details after the insert. */
 export const SELLER_CREATE_FIELDS = ["owner_name", "owner_phone", "owner_notes"];
 
-/** Create form: seller first, then the property (no previous price — it's filled automatically). */
-export const PROPERTY_CREATE_SECTIONS: FormSection[] = [
-  {
-    title: "פרטי המוכר",
-    fields: [
-      { name: "owner_name", label: "שם המוכר", type: "text" },
-      { name: "owner_phone", label: "טלפון", type: "tel" },
-      { name: "owner_notes", label: "הערות על המוכר", type: "textarea", span: 6 },
-    ],
-  },
-  ...PROPERTY_SECTIONS.map((s) => ({
-    ...s,
-    fields: s.fields.filter((f) => f.name !== "previous_price"),
-  })),
-];
+export const SELLER_CREATE_SECTION: FormSection = {
+  title: "פרטי המוכר",
+  fields: [
+    { name: "owner_name", label: "שם המוכר", type: "text" },
+    { name: "owner_phone", label: "טלפון", type: "tel" },
+    { name: "owner_notes", label: "הערות על המוכר", type: "textarea", span: 6 },
+  ],
+};
+
+/** A new seller: the property's sections without the previous price (it's filled automatically). */
+const CREATE_PROPERTY_SECTIONS = PROPERTY_SECTIONS.map((s) =>
+  s === PROPERTY_DESCRIPTION_SECTION ? s : { ...s, fields: s.fields.filter((f) => f.name !== "previous_price") },
+);
+/** Agents recruit for themselves; only the admin picks another recruiter from the team list. */
+const AGENT_CREATE_PROPERTY_SECTIONS = CREATE_PROPERTY_SECTIONS.map((s) =>
+  s === PROPERTY_DESCRIPTION_SECTION ? s : { ...s, fields: s.fields.filter((f) => f.name !== "recruiter_id") },
+);
+export const propertyCreateSections = (admin: boolean) => (admin ? CREATE_PROPERTY_SECTIONS : AGENT_CREATE_PROPERTY_SECTIONS);
+
+export const NEW_PROPERTY = { status: "active", parking_spots: 0 };
 
 export const OWNER_SECTIONS: FormSection[] = [
   {

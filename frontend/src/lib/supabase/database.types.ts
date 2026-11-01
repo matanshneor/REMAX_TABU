@@ -586,6 +586,7 @@ export type Database = {
           image_paths: string[]
           is_exclusive: boolean
           is_renovated: boolean
+          lead_source: string | null
           neighborhood: string | null
           parking_spots: number
           previous_price: number | null
@@ -625,6 +626,7 @@ export type Database = {
           image_paths?: string[]
           is_exclusive?: boolean
           is_renovated?: boolean
+          lead_source?: string | null
           neighborhood?: string | null
           parking_spots?: number
           previous_price?: number | null
@@ -664,6 +666,7 @@ export type Database = {
           image_paths?: string[]
           is_exclusive?: boolean
           is_renovated?: boolean
+          lead_source?: string | null
           neighborhood?: string | null
           parking_spots?: number
           previous_price?: number | null

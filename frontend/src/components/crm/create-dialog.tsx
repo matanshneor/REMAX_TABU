@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
 import { EntityForm } from "@/components/form/entity-form";
-import type { FormSection, FormValues } from "@/components/form/types";
+import type { FormSection } from "@/components/form/types";
 import { useFormValues } from "@/components/form/use-form-values";
 import { toPayload } from "@/components/form/values";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { errorMessage, useSaveRecord } from "@/lib/data";
+import { useSaveRecord } from "@/lib/data";
 import { useDiscardGuard } from "./panel";
 import type { TableName } from "@/lib/types";
 
@@ -22,9 +21,6 @@ export function CreateDialog<T extends { id: string }>({
   initial,
   extra,
   onCreated,
-  renderExtra,
-  omitFromInsert,
-  afterInsert,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -35,12 +31,6 @@ export function CreateDialog<T extends { id: string }>({
   /** Extra columns sent with the insert that aren't in the form. */
   extra?: Record<string, unknown>;
   onCreated?: (row: T) => void;
-  /** Live content under the form (e.g. duplicate warnings), computed from the current values. */
-  renderExtra?: (values: FormValues) => React.ReactNode;
-  /** Form fields that belong to a related table rather than the inserted row. */
-  omitFromInsert?: string[];
-  /** Saves those related fields once the row exists (e.g. the seller of a new property). */
-  afterInsert?: (row: T, payload: Record<string, unknown>) => Promise<void>;
 }) {
   const [dirty, setDirty] = useState(false);
   const guard = useDiscardGuard(dirty, () => {
@@ -60,9 +50,6 @@ export function CreateDialog<T extends { id: string }>({
               sections={sections}
               initial={initial}
               extra={extra}
-              renderExtra={renderExtra}
-              omitFromInsert={omitFromInsert}
-              afterInsert={afterInsert as ((row: { id: string }, payload: Record<string, unknown>) => Promise<void>) | undefined}
               onCancel={guard.requestClose}
               onDirtyChange={setDirty}
               onCreated={(row) => {
@@ -84,9 +71,6 @@ function CreateForm({
   sections,
   initial,
   extra,
-  renderExtra,
-  omitFromInsert = [],
-  afterInsert,
   onCancel,
   onDirtyChange,
   onCreated,
@@ -95,9 +79,6 @@ function CreateForm({
   sections: FormSection[];
   initial?: Record<string, unknown>;
   extra?: Record<string, unknown>;
-  renderExtra?: (values: FormValues) => React.ReactNode;
-  omitFromInsert?: string[];
-  afterInsert?: (row: { id: string }, payload: Record<string, unknown>) => Promise<void>;
   onCancel: () => void;
   onDirtyChange: (dirty: boolean) => void;
   onCreated: (row: { id: string }) => void;
@@ -109,28 +90,13 @@ function CreateForm({
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.validate()) return;
-    const payload = toPayload(sections, form.values);
-    const values = Object.fromEntries(Object.entries(payload).filter(([k]) => !omitFromInsert.includes(k)));
-    save.mutate(
-      { values: { ...values, ...extra } },
-      {
-        onSuccess: async (row) => {
-          try {
-            await afterInsert?.(row, payload);
-          } catch (e) {
-            toast.error(`נשמר, אבל חלק מהפרטים לא נשמרו: ${errorMessage(e)}`);
-          }
-          onCreated(row);
-        },
-      },
-    );
+    save.mutate({ values: { ...toPayload(sections, form.values), ...extra } }, { onSuccess: onCreated });
   }
 
   return (
     <form onSubmit={submit} className="contents">
       <div className="-mx-4 overflow-y-auto px-4 py-1">
         <EntityForm sections={sections} values={form.values} onChange={form.set} idPrefix="new" />
-        {renderExtra && <div className="mt-4 empty:hidden">{renderExtra(form.values)}</div>}
       </div>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onCancel}>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -105,7 +106,9 @@ function Field({
       );
       break;
     case "select":
-      control = (
+      control = field.other ? (
+        <SelectWithOther id={id} field={field} value={str} onChange={onChange} disabled={disabled} />
+      ) : (
         <NativeSelect id={id} value={str} onChange={(e) => onChange(e.target.value)} disabled={disabled}>
           {!field.required && <option value="">—</option>}
           {field.options?.map((o) => (
@@ -190,6 +193,63 @@ function Field({
     <div className="flex flex-col">
       {label}
       {control}
+    </div>
+  );
+}
+
+/**
+ * A list plus an "other" choice: picking it opens a text box, and what's typed there is the value.
+ * A saved value that isn't in the list (typed earlier) shows as "other" with its text.
+ */
+function SelectWithOther({
+  id,
+  field,
+  value,
+  onChange,
+  disabled,
+}: {
+  id: string;
+  field: FieldDef;
+  value: string;
+  onChange: (value: unknown) => void;
+  disabled?: boolean;
+}) {
+  const listed = !value || !!field.options?.some((o) => o.value === value);
+  // Just picked "other" and nothing typed yet; a typed value that's in the list shows as that choice.
+  const [typing, setTyping] = useState(false);
+  const other = !listed || (typing && !value);
+  const OTHER = "__other__";
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <NativeSelect
+        id={id}
+        value={other ? OTHER : value}
+        onChange={(e) => {
+          const picked = e.target.value === OTHER;
+          setTyping(picked);
+          onChange(picked ? "" : e.target.value);
+        }}
+        disabled={disabled}
+      >
+        {!field.required && <option value="">—</option>}
+        {field.options?.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+        <option value={OTHER}>{field.other}</option>
+      </NativeSelect>
+      {other && (
+        <Input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
+          placeholder={field.placeholder ?? "כתבו כאן"}
+          aria-label={`${field.label}: ${field.other}`}
+          autoFocus={typing && !value}
+        />
+      )}
     </div>
   );
 }
