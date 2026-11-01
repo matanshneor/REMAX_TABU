@@ -832,6 +832,7 @@ export type Database = {
           description: string
           due_at: string
           id: string
+          location: string
           related: string
           title: string
           updated_at: string

@@ -27,6 +27,7 @@ export function AddToCalendar({ task }: { task: TaskForCalendar }) {
       [buyer && `קונה: ${buyer.full_name}${buyer.phone ? ` (${buyer.phone})` : ""}`, property && `נכס: ${formatAddress(property)}`].filter(
         (s): s is string => !!s,
       ),
+      property ? `${formatAddress(property)}, ${property.city}` : undefined,
     );
 
   return (

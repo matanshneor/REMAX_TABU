@@ -9,15 +9,21 @@ export type CalendarEvent = {
   duration: number;
   details: string;
   url: string;
+  /** Where (e.g. the property's address): calendars show a map and can navigate there. */
+  location?: string;
 };
 
 const EVENT_MINUTES = 30;
 const ALARM_MINUTES = 15;
 
-export function taskEvent(task: { id: string; title: string; due_at: string; description: string | null }, related: string[]) {
+export function taskEvent(
+  task: { id: string; title: string; due_at: string; description: string | null },
+  related: string[],
+  location?: string,
+) {
   const url = `${window.location.origin}/tasks?open=${task.id}`;
   const details = [task.description, ...related, `פתיחה במערכת: ${url}`].filter(Boolean).join("\n");
-  return { id: task.id, title: task.title, start: new Date(task.due_at), duration: EVENT_MINUTES, details, url } satisfies CalendarEvent;
+  return { id: task.id, title: task.title, start: new Date(task.due_at), duration: EVENT_MINUTES, details, url, location } satisfies CalendarEvent;
 }
 
 /** 2026-10-21T13:00:00Z → 20261021T130000Z */
@@ -56,6 +62,7 @@ function eventLines(e: CalendarEvent, stamp: Date, sequence = 0): string[] {
     `DTEND:${utc(end)}`,
     `SUMMARY:${escapeText(e.title)}`,
     `DESCRIPTION:${escapeText(e.details)}`,
+    ...(e.location ? [`LOCATION:${escapeText(e.location)}`] : []),
     `URL:${e.url}`,
     "BEGIN:VALARM",
     "ACTION:DISPLAY",
@@ -95,6 +102,7 @@ export function googleCalendarUrl(e: CalendarEvent): string {
     text: e.title,
     dates: `${utc(e.start)}/${utc(end)}`,
     details: e.details,
+    ...(e.location ? { location: e.location } : {}),
   });
   return `https://calendar.google.com/calendar/render?${params}`;
 }

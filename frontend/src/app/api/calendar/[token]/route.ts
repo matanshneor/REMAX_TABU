@@ -32,6 +32,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/calendar
       duration: EVENT_MINUTES,
       details: [t.description, t.related, `פתיחה במערכת: ${origin}/tasks?open=${t.id}`].filter(Boolean).join("\n"),
       url: `${origin}/tasks?open=${t.id}`,
+      location: t.location || undefined,
       version: Math.floor(new Date(t.updated_at).getTime() / 1000),
     })),
     "משימות – רימקס טאבו",

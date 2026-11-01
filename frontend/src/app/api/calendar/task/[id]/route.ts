@@ -18,7 +18,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/calendar
   const supabase = await createClient();
   const { data: task } = await supabase
     .from("tasks")
-    .select("id, title, description, due_at, buyers(full_name, phone), properties(street, house_number, apartment_number, city), candidates(full_name, phone)")
+    .select("id, title, description, due_at, buyers(full_name, phone), properties(street, house_number, apartment_number, city, property_owner_details(owner_name, owner_phone)), candidates(full_name, phone)")
     .eq("id", id)
     .maybeSingle();
   if (!task?.due_at) return new Response("המשימה לא נמצאה או שאין לה מועד", { status: 404 });
@@ -31,9 +31,12 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/calendar
   const buyer = one(task.buyers);
   const property = one(task.properties);
   const candidate = one(task.candidates);
+  const seller = one(property?.property_owner_details);
+  const address = property && `${formatAddress(property)}, ${property.city}`;
   const related = [
     buyer && `קונה: ${buyer.full_name}${buyer.phone ? ` (${buyer.phone})` : ""}`,
-    property && `נכס: ${formatAddress(property)}, ${property.city}`,
+    address && `נכס: ${address}`,
+    (seller?.owner_name || seller?.owner_phone) && `מוכר: ${[seller.owner_name, seller.owner_phone && `(${seller.owner_phone})`].filter(Boolean).join(" ")}`,
     candidate && `מועמד: ${candidate.full_name}${candidate.phone ? ` (${candidate.phone})` : ""}`,
   ];
   const body = icsCalendar([
@@ -44,6 +47,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/calendar
       duration: EVENT_MINUTES,
       details: [task.description, ...related, `פתיחה במערכת: ${url}`].filter(Boolean).join("\n"),
       url,
+      location: address || undefined,
     },
   ]);
 

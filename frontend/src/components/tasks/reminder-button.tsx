@@ -3,6 +3,8 @@
 import { BellPlusIcon } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/components/auth-provider";
+import { Segmented } from "@/components/crm/segmented";
+import { RelationSelect } from "@/components/form/relation-select";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -46,7 +48,10 @@ export function ReminderButton({
   );
 }
 
-/** A private task: what, when (quick date buttons) and optional details. Used by "תזכורת" and "משימה חדשה". */
+/**
+ * A private task: what, when (quick date buttons), optionally who it's about, and details.
+ * Used by "תזכורת", the "+ משימה" in a card and "משימה חדשה" on the tasks page.
+ */
 export function NewTaskForm({
   heading,
   submitLabel,
@@ -66,6 +71,10 @@ export function NewTaskForm({
   const [title, setTitle] = useState(defaultTitle);
   const [due, setDue] = useState<string | null>(null);
   const [details, setDetails] = useState("");
+  // Opened from the tasks page (not from a card): the task can still be linked to a buyer or seller.
+  const pickLink = !buyerId && !propertyId;
+  const [linkKind, setLinkKind] = useState<"none" | "buyer" | "property">("none");
+  const [linkId, setLinkId] = useState("");
   const save = useSaveRecord("tasks", { silent: true });
 
   function submit(e: React.FormEvent) {
@@ -77,8 +86,8 @@ export function NewTaskForm({
           title: title.trim(),
           due_at: due,
           description: details.trim() || null,
-          buyer_id: buyerId ?? null,
-          property_id: propertyId ?? null,
+          buyer_id: buyerId ?? ((linkKind === "buyer" && linkId) || null),
+          property_id: propertyId ?? ((linkKind === "property" && linkId) || null),
           assigned_to: profile?.id,
           created_by: profile?.id,
         },
@@ -110,6 +119,26 @@ export function NewTaskForm({
           <span className="text-xs text-muted-foreground">מתי?</span>
           <QuickDate value={due} onChange={setDue} />
         </div>
+        {pickLink && (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs text-muted-foreground">קשור ל…</span>
+            <Segmented
+              value={linkKind}
+              onChange={(k) => {
+                setLinkKind(k);
+                setLinkId("");
+              }}
+              options={[
+                { value: "none", label: "ללא" },
+                { value: "buyer", label: "קונה" },
+                { value: "property", label: "מוכר" },
+              ]}
+            />
+            {linkKind !== "none" && (
+              <RelationSelect kind={linkKind} value={linkId} onChange={setLinkId} id="reminder-link" />
+            )}
+          </div>
+        )}
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="reminder-details" className="text-xs text-muted-foreground">
             פרטים (לא חובה)
