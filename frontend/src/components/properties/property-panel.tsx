@@ -19,6 +19,7 @@ import type { Property } from "@/lib/types";
 import { ExclusivityPill } from "./exclusivity-pill";
 import { OwnerDetails } from "./owner-details";
 import { MANAGER_ONLY_FIELDS, PROPERTY_SECTIONS } from "./property-fields";
+import { CreateAdButton } from "./create-ad-dialog";
 import { PropertyImages } from "./property-images";
 import { ShareWhatsAppButton } from "./share-whatsapp-dialog";
 
@@ -64,6 +65,7 @@ export function PropertyPanel({ id, onClose }: { id: string | null; onClose: () 
               </Button>
             )}
             <ShareWhatsAppButton property={property} />
+            <CreateAdButton property={property} />
             <ReminderButton propertyId={property.id} defaultTitle={`מעקב: ${formatAddress(property)}`} />
           </>
         )

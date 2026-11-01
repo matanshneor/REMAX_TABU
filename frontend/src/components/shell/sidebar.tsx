@@ -24,6 +24,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AD_TOOL_URL } from "@/lib/ad-tool";
 import { USER_ROLE } from "@/lib/labels";
 import { isAdmin } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
@@ -42,7 +43,7 @@ const MAIN: NavItem[] = [
   { href: "/properties", label: "מוכרים", icon: Building2Icon },
   { href: "/tasks", label: "משימות", icon: ListChecksIcon },
   { href: "/team", label: "צוות המשרד", icon: UsersRoundIcon },
-  { href: "https://matanshneor.github.io/Remax-Template/", label: "יצירת מודעת פרסום", icon: MegaphoneIcon, external: true },
+  { href: AD_TOOL_URL, label: "יצירת מודעת פרסום", icon: MegaphoneIcon, external: true },
   { href: "/help", label: "מדריך", icon: CircleHelpIcon },
 ];
 
