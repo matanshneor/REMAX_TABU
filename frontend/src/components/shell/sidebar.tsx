@@ -8,22 +8,15 @@ import {
   ListChecksIcon,
   LogOutIcon,
   MegaphoneIcon,
-  PlusIcon,
   UserCheckIcon,
   UsersIcon,
   UsersRoundIcon,
   WalletIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 import { BrandLogo } from "@/components/brand-logo";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { AD_TOOL_URL } from "@/lib/ad-tool";
 import { USER_ROLE } from "@/lib/labels";
 import { isAdmin } from "@/lib/permissions";
@@ -53,13 +46,6 @@ const ADMIN: NavItem[] = [
   { href: "/agents", label: "סוכנים", icon: UserCheckIcon },
 ];
 
-/** "?new=1" opens the page's "add" dialog (handled by each page). */
-const QUICK_ADD = [
-  { href: "/buyers?new=1", label: "קונה חדש", icon: UsersIcon },
-  { href: "/properties?new=1", label: "מוכר חדש", icon: Building2Icon },
-  { href: "/tasks?new=1", label: "משימה חדשה", icon: ListChecksIcon },
-];
-
 /** Fixed menu on desktop; on smaller screens the same content opens from the header's ☰ button. */
 export function Sidebar() {
   return (
@@ -73,7 +59,6 @@ export function Sidebar() {
 export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { profile, signOut } = useAuth();
   const pathname = usePathname();
-  const router = useRouter();
   const counts = useNavCounts();
 
   return (
@@ -83,30 +68,8 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <p className="mt-1 text-center text-[11px] font-medium text-slate-500">פסגת זאב, ירושלים</p>
       </Link>
 
-      <div className="mx-4 mt-4">
-        <DropdownMenu>
-          <DropdownMenuTrigger className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-red text-sm font-semibold text-white shadow-[0_6px_16px_-6px_rgb(211_48_58/0.7)] transition-[transform,filter] outline-none hover:brightness-110 focus-visible:ring-2 focus-visible:ring-white/60 active:translate-y-px">
-            <PlusIcon className="size-4.5" />
-            הוספה מהירה
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-(--anchor-width)">
-            {QUICK_ADD.map(({ href, label, icon: Icon }) => (
-              <DropdownMenuItem
-                key={href}
-                onClick={() => {
-                  router.push(href);
-                  onNavigate?.();
-                }}
-              >
-                <Icon />
-                {label}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      <nav className="flex flex-1 flex-col gap-6 px-3 pt-6">
+      {/* Scrolls on short screens, so the account row below is never cut off. */}
+      <nav className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-3 py-6">
         <NavGroup
           items={MAIN}
           pathname={pathname}
@@ -118,7 +81,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         )}
       </nav>
 
-      <div className="flex items-center gap-1 border-t border-sidebar-border px-2 py-2">
+      <div className="flex shrink-0 items-center gap-1 border-t border-sidebar-border px-2 py-2">
         <Link
           href="/account"
           onClick={onNavigate}
