@@ -10,7 +10,7 @@ export default function manifest(): MetadataRoute.Manifest {
     dir: "rtl",
     start_url: "/buyers",
     display: "standalone",
-    background_color: "#ffffff",
+    background_color: "#003da5",  // the splash screen behind the icon while the app opens
     theme_color: "#ffffff",
     icons: [
       { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
