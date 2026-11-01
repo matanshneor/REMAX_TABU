@@ -19,7 +19,7 @@ import { useNewParam, usePanelParam } from "@/lib/use-panel-param";
 import { PropertiesKpis } from "./properties-kpis";
 import { PropertyCard } from "./property-card";
 import { PROPERTY_CREATE_SECTIONS, SELLER_CREATE_FIELDS } from "./property-fields";
-import { applyFilters, DEFAULT_FILTERS, PropertyFiltersPanel } from "./property-filters";
+import { applyFilters, DEFAULT_FILTERS, PropertyFiltersBar, PropertyFiltersPanel } from "./property-filters";
 import { MEDIA_BUCKET } from "./property-images";
 import { PropertyPanel } from "./property-panel";
 
@@ -93,66 +93,64 @@ export function PropertiesView() {
 
       {!isLoading && !error && <PropertiesKpis properties={properties} />}
 
-      <div className="flex gap-6">
-        {/* Desktop: filters beside the grid. Smaller screens: behind the "סינון" button. */}
-        <div className="hidden lg:block">
+      {/* Desktop: the filter bar above the grid. Smaller screens: behind the "סינון" button. */}
+      <div className="hidden lg:block">
+        <PropertyFiltersBar value={filters} onChange={setFilters} cities={cities} />
+      </div>
+      <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <SheetContent side="right" className="overflow-y-auto p-3 pt-12">
+          <SheetTitle className="sr-only">סינון מוכרים</SheetTitle>
           <PropertyFiltersPanel value={filters} onChange={setFilters} cities={cities} />
-        </div>
-        <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
-          <SheetContent side="right" className="overflow-y-auto p-3 pt-12">
-            <SheetTitle className="sr-only">סינון מוכרים</SheetTitle>
-            <PropertyFiltersPanel value={filters} onChange={setFilters} cities={cities} />
-          </SheetContent>
-        </Sheet>
+        </SheetContent>
+      </Sheet>
 
-        <div className="min-w-0 flex-1">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <Button variant="outline" className="lg:hidden" onClick={() => setFiltersOpen(true)}>
-              <SlidersHorizontalIcon />
-              סינון
-              {filtering && <span aria-label="יש סינון פעיל" className="size-2 rounded-full bg-primary" />}
-            </Button>
-            <p className="text-sm text-muted-foreground">
-              {isLoading ? "טוען…" : `${rows.length} תואמים לסינון`}
-            </p>
-            <NativeSelect value={sort} onChange={(e) => setSort(e.target.value as Sort)} className="w-44">
-              <option value="updated">עודכנו לאחרונה</option>
-              <option value="price_asc">מחיר: מהנמוך לגבוה</option>
-              <option value="price_desc">מחיר: מהגבוה לנמוך</option>
-              <option value="rooms">מספר חדרים</option>
-            </NativeSelect>
+      <div>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <Button variant="outline" className="lg:hidden" onClick={() => setFiltersOpen(true)}>
+            <SlidersHorizontalIcon />
+            סינון
+            {filtering && <span aria-label="יש סינון פעיל" className="size-2 rounded-full bg-primary" />}
+          </Button>
+          <p className="text-sm text-muted-foreground">
+            {isLoading ? "טוען…" : `${rows.length} תואמים לסינון`}
+          </p>
+          <NativeSelect value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="מיון" className="w-44">
+            <option value="updated">עודכנו לאחרונה</option>
+            <option value="price_asc">מחיר: מהנמוך לגבוה</option>
+            <option value="price_desc">מחיר: מהגבוה לנמוך</option>
+            <option value="rooms">מספר חדרים</option>
+          </NativeSelect>
+        </div>
+
+        {error ? (
+          <ErrorState error={error} />
+        ) : isLoading ? (
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
+            {Array.from({ length: 6 }, (_, i) => (
+              <Skeleton key={i} className="h-80 rounded-xl" />
+            ))}
           </div>
-
-          {error ? (
-            <ErrorState error={error} />
-          ) : isLoading ? (
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(215px,1fr))] gap-4">
-              {Array.from({ length: 6 }, (_, i) => (
-                <Skeleton key={i} className="h-80 rounded-xl" />
-              ))}
-            </div>
-          ) : rows.length === 0 ? (
-            <EmptyState
-              icon={<Building2Icon />}
-              title={properties.length ? "אין מוכרים שמתאימים לסינון" : "עדיין אין מוכרים במאגר"}
-              hint={properties.length ? "נסה להרחיב את הסינון." : "לחץ על ״מוכר חדש״ כדי להוסיף את הראשון."}
-            />
-          ) : (
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(215px,1fr))] gap-4">
-              {rows.map((p) => (
-                <PropertyCard
-                  key={p.id}
-                  property={p}
-                  imageUrl={p.image_paths[0] ? urls[p.image_paths[0]] : undefined}
-                  agentName={recruiterName(p.recruiter_id, p.recruiting_agent_id)}
-                  sellerName={p.property_owner_details?.owner_name}
-                  selected={openId === p.id}
-                  onClick={() => setOpenId(p.id)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        ) : rows.length === 0 ? (
+          <EmptyState
+            icon={<Building2Icon />}
+            title={properties.length ? "אין מוכרים שמתאימים לסינון" : "עדיין אין מוכרים במאגר"}
+            hint={properties.length ? "נסה להרחיב את הסינון." : "לחץ על ״מוכר חדש״ כדי להוסיף את הראשון."}
+          />
+        ) : (
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
+            {rows.map((p) => (
+              <PropertyCard
+                key={p.id}
+                property={p}
+                imageUrl={p.image_paths[0] ? urls[p.image_paths[0]] : undefined}
+                agentName={recruiterName(p.recruiter_id, p.recruiting_agent_id)}
+                sellerName={p.property_owner_details?.owner_name}
+                selected={openId === p.id}
+                onClick={() => setOpenId(p.id)}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <CreateDialog<Property>

@@ -53,8 +53,9 @@ export function PropertyCard({
       {hasImages ? (
         <div className="relative aspect-[16/10] bg-muted">
           {imageUrl && (
+            // Absolute: a portrait photo can't stretch the frame taller than 16:10.
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={imageUrl} alt="" className="size-full object-cover" />
+            <img src={imageUrl} alt="" className="absolute inset-0 size-full object-cover" />
           )}
           <div className="absolute inset-x-2 top-2 flex justify-between gap-1">
             {p.is_exclusive ? <ExclusivityPill end={p.exclusivity_end} onImage /> : <span />}
