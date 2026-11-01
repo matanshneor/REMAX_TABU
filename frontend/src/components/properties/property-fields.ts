@@ -4,6 +4,20 @@ import { PISGAT_AREAS, PROPERTY_STATUS, PROPERTY_TYPES, toOptions } from "@/lib/
 /** Only the recruiting agent / admin may change these (enforced by a DB trigger). */
 export const MANAGER_ONLY_FIELDS = ["recruiter_id", "is_exclusive", "exclusivity_start", "exclusivity_end"];
 
+/** Shown right under the photos in the property panel; at the end of the "new seller" form. */
+export const PROPERTY_DESCRIPTION_SECTION: FormSection = {
+  title: "תיאור הנכס",
+  fields: [
+    {
+      name: "description",
+      label: "תיאור חופשי",
+      type: "textarea",
+      span: 6,
+      placeholder: "לדוגמה: דירה מוארת עם נוף פתוח, מטבח משודרג, קרובה לבתי ספר ולתחבורה ציבורית",
+    },
+  ],
+};
+
 export const PROPERTY_SECTIONS: FormSection[] = [
   {
     title: "מיקום",
@@ -38,13 +52,25 @@ export const PROPERTY_SECTIONS: FormSection[] = [
     title: "מאפיינים",
     fields: [
       { name: "has_safe_room", label: "ממ״ד", type: "boolean", span: 2 },
-      { name: "has_balcony", label: "מרפסת", type: "boolean", span: 2 },
       { name: "has_elevator", label: "מעלית", type: "boolean", span: 2 },
       { name: "has_storage", label: "מחסן", type: "boolean", span: 2 },
       { name: "is_renovated", label: "משופץ", type: "boolean", span: 2 },
       { name: "parking_spots", label: "חניות", type: "number", span: 2 },
     ],
   },
+  {
+    // Filling in a count or a size ticks "גינה" / "מרפסת" on save (a DB trigger), so search and matching see it.
+    title: "גינה ומרפסות",
+    fields: [
+      { name: "has_garden", label: "גינה", type: "boolean", span: 2 },
+      { name: "garden_count", label: "מספר גינות", type: "number", span: 2 },
+      { name: "garden_sqm", label: "גודל הגינות (מ״ר)", type: "number", span: 2 },
+      { name: "has_balcony", label: "מרפסת", type: "boolean", span: 2 },
+      { name: "balcony_count", label: "מספר מרפסות", type: "number", span: 2 },
+      { name: "balcony_sqm", label: "גודל המרפסות (מ״ר)", type: "number", span: 2 },
+    ],
+  },
+  PROPERTY_DESCRIPTION_SECTION,
   {
     title: "סטטוס ובלעדיות",
     fields: [

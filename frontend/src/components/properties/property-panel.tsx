@@ -18,10 +18,13 @@ import { canEditProperty, canManageProperty, isAdmin } from "@/lib/permissions";
 import type { Property } from "@/lib/types";
 import { ExclusivityPill } from "./exclusivity-pill";
 import { OwnerDetails } from "./owner-details";
-import { MANAGER_ONLY_FIELDS, PROPERTY_SECTIONS } from "./property-fields";
+import { MANAGER_ONLY_FIELDS, PROPERTY_DESCRIPTION_SECTION, PROPERTY_SECTIONS } from "./property-fields";
 import { CreateAdButton } from "./create-ad-dialog";
 import { PropertyImages } from "./property-images";
 import { ShareWhatsAppButton } from "./share-whatsapp-dialog";
+
+/** The description sits right under the photos; the other sections follow. */
+const DETAIL_SECTIONS = PROPERTY_SECTIONS.filter((s) => s !== PROPERTY_DESCRIPTION_SECTION);
 
 export function PropertyPanel({ id, onClose }: { id: string | null; onClose: () => void }) {
   const { profile } = useAuth();
@@ -94,7 +97,14 @@ export function PropertyPanel({ id, onClose }: { id: string | null; onClose: () 
           <OwnerDetails propertyId={property.id} editable={editable} first />
           <PropertyImages property={property} editable={editable} />
           <EntityForm
-            sections={PROPERTY_SECTIONS}
+            sections={[PROPERTY_DESCRIPTION_SECTION]}
+            values={form.values}
+            onChange={form.set}
+            readOnly={!editable}
+            idPrefix="property"
+          />
+          <EntityForm
+            sections={DETAIL_SECTIONS}
             values={form.values}
             onChange={form.set}
             readOnly={!editable}
