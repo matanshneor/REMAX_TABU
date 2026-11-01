@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useSaveRecord } from "@/lib/data";
 import { QuickDate } from "./quick-date";
 
@@ -30,7 +31,14 @@ export function ReminderButton({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
           {open && (
-            <ReminderForm buyerId={buyerId} propertyId={propertyId} defaultTitle={defaultTitle} onDone={() => setOpen(false)} />
+            <NewTaskForm
+              heading="תזכורת חדשה"
+              submitLabel="שמור תזכורת"
+              buyerId={buyerId}
+              propertyId={propertyId}
+              defaultTitle={defaultTitle}
+              onDone={() => setOpen(false)}
+            />
           )}
         </DialogContent>
       </Dialog>
@@ -38,20 +46,26 @@ export function ReminderButton({
   );
 }
 
-function ReminderForm({
+/** A private task: what, when (quick date buttons) and optional details. Used by "תזכורת" and "משימה חדשה". */
+export function NewTaskForm({
+  heading,
+  submitLabel,
   buyerId,
   propertyId,
-  defaultTitle,
+  defaultTitle = "",
   onDone,
 }: {
+  heading: string;
+  submitLabel: string;
   buyerId?: string;
   propertyId?: string;
-  defaultTitle: string;
+  defaultTitle?: string;
   onDone: () => void;
 }) {
   const { profile } = useAuth();
   const [title, setTitle] = useState(defaultTitle);
   const [due, setDue] = useState<string | null>(null);
+  const [details, setDetails] = useState("");
   const save = useSaveRecord("tasks", { silent: true });
 
   function submit(e: React.FormEvent) {
@@ -62,6 +76,7 @@ function ReminderForm({
         values: {
           title: title.trim(),
           due_at: due,
+          description: details.trim() || null,
           buyer_id: buyerId ?? null,
           property_id: propertyId ?? null,
           assigned_to: profile?.id,
@@ -75,7 +90,7 @@ function ReminderForm({
   return (
     <form onSubmit={submit} className="contents">
       <DialogHeader>
-        <DialogTitle className="text-xl font-normal">תזכורת חדשה</DialogTitle>
+        <DialogTitle className="text-xl font-normal">{heading}</DialogTitle>
         <DialogDescription>תופיע ב״המשימות שלי״. רק אתה רואה אותה.</DialogDescription>
       </DialogHeader>
       <div className="flex flex-col gap-4">
@@ -83,11 +98,23 @@ function ReminderForm({
           <Label htmlFor="reminder-title" className="text-xs text-muted-foreground">
             מה לעשות?
           </Label>
-          <Input id="reminder-title" autoFocus value={title} onChange={(e) => setTitle(e.target.value)} />
+          <Input
+            id="reminder-title"
+            autoFocus
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="לדוגמה: להתקשר לדני לגבי הדירה בהרצל"
+          />
         </div>
         <div className="flex flex-col gap-1.5">
           <span className="text-xs text-muted-foreground">מתי?</span>
           <QuickDate value={due} onChange={setDue} />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="reminder-details" className="text-xs text-muted-foreground">
+            פרטים (לא חובה)
+          </Label>
+          <Textarea id="reminder-details" rows={3} value={details} onChange={(e) => setDetails(e.target.value)} />
         </div>
       </div>
       <DialogFooter>
@@ -95,7 +122,7 @@ function ReminderForm({
           ביטול
         </Button>
         <Button type="submit" disabled={!title.trim() || save.isPending}>
-          שמור תזכורת
+          {submitLabel}
         </Button>
       </DialogFooter>
     </form>

@@ -9,15 +9,16 @@ import { useAuth } from "@/components/auth-provider";
 import { EmptyState, ErrorState, PageHeader } from "@/components/crm/page-header";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { errorMessage, useSaveRecord } from "@/lib/data";
+import { errorMessage } from "@/lib/data";
 import { formatAddress } from "@/lib/format";
 import { canEditTask } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/client";
 import { useNewParam, usePanelParam } from "@/lib/use-panel-param";
 import { cn } from "@/lib/utils";
 import { CalendarSyncButton } from "./calendar-sync";
-import { QuickDate } from "./quick-date";
+import { NewTaskForm } from "./reminder-button";
 import { TaskPanel } from "./task-panel";
 
 const LIST_KEY = ["tasks", "list"];
@@ -70,6 +71,7 @@ export function TasksView() {
   const { profile } = useAuth();
   const qc = useQueryClient();
   const [openId, setOpenId] = usePanelParam();
+  const [creating, setCreating] = useNewParam();
   const [showDone, setShowDone] = useState(false);
   // Tasks being checked off play a short strike-through + fade before moving to "done".
   const [completing, setCompleting] = useState<Set<string>>(new Set());
@@ -135,10 +137,16 @@ export function TasksView() {
         title="המשימות שלי"
         count={openCount}
         description="רשימה אישית: רק אתה רואה את המשימות שלך"
-        actions={<CalendarSyncButton />}
+        actions={
+          <>
+            <CalendarSyncButton />
+            <Button onClick={() => setCreating(true)}>
+              <PlusIcon />
+              משימה חדשה
+            </Button>
+          </>
+        }
       />
-
-      <QuickAdd />
 
       {error ? (
         <ErrorState error={error} />
@@ -148,7 +156,7 @@ export function TasksView() {
         <EmptyState
           icon={<ListChecksIcon />}
           title="אין משימות"
-          hint="הוסף משימה בשורה למעלה — לדוגמה ״להתקשר לדני לגבי הדירה בהרצל״."
+          hint="לחץ על ״משימה חדשה״ למעלה כדי להוסיף את הראשונה."
         />
       ) : (
         <div className="flex flex-col gap-5">
@@ -255,61 +263,13 @@ export function TasksView() {
         </div>
       )}
 
+      {/* "?new=1" (e.g. from a link) opens this too. */}
+      <Dialog open={creating} onOpenChange={setCreating}>
+        <DialogContent className="sm:max-w-md">
+          {creating && <NewTaskForm heading="משימה חדשה" submitLabel="הוסף משימה" onDone={() => setCreating(false)} />}
+        </DialogContent>
+      </Dialog>
       <TaskPanel id={openId} onClose={() => setOpenId(null)} />
     </div>
-  );
-}
-
-function QuickAdd() {
-  const { profile } = useAuth();
-  // "?new=1" from the sidebar's quick-add menu focuses the task field.
-  const [focusNew] = useNewParam();
-  const [title, setTitle] = useState("");
-  const [due, setDue] = useState<string | null>(null);
-  const save = useSaveRecord("tasks", { silent: true });
-
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!title.trim()) return;
-    save.mutate(
-      {
-        values: {
-          title: title.trim(),
-          due_at: due,
-          assigned_to: profile?.id,
-          created_by: profile?.id,
-        },
-      },
-      {
-        onSuccess: () => {
-          setTitle("");
-          setDue(null);
-          toast.success("המשימה נוספה");
-        },
-      },
-    );
-  }
-
-  return (
-    <form onSubmit={submit} className="mb-6 flex flex-col gap-2 rounded-xl border bg-card p-2 shadow-xs">
-      <div className="flex items-center gap-2">
-        <PlusIcon className="ms-1.5 size-4 shrink-0 text-muted-foreground" />
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="משימה חדשה… (Enter להוספה)"
-          aria-label="משימה חדשה"
-          autoFocus={focusNew}
-          className="h-8 min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground md:text-sm"
-        />
-        <Button type="submit" disabled={!title.trim() || save.isPending}>
-          הוסף
-        </Button>
-      </div>
-      <div className="flex flex-wrap items-center gap-2 border-t pt-2 ps-7">
-        <span className="text-xs text-muted-foreground">מתי?</span>
-        <QuickDate value={due} onChange={setDue} />
-      </div>
-    </form>
   );
 }
