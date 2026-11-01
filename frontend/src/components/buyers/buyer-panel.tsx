@@ -7,6 +7,7 @@ import { DealDialog, type DealPrefill } from "@/components/deals/deal-dialog";
 import { useAuth } from "@/components/auth-provider";
 import { EntityForm } from "@/components/form/entity-form";
 import { useFormValues } from "@/components/form/use-form-values";
+import { toPayload } from "@/components/form/values";
 import { LockBanner, Panel, SaveFooter } from "@/components/crm/panel";
 import { WhatsAppButton } from "@/components/crm/whatsapp-button";
 import { PropertyMatches } from "@/components/matching/property-matches";
@@ -20,23 +21,77 @@ import { formatRelative } from "@/lib/format";
 import { canEditBuyer, isAdmin } from "@/lib/permissions";
 import type { Buyer } from "@/lib/types";
 import { usePanelParam } from "@/lib/use-panel-param";
-import { BUYER_SECTIONS } from "./buyer-fields";
+import { ADMIN_CREATE_SECTIONS, BUYER_SECTIONS, NEW_BUYER } from "./buyer-fields";
 import { BuyerNotes } from "./buyer-notes";
 import { DuplicatePhoneWarning } from "./duplicate-phone-warning";
 
-export function BuyerPanel({ id, onClose }: { id: string | null; onClose: () => void }) {
+/**
+ * The buyer's card. With `creating`, the same card starts empty and is saved once; it then stays
+ * open as the new buyer's card. `onCreated` opens a buyer here: the new one, or an existing buyer
+ * with the same phone picked from the duplicate warning.
+ */
+export function BuyerPanel({
+  id,
+  creating = false,
+  onClose,
+  onCreated,
+}: {
+  id: string | null;
+  creating?: boolean;
+  onClose: () => void;
+  onCreated?: (id: string) => void;
+}) {
   const { profile } = useAuth();
   const recruiterName = useRecruiterName();
   const { data: team = [] } = useTeam();
-  const { data: buyer, isLoading } = useRecord<Buyer>("buyers", id);
-  const form = useFormValues(BUYER_SECTIONS, buyer, `${buyer?.id}:${buyer?.updated_at}`);
-  const save = useSaveRecord("buyers");
+  const { data: buyer, isLoading } = useRecord<Buyer>("buyers", creating ? null : id);
+  const admin = isAdmin(profile);
+  const createSections = admin ? ADMIN_CREATE_SECTIONS : BUYER_SECTIONS;
+  const form = useFormValues(
+    creating ? createSections : BUYER_SECTIONS,
+    creating ? NEW_BUYER : buyer,
+    creating ? "new" : `${buyer?.id}:${buyer?.updated_at}`,
+  );
+  const save = useSaveRecord<Buyer>("buyers");
   const remove = useDeleteRecord("buyers");
 
   const [, setOpenId] = usePanelParam();
   const editable = buyer ? canEditBuyer(profile, buyer) : false;
-  const admin = isAdmin(profile);
   const [dealPrefill, setDealPrefill] = useState<DealPrefill | null>(null);
+
+  if (creating) {
+    return (
+      <Panel
+        dirty={form.dirty}
+        open
+        onClose={onClose}
+        title="קונה חדש"
+        subtitle="ממלאים את הפרטים ושומרים פעם אחת"
+        footer={
+          <>
+            <Button
+              onClick={() => {
+                if (!form.validate()) return;
+                // Whoever enters a buyer owns it (also the DB default); a chosen recruiter overrides it.
+                save.mutate(
+                  { values: { ...toPayload(createSections, form.values), owner_agent_id: profile?.id } },
+                  { onSuccess: (row) => onCreated?.(row.id) },
+                );
+              }}
+              disabled={save.isPending}
+            >
+              {save.isPending ? "שומר…" : "שמור"}
+            </Button>
+          </>
+        }
+      >
+        <EntityForm sections={createSections} values={form.values} onChange={form.set} idPrefix="new-buyer" />
+        <div className="mt-4 empty:hidden">
+          <DuplicatePhoneWarning phone={String(form.values.phone ?? "")} onOpen={(existing) => onCreated?.(existing)} />
+        </div>
+      </Panel>
+    );
+  }
 
   function saveChanges() {
     if (!buyer || !form.validate()) return;

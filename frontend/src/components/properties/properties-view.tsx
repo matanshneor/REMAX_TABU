@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Building2Icon, PlusIcon, SlidersHorizontalIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
-import { CreateDialog } from "@/components/crm/create-dialog";
 import { ExportButton } from "@/components/crm/export-button";
 import { EmptyState, ErrorState, PageHeader } from "@/components/crm/page-header";
 import { Button } from "@/components/ui/button";
@@ -12,29 +11,18 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRecruiterName, useSignedUrls } from "@/lib/data";
-import { isAdmin } from "@/lib/permissions";
+import { sourceOptions } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/client";
 import type { Property } from "@/lib/types";
 import { useNewParam, usePanelParam } from "@/lib/use-panel-param";
 import { PropertiesKpis } from "./properties-kpis";
 import { PropertyCard } from "./property-card";
-import { PROPERTY_CREATE_SECTIONS, SELLER_CREATE_FIELDS } from "./property-fields";
 import { applyFilters, DEFAULT_FILTERS, PropertyFiltersBar, PropertyFiltersPanel } from "./property-filters";
 import { MEDIA_BUCKET } from "./property-images";
 import { PropertyPanel } from "./property-panel";
 
-const AGENT_CREATE_SECTIONS = PROPERTY_CREATE_SECTIONS.map((s) => ({ ...s, fields: s.fields.filter((f) => f.name !== "recruiter_id") }));
 
 /** Saves the seller typed into the "new seller" form, once the property row exists. */
-async function saveSeller(property: Property, payload: Record<string, unknown>) {
-  const { owner_name, owner_phone, owner_notes } = payload as Record<string, string | null>;
-  if (!owner_name && !owner_phone && !owner_notes) return;
-  const { error } = await createClient()
-    .from("property_owner_details")
-    .insert({ property_id: property.id, owner_name, owner_phone, notes: owner_notes });
-  if (error) throw error;
-}
-
 type Sort = "updated" | "price_asc" | "price_desc" | "rooms";
 
 const SORTERS: Record<Sort, (a: Property, b: Property) => number> = {
@@ -70,6 +58,7 @@ export function PropertiesView() {
     [properties, filters, profile?.id, sort],
   );
   const cities = useMemo(() => [...new Set(properties.map((p) => p.city))].sort(), [properties]);
+  const sources = useMemo(() => sourceOptions(properties.map((p) => p.lead_source)), [properties]);
   const coverPaths = useMemo(() => rows.flatMap((p) => p.image_paths.slice(0, 1)), [rows]);
   const { data: urls = {} } = useSignedUrls(MEDIA_BUCKET, coverPaths);
 
@@ -83,7 +72,12 @@ export function PropertiesView() {
         actions={
           <>
             <ExportButton entity="properties" />
-            <Button onClick={() => setCreating(true)}>
+            <Button
+              onClick={() => {
+                setOpenId(null);
+                setCreating(true);
+              }}
+            >
               <PlusIcon />
               מוכר חדש
             </Button>
@@ -95,12 +89,12 @@ export function PropertiesView() {
 
       {/* Desktop: the filter bar above the grid. Smaller screens: behind the "סינון" button. */}
       <div className="hidden lg:block">
-        <PropertyFiltersBar value={filters} onChange={setFilters} cities={cities} />
+        <PropertyFiltersBar value={filters} onChange={setFilters} cities={cities} sources={sources} />
       </div>
       <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
         <SheetContent side="right" className="overflow-y-auto p-3 pt-12">
           <SheetTitle className="sr-only">סינון מוכרים</SheetTitle>
-          <PropertyFiltersPanel value={filters} onChange={setFilters} cities={cities} />
+          <PropertyFiltersPanel value={filters} onChange={setFilters} cities={cities} sources={sources} />
         </SheetContent>
       </Sheet>
 
@@ -153,20 +147,18 @@ export function PropertiesView() {
         )}
       </div>
 
-      <CreateDialog<Property>
-        open={creating}
-        onOpenChange={setCreating}
-        title="מוכר חדש"
-        table="properties"
-        // Agents recruit for themselves; only the admin picks another recruiter from the team list.
-        sections={isAdmin(profile) ? PROPERTY_CREATE_SECTIONS : AGENT_CREATE_SECTIONS}
-        initial={{ status: "active", parking_spots: 0 }}
-        extra={{ recruiting_agent_id: profile?.id }}
-        omitFromInsert={SELLER_CREATE_FIELDS}
-        afterInsert={saveSeller}
-        onCreated={(p) => setOpenId(p.id)}
+      <PropertyPanel
+        id={openId}
+        creating={creating}
+        onClose={() => {
+          setCreating(false);
+          setOpenId(null);
+        }}
+        onCreated={(id) => {
+          setCreating(false);
+          setOpenId(id);
+        }}
       />
-      <PropertyPanel id={openId} onClose={() => setOpenId(null)} />
     </>
   );
 }

@@ -1,5 +1,5 @@
 import type { FormSection } from "@/components/form/types";
-import { BUYER_STATUS, LEAD_SOURCES, PISGAT_AREAS, PROPERTY_TYPES, REQUIREMENT, toOptions } from "@/lib/labels";
+import { BUYER_STATUS, LEAD_SOURCES, OTHER_SOURCE, PISGAT_AREAS, PROPERTY_TYPES, REQUIREMENT, toOptions } from "@/lib/labels";
 
 const REQUIREMENT_OPTIONS = toOptions(REQUIREMENT);
 
@@ -10,7 +10,7 @@ export const BUYER_SECTIONS: FormSection[] = [
       { name: "full_name", label: "שם מלא", type: "text", required: true },
       { name: "phone", label: "טלפון", type: "tel", placeholder: "050-0000000" },
       { name: "email", label: "אימייל", type: "email" },
-      { name: "lead_source", label: "מקור ליד", type: "select", options: LEAD_SOURCES },
+      { name: "lead_source", label: "מקור ליד", type: "select", options: LEAD_SOURCES, other: OTHER_SOURCE, placeholder: "לדוגמה: חבר של משה" },
       { name: "status", label: "סטטוס", type: "select", options: toOptions(BUYER_STATUS), required: true },
     ],
   },
@@ -49,3 +49,9 @@ export const NEW_BUYER = {
   needs_elevator: "any",
   needs_safe_room: "any",
 };
+
+/** New buyer, admin: can hand the buyer to anyone on the team; agents keep what they enter. */
+export const ADMIN_CREATE_SECTIONS: FormSection[] = [
+  { fields: [{ name: "recruiter_id", label: "סוכן מגייס (מטפל)", type: "team", span: 6 }] },
+  ...BUYER_SECTIONS,
+];

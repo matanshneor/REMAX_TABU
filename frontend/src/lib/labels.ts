@@ -84,7 +84,15 @@ export const PROPERTY_TYPES = list(
   "מסחרי",
 );
 
-export const LEAD_SOURCES = list("יד2", "פייסבוק", "אינסטגרם", "אתר", "הפניה", "שלט", "הגיע למשרד", "אחר");
+/** Where a buyer or seller came from. Anything else is typed in under "אחר" and saved as written. */
+export const LEAD_SOURCES = list("יד2", "פייסבוק", "אינסטגרם", "אתר", "רימקס ישראל", "הפניה", "שלט", "הגיע למשרד");
+export const OTHER_SOURCE = "אחר (לכתוב בעצמי)";
+
+/** The list above plus every typed-in source already in use, for filters. */
+export function sourceOptions(used: (string | null)[]): Option[] {
+  const extra = [...new Set(used.filter((s): s is string => !!s && !LEAD_SOURCES.some((o) => o.value === s)))].sort();
+  return [...LEAD_SOURCES, ...list(...extra)];
+}
 
 export const CANDIDATE_SOURCES = list("לינקדאין", "פייסבוק", "הפניה", "אתר דרושים", "אחר");
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { ImageIcon, ImagePlusIcon, XIcon } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { errorMessage, uploadFile, useSaveRecord, useSignedUrls } from "@/lib/data";
@@ -31,6 +31,27 @@ async function shrinkImage(file: File): Promise<File> {
   }
 }
 
+/** The photos among picked files; says so when something else was picked. */
+function onlyImages(files: FileList | null): File[] {
+  if (!files?.length) return [];
+  const images = [...files].filter((f) => f.type.startsWith("image/"));
+  if (images.length < files.length) toast.error("אפשר להעלות רק תמונות");
+  return images;
+}
+
+/** Shrinks and uploads photos for a property. Each on its own: one failure doesn't lose the others. */
+export async function uploadPropertyImages(propertyId: string, files: File[]) {
+  const results = await Promise.allSettled(
+    files.map(async (f) => {
+      const small = await shrinkImage(f);
+      if (small.size > MAX_BYTES) throw new Error("too big");
+      return uploadFile(MEDIA_BUCKET, propertyId, small);
+    }),
+  );
+  const paths = results.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
+  return { paths, failed: results.length - paths.length };
+}
+
 export function PropertyImages({ property, editable }: { property: Property; editable: boolean }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -38,22 +59,11 @@ export function PropertyImages({ property, editable }: { property: Property; edi
   const { data: urls = {} } = useSignedUrls(MEDIA_BUCKET, property.image_paths);
 
   async function onFiles(files: FileList | null) {
-    if (!files?.length) return;
-    const images = [...files].filter((f) => f.type.startsWith("image/"));
-    if (images.length < files.length) toast.error("אפשר להעלות רק תמונות");
+    const images = onlyImages(files);
     if (!images.length) return;
     setUploading(true);
     try {
-      // Each photo on its own: one failure doesn't lose the others.
-      const results = await Promise.allSettled(
-        images.map(async (f) => {
-          const small = await shrinkImage(f);
-          if (small.size > MAX_BYTES) throw new Error("too big");
-          return uploadFile(MEDIA_BUCKET, property.id, small);
-        }),
-      );
-      const paths = results.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
-      const failed = results.length - paths.length;
+      const { paths, failed } = await uploadPropertyImages(property.id, images);
       if (paths.length) {
         await save.mutateAsync({ id: property.id, values: { image_paths: [...property.image_paths, ...paths] } });
         toast.success(paths.length > 1 ? `${paths.length} תמונות הועלו` : "התמונה הועלתה");
@@ -133,6 +143,69 @@ export function PropertyImages({ property, editable }: { property: Property; edi
           {uploading ? "מעלה…" : "הוסף תמונות"}
         </button>
       )}
+      {fileInput}
+    </div>
+  );
+}
+
+/** A new seller isn't saved yet: photos picked here wait and are uploaded with the first save. */
+export function PendingImages({ files, onChange }: { files: File[]; onChange: (files: File[]) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const previews = useMemo(() => files.map((f) => URL.createObjectURL(f)), [files]);
+  useEffect(() => () => previews.forEach((u) => URL.revokeObjectURL(u)), [previews]);
+
+  const fileInput = (
+    <input
+      ref={inputRef}
+      type="file"
+      accept="image/*"
+      multiple
+      hidden
+      onChange={(e) => {
+        onChange([...files, ...onlyImages(e.target.files)]);
+        e.target.value = "";
+      }}
+    />
+  );
+
+  if (!files.length) {
+    return (
+      <div className="relative mb-6 h-36 overflow-hidden rounded-xl">
+        <PropertyPlaceholder label="אפשר להוסיף תמונות כבר עכשיו" />
+        <Button size="sm" className="absolute bottom-3 start-1/2 -translate-x-1/2 rtl:translate-x-1/2" onClick={() => inputRef.current?.click()}>
+          <ImagePlusIcon />
+          הוסף תמונות
+        </Button>
+        {fileInput}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-6 grid grid-cols-4 gap-2">
+      {previews.map((src, i) => (
+        <div key={src} className={`group relative overflow-hidden rounded-lg bg-muted ${i === 0 ? "col-span-2 row-span-2" : ""}`}>
+          {/* Local previews of files that aren't uploaded yet. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={src} alt="" className="aspect-square size-full object-cover" />
+          <button
+            type="button"
+            onClick={() => onChange(files.filter((_, j) => j !== i))}
+            aria-label="הסר תמונה"
+            className="absolute top-1.5 end-1.5 rounded-full bg-black/60 p-1 text-white transition-opacity pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100"
+          >
+            <XIcon className="size-3.5" />
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border border-dashed text-xs text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+      >
+        <ImagePlusIcon className="size-5" />
+        הוסף תמונות
+      </button>
       {fileInput}
     </div>
   );

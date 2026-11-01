@@ -1,9 +1,12 @@
 "use client";
 
 import { ExternalLinkIcon } from "lucide-react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { useAuth } from "@/components/auth-provider";
 import { EntityForm } from "@/components/form/entity-form";
 import { useFormValues } from "@/components/form/use-form-values";
+import { toPayload } from "@/components/form/values";
 import { LockBanner, Panel, SaveFooter } from "@/components/crm/panel";
 import { StatusBadge } from "@/components/crm/status-badge";
 import { BuyerMatches } from "@/components/matching/buyer-matches";
@@ -11,31 +14,130 @@ import { LinkedTasks } from "@/components/tasks/linked-tasks";
 import { ReminderButton } from "@/components/tasks/reminder-button";
 import { ViewingsList } from "@/components/viewings/viewings-list";
 import { Button } from "@/components/ui/button";
-import { useDeleteRecord, useRecord, useRecruiterName, useSaveRecord } from "@/lib/data";
+import { errorMessage, useDeleteRecord, useRecord, useRecruiterName, useSaveRecord } from "@/lib/data";
 import { formatAddress, formatILS } from "@/lib/format";
 import { PROPERTY_STATUS } from "@/lib/labels";
 import { canEditProperty, canManageProperty, isAdmin } from "@/lib/permissions";
+import { createClient } from "@/lib/supabase/client";
 import type { Property } from "@/lib/types";
 import { ExclusivityPill } from "./exclusivity-pill";
 import { OwnerDetails } from "./owner-details";
-import { MANAGER_ONLY_FIELDS, PROPERTY_DESCRIPTION_SECTION, PROPERTY_SECTIONS } from "./property-fields";
+import {
+  MANAGER_ONLY_FIELDS,
+  NEW_PROPERTY,
+  PROPERTY_DESCRIPTION_SECTION,
+  PROPERTY_SECTIONS,
+  propertyCreateSections,
+  SELLER_CREATE_FIELDS,
+  SELLER_CREATE_SECTION,
+} from "./property-fields";
 import { CreateAdButton } from "./create-ad-dialog";
-import { PropertyImages } from "./property-images";
+import { PendingImages, PropertyImages, uploadPropertyImages } from "./property-images";
 import { ShareWhatsAppButton } from "./share-whatsapp-dialog";
 
 /** The description sits right under the photos; the other sections follow. */
 const DETAIL_SECTIONS = PROPERTY_SECTIONS.filter((s) => s !== PROPERTY_DESCRIPTION_SECTION);
 
-export function PropertyPanel({ id, onClose }: { id: string | null; onClose: () => void }) {
+/** Owner details of a new seller go to their own table once the property exists. */
+async function saveSeller(propertyId: string, payload: Record<string, unknown>) {
+  const { owner_name, owner_phone, owner_notes } = payload as Record<string, string | null>;
+  if (!owner_name && !owner_phone && !owner_notes) return;
+  const { error } = await createClient()
+    .from("property_owner_details")
+    .insert({ property_id: propertyId, owner_name, owner_phone, notes: owner_notes });
+  if (error) throw error;
+}
+
+/**
+ * The seller's card. With `creating`, the same card starts empty: details, seller and photos are
+ * filled in and saved once, and then it stays open as the new seller's card (`onCreated`).
+ */
+export function PropertyPanel({
+  id,
+  creating = false,
+  onClose,
+  onCreated,
+}: {
+  id: string | null;
+  creating?: boolean;
+  onClose: () => void;
+  onCreated?: (id: string) => void;
+}) {
   const { profile } = useAuth();
   const recruiterName = useRecruiterName();
-  const { data: property, isLoading } = useRecord<Property>("properties", id);
-  const form = useFormValues(PROPERTY_SECTIONS, property, `${property?.id}:${property?.updated_at}`);
-  const save = useSaveRecord("properties");
+  const { data: property, isLoading } = useRecord<Property>("properties", creating ? null : id);
+  const createSections = propertyCreateSections(isAdmin(profile));
+  const createForm = useMemo(() => [SELLER_CREATE_SECTION, ...createSections], [createSections]);
+  const form = useFormValues(
+    creating ? createForm : PROPERTY_SECTIONS,
+    creating ? NEW_PROPERTY : property,
+    creating ? "new" : `${property?.id}:${property?.updated_at}`,
+  );
+  const save = useSaveRecord<Property>("properties");
+  const saveQuiet = useSaveRecord("properties", { silent: true });
   const remove = useDeleteRecord("properties");
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [finishing, setFinishing] = useState(false);
 
   const editable = property ? canEditProperty(profile, property) : false;
   const manager = property ? canManageProperty(profile, property) : false;
+
+  function create() {
+    if (!form.validate()) return;
+    const payload = toPayload(createForm, form.values);
+    const values = Object.fromEntries(Object.entries(payload).filter(([k]) => !SELLER_CREATE_FIELDS.includes(k)));
+    save.mutate(
+      { values: { ...values, recruiting_agent_id: profile?.id } },
+      {
+        onSuccess: async (row) => {
+          setFinishing(true);
+          try {
+            await saveSeller(row.id, payload);
+            if (photos.length) {
+              const { paths, failed } = await uploadPropertyImages(row.id, photos);
+              if (paths.length) await saveQuiet.mutateAsync({ id: row.id, values: { image_paths: paths } });
+              if (failed) toast.error(failed > 1 ? `${failed} תמונות לא הועלו — אפשר להוסיף אותן שוב` : "תמונה אחת לא הועלתה — אפשר להוסיף אותה שוב");
+            }
+          } catch (e) {
+            toast.error(`המוכר נשמר, אבל חלק מהפרטים לא נשמרו: ${errorMessage(e)}`);
+          } finally {
+            setFinishing(false);
+            setPhotos([]);
+            onCreated?.(row.id);
+          }
+        },
+      },
+    );
+  }
+
+  if (creating) {
+    const busy = save.isPending || finishing;
+    const description = createSections.filter((s) => s === PROPERTY_DESCRIPTION_SECTION);
+    const details = createSections.filter((s) => s !== PROPERTY_DESCRIPTION_SECTION);
+    return (
+      <Panel
+        dirty={form.dirty || photos.length > 0}
+        open
+        onClose={onClose}
+        title="מוכר חדש"
+        subtitle="ממלאים את הפרטים ושומרים פעם אחת"
+        footer={
+          <>
+            <Button onClick={create} disabled={busy}>
+              {finishing ? "מעלה תמונות…" : busy ? "שומר…" : "שמור"}
+            </Button>
+          </>
+        }
+      >
+        <EntityForm sections={[SELLER_CREATE_SECTION]} values={form.values} onChange={form.set} idPrefix="new-property" />
+        <div className="mt-6">
+          <PendingImages files={photos} onChange={setPhotos} />
+        </div>
+        <EntityForm sections={description} values={form.values} onChange={form.set} idPrefix="new-property" />
+        <EntityForm sections={details} values={form.values} onChange={form.set} idPrefix="new-property" />
+      </Panel>
+    );
+  }
 
   return (
     <Panel
