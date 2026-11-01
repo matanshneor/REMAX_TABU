@@ -38,11 +38,33 @@ export const PROPERTY_SECTIONS: FormSection[] = [
     title: "מאפיינים",
     fields: [
       { name: "has_safe_room", label: "ממ״ד", type: "boolean", span: 2 },
-      { name: "has_balcony", label: "מרפסת", type: "boolean", span: 2 },
       { name: "has_elevator", label: "מעלית", type: "boolean", span: 2 },
       { name: "has_storage", label: "מחסן", type: "boolean", span: 2 },
       { name: "is_renovated", label: "משופץ", type: "boolean", span: 2 },
       { name: "parking_spots", label: "חניות", type: "number", span: 2 },
+    ],
+  },
+  {
+    // Filling in a size or a count ticks "גינה" / "מרפסת" on save (a DB trigger), so search and matching see it.
+    title: "גינה ומרפסות",
+    fields: [
+      { name: "has_garden", label: "גינה", type: "boolean", span: 2 },
+      { name: "garden_sqm", label: "גודל הגינה (מ״ר)", type: "number", span: 4 },
+      { name: "has_balcony", label: "מרפסת", type: "boolean", span: 2 },
+      { name: "balcony_count", label: "מספר מרפסות", type: "number", span: 2 },
+      { name: "balcony_sqm", label: "גודל המרפסות (מ״ר)", type: "number", span: 2 },
+    ],
+  },
+  {
+    title: "תיאור הנכס",
+    fields: [
+      {
+        name: "description",
+        label: "תיאור חופשי",
+        type: "textarea",
+        span: 6,
+        placeholder: "לדוגמה: דירה מוארת עם נוף פתוח, מטבח משודרג, קרובה לבתי ספר ולתחבורה ציבורית",
+      },
     ],
   },
   {

@@ -563,15 +563,20 @@ export type Database = {
       properties: {
         Row: {
           apartment_number: string | null
+          balcony_count: number | null
+          balcony_sqm: number | null
           city: string
           created_at: string
           created_by: string | null
           current_price: number | null
+          description: string | null
           eviction_date: string | null
           exclusivity_end: string | null
           exclusivity_start: string | null
           floor: number | null
+          garden_sqm: number | null
           has_balcony: boolean
+          has_garden: boolean
           has_elevator: boolean
           has_safe_room: boolean
           has_storage: boolean
@@ -596,15 +601,20 @@ export type Database = {
         }
         Insert: {
           apartment_number?: string | null
+          balcony_count?: number | null
+          balcony_sqm?: number | null
           city: string
           created_at?: string
           created_by?: string | null
           current_price?: number | null
+          description?: string | null
           eviction_date?: string | null
           exclusivity_end?: string | null
           exclusivity_start?: string | null
           floor?: number | null
+          garden_sqm?: number | null
           has_balcony?: boolean
+          has_garden?: boolean
           has_elevator?: boolean
           has_safe_room?: boolean
           has_storage?: boolean
@@ -629,15 +639,20 @@ export type Database = {
         }
         Update: {
           apartment_number?: string | null
+          balcony_count?: number | null
+          balcony_sqm?: number | null
           city?: string
           created_at?: string
           created_by?: string | null
           current_price?: number | null
+          description?: string | null
           eviction_date?: string | null
           exclusivity_end?: string | null
           exclusivity_start?: string | null
           floor?: number | null
+          garden_sqm?: number | null
           has_balcony?: boolean
+          has_garden?: boolean
           has_elevator?: boolean
           has_safe_room?: boolean
           has_storage?: boolean

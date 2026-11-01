@@ -24,16 +24,24 @@ export function openWhatsApp(phone: string | null | undefined, text?: string) {
   if (url) window.open(url, "_blank", "noopener");
 }
 
-/** Ready-to-send property summary. Leaves out the apartment number and owner details. */
-export function propertyMessage(p: Property, greetingName?: string): string {
-  const features = [
+/** The property's features as short phrases: "ממ״ד", "2 מרפסות (20 מ״ר)", "גינה 80 מ״ר"... */
+export function propertyFeatures(p: Property): string[] {
+  const sqm = (n: number | null) => (n ? ` ${n} מ״ר` : "");
+  const balconies = (p.balcony_count ?? 0) > 1 ? `${p.balcony_count} מרפסות` : "מרפסת";
+  return [
     p.has_safe_room && "ממ״ד",
-    p.has_balcony && "מרפסת",
+    p.has_balcony && (p.balcony_sqm ? `${balconies} (${p.balcony_sqm} מ״ר)` : balconies),
+    p.has_garden && `גינה${sqm(p.garden_sqm)}`,
     p.parking_spots > 0 && (p.parking_spots > 1 ? `${p.parking_spots} חניות` : "חניה"),
     p.has_elevator && "מעלית",
     p.has_storage && "מחסן",
     p.is_renovated && "משופצת",
-  ].filter(Boolean);
+  ].filter((f): f is string => !!f);
+}
+
+/** Ready-to-send property summary. Leaves out the apartment number and owner details. */
+export function propertyMessage(p: Property, greetingName?: string): string {
+  const features = propertyFeatures(p);
   const specs = [
     p.rooms && `${p.rooms} חדרים`,
     p.size_sqm && `${p.size_sqm} מ״ר`,
