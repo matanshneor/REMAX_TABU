@@ -498,7 +498,10 @@ const COLUMNS: Column[] = [
     cell: (b) => (
       <span className="flex items-center gap-2.5">
         <BuyerAvatar name={b.full_name} />
-        <span className="font-semibold">{b.full_name}</span>
+        <span className="min-w-0">
+          <span className="block font-semibold">{b.full_name}</span>
+          <BuyerSubtitle buyer={b} />
+        </span>
       </span>
     ),
   },
@@ -654,6 +657,12 @@ function initials(name: string) {
     .trim()
     .split(/\s+/);
   return (parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "");
+}
+
+/** Second line under the name: the start of the notes. */
+function BuyerSubtitle({ buyer }: { buyer: Buyer }) {
+  const note = buyer.notes?.split("\n")[0];
+  return note ? <span className="block max-w-36 truncate text-xs text-muted-foreground">{note}</span> : null;
 }
 
 function AreaTags({ areas }: { areas: string[] }) {
