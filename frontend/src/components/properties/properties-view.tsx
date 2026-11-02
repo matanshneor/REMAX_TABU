@@ -1,22 +1,23 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Building2Icon, PlusIcon, SlidersHorizontalIcon } from "lucide-react";
+import { Building2Icon, PlusIcon, SearchIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { ExportButton } from "@/components/crm/export-button";
 import { EmptyState, ErrorState, PageHeader } from "@/components/crm/page-header";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
-import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRecruiterName, useSignedUrls } from "@/lib/data";
 import { sourceOptions } from "@/lib/labels";
+import { isAdmin } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/client";
 import type { Property } from "@/lib/types";
 import { useNewParam, usePanelParam } from "@/lib/use-panel-param";
 import { PropertyCard } from "./property-card";
-import { applyFilters, DEFAULT_FILTERS, PropertyFiltersBar, PropertyFiltersPanel } from "./property-filters";
+import { applyFilters, DEFAULT_FILTERS, PropertyFiltersBar } from "./property-filters";
 import { MEDIA_BUCKET } from "./property-images";
 import { PropertyPanel } from "./property-panel";
 
@@ -38,8 +39,8 @@ export function PropertiesView() {
   const [creating, setCreating] = useNewParam();
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [sort, setSort] = useState<Sort>("updated");
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const filtering = JSON.stringify(filters) !== JSON.stringify(DEFAULT_FILTERS);
+  const [text, setText] = useState("");
+  const filtering = text !== "" || JSON.stringify(filters) !== JSON.stringify(DEFAULT_FILTERS);
 
   const { data: properties = [], isLoading, error } = useQuery({
     queryKey: ["properties", "list"],
@@ -52,10 +53,17 @@ export function PropertiesView() {
     },
   });
 
-  const rows = useMemo(
-    () => applyFilters(properties, filters, profile?.id).sort(SORTERS[sort]),
-    [properties, filters, profile?.id, sort],
-  );
+  const rows = useMemo(() => {
+    const t = text.trim().toLowerCase();
+    // Phones are saved as 052-123-4567; typed digits should still find them.
+    const digits = t.replace(/\D/g, "");
+    const found = (p: (typeof properties)[number]) =>
+      !t ||
+      (digits.length >= 3 && !!p.property_owner_details?.owner_phone?.replace(/\D/g, "").includes(digits)) ||
+      [[p.street, p.house_number].filter(Boolean).join(" "), p.neighborhood, p.city, p.property_owner_details?.owner_name]
+        .some((s) => s?.toLowerCase().includes(t));
+    return applyFilters(properties, filters, profile?.id).filter(found).sort(SORTERS[sort]);
+  }, [properties, filters, profile?.id, sort, text]);
   const cities = useMemo(
     () => [...new Set(properties.map((p) => p.city).filter((c): c is string => !!c))].sort(),
     [properties],
@@ -67,7 +75,7 @@ export function PropertiesView() {
   return (
     <>
       <PageHeader
-        title="מוכרים"
+        title={isAdmin(profile) ? "מוכרים" : "המוכרים שלי"}
         // Same number as the sidebar: listings that are on the market now.
         count={properties.filter((p) => p.status === "active").length}
         actions={
@@ -86,35 +94,38 @@ export function PropertiesView() {
         }
       />
 
-      {/* Desktop: the filter bar above the grid. Smaller screens: behind the "סינון" button. */}
-      <div className="hidden lg:block">
-        <PropertyFiltersBar value={filters} onChange={setFilters} cities={cities} sources={sources} />
-      </div>
-      <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
-        <SheetContent side="right" className="overflow-y-auto p-3 pt-12">
-          <SheetTitle className="sr-only">סינון מוכרים</SheetTitle>
-          <PropertyFiltersPanel value={filters} onChange={setFilters} cities={cities} sources={sources} />
-        </SheetContent>
-      </Sheet>
+      <PropertyFiltersBar
+        value={filters}
+        onChange={setFilters}
+        cities={cities}
+        sources={sources}
+        onReset={
+          filtering
+            ? () => {
+                setText("");
+                setFilters(DEFAULT_FILTERS);
+              }
+            : undefined
+        }
+      >
+        <div className="relative min-w-0 flex-1">
+          <SearchIcon className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="חיפוש כתובת, שכונה, שם המוכר או טלפון…"
+            className="bg-card ps-9"
+          />
+        </div>
+        <NativeSelect value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="מיון" className="w-48 bg-card">
+          <option value="updated">מיון: עודכנו לאחרונה</option>
+          <option value="price_asc">מיון: מחיר מהנמוך לגבוה</option>
+          <option value="price_desc">מיון: מחיר מהגבוה לנמוך</option>
+          <option value="rooms">מיון: מספר חדרים</option>
+        </NativeSelect>
+      </PropertyFiltersBar>
 
       <div>
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <Button variant="outline" className="lg:hidden" onClick={() => setFiltersOpen(true)}>
-            <SlidersHorizontalIcon />
-            סינון
-            {filtering && <span aria-label="יש סינון פעיל" className="size-2 rounded-full bg-primary" />}
-          </Button>
-          <p className="text-sm text-muted-foreground">
-            {isLoading ? "טוען…" : `${rows.length} תואמים לסינון`}
-          </p>
-          <NativeSelect value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="מיון" className="w-44">
-            <option value="updated">עודכנו לאחרונה</option>
-            <option value="price_asc">מחיר: מהנמוך לגבוה</option>
-            <option value="price_desc">מחיר: מהגבוה לנמוך</option>
-            <option value="rooms">מספר חדרים</option>
-          </NativeSelect>
-        </div>
-
         {error ? (
           <ErrorState error={error} />
         ) : isLoading ? (

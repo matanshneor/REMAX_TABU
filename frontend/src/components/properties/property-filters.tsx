@@ -1,12 +1,10 @@
 "use client";
 
-import { RotateCcwIcon } from "lucide-react";
 import { FilterBar, FilterChip, FilterDivider } from "@/components/crm/filter-bar";
 import { CurrencyInput } from "@/components/form/currency-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
-import { Switch } from "@/components/ui/switch";
 import { type Option, PROPERTY_ENGAGEMENT, PROPERTY_STATUS, PROPERTY_TYPES } from "@/lib/labels";
 import type { Enum, Property } from "@/lib/types";
 
@@ -97,151 +95,28 @@ const TOGGLES: [keyof PropertyFilters, string][] = [
   ["renovated", "משופץ"],
 ];
 
-/** Persistent "Advanced Filters" sidebar. */
-export function PropertyFiltersPanel({
-  value,
-  onChange,
-  cities,
-  sources,
-}: {
-  value: PropertyFilters;
-  onChange: (next: PropertyFilters) => void;
-  cities: string[];
-  /** Lead sources to filter by: the fixed list plus any typed-in ones. */
-  sources: Option[];
-}) {
-  const set = <K extends keyof PropertyFilters>(k: K, v: PropertyFilters[K]) => onChange({ ...value, [k]: v });
-  const dirty = JSON.stringify(value) !== JSON.stringify(DEFAULT_FILTERS);
-
-  return (
-    <aside className="flex w-full shrink-0 flex-col gap-4 self-start rounded-xl border bg-card p-4 lg:sticky lg:top-20 lg:w-64 shadow-[0_1px_2px_rgb(15_26_46/0.04),0_8px_24px_-14px_rgb(15_26_46/0.12)]">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold">סינון מתקדם</h2>
-        {dirty && (
-          <button onClick={() => onChange(DEFAULT_FILTERS)} className="flex items-center gap-1 text-xs text-primary hover:underline">
-            <RotateCcwIcon className="size-3" />
-            איפוס
-          </button>
-        )}
-      </div>
-
-      <Group label="מצב בשוק">
-        <NativeSelect value={value.status} onChange={(e) => set("status", e.target.value as PropertyFilters["status"])}>
-          <option value="">הכל</option>
-          {Object.entries(PROPERTY_STATUS).map(([k, v]) => (
-            <option key={k} value={k}>
-              {v.label}
-            </option>
-          ))}
-        </NativeSelect>
-      </Group>
-
-      <Group label="עיר">
-        <Input value={value.city} onChange={(e) => set("city", e.target.value)} list="filter-cities" placeholder="כל הערים" />
-        <datalist id="filter-cities">
-          {cities.map((c) => (
-            <option key={c} value={c} />
-          ))}
-        </datalist>
-      </Group>
-
-      <Group label="שכונה">
-        <Input value={value.neighborhood} onChange={(e) => set("neighborhood", e.target.value)} placeholder="כל השכונות" />
-      </Group>
-
-      <Group label="סוג נכס">
-        <NativeSelect value={value.type} onChange={(e) => set("type", e.target.value)}>
-          <option value="">הכל</option>
-          {PROPERTY_TYPES.map((t) => (
-            <option key={t.value} value={t.value}>
-              {t.label}
-            </option>
-          ))}
-        </NativeSelect>
-      </Group>
-
-      <Group label="סוג התקשרות">
-        <NativeSelect value={value.engagement} onChange={(e) => set("engagement", e.target.value as PropertyFilters["engagement"])}>
-          <option value="">הכל</option>
-          {Object.entries(PROPERTY_ENGAGEMENT).map(([k, v]) => (
-            <option key={k} value={k}>
-              {v.label}
-            </option>
-          ))}
-        </NativeSelect>
-      </Group>
-
-      <Group label="מקור">
-        <NativeSelect value={value.source} onChange={(e) => set("source", e.target.value)}>
-          <option value="">הכל</option>
-          {sources.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </NativeSelect>
-      </Group>
-
-      <Group label="מחיר">
-        <div className="flex items-center gap-1.5">
-          <CurrencyInput value={value.priceMin} onChange={(v) => set("priceMin", v)} placeholder="מ-" aria-label="מחיר מינימלי" />
-          <span className="text-muted-foreground">–</span>
-          <CurrencyInput value={value.priceMax} onChange={(v) => set("priceMax", v)} placeholder="עד" aria-label="מחיר מקסימלי" />
-        </div>
-      </Group>
-
-      <div className="grid grid-cols-2 gap-2">
-        <Group label="מינ׳ חדרים">
-          <Input type="number" min={0} step={0.5} value={value.roomsMin} onChange={(e) => set("roomsMin", e.target.value)} />
-        </Group>
-        <Group label="מינ׳ מ״ר">
-          <Input type="number" min={0} step={10} value={value.sizeMin} onChange={(e) => set("sizeMin", e.target.value)} />
-        </Group>
-      </div>
-
-      <Group label="מאפיינים">
-        <div className="flex flex-wrap gap-1.5">
-          {TOGGLES.map(([k, label]) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => set(k, !value[k])}
-              className={`h-7 rounded-full border px-2.5 text-xs font-medium transition-colors ${
-                value[k] ? "border-primary bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </Group>
-
-      <div className="flex flex-col gap-2.5 border-t pt-4">
-        <ToggleRow label="בלעדיות בלבד" checked={value.exclusiveOnly} onChange={(c) => set("exclusiveOnly", c)} />
-        <ToggleRow label="הנכסים שגייסתי" checked={value.mineOnly} onChange={(c) => set("mineOnly", c)} />
-      </div>
-    </aside>
-  );
-}
-
-/** Filters that live behind "עוד סינונים" in the bar: shown on the button when any is on. */
-const MORE_FILTERS: (keyof PropertyFilters)[] = ["engagement", "source", "roomsMin", "sizeMin", ...TOGGLES.map(([k]) => k), "exclusiveOnly", "mineOnly"];
-
-/** Desktop: the filters in a bar above the grid, so the listings use the full width. */
+/**
+ * The filters bar above the sellers: the page's search and sort in one row (`children`),
+ * every filter behind "עוד סינונים" (its button counts those that are on).
+ */
 export function PropertyFiltersBar({
   value,
   onChange,
   cities,
   sources,
+  onReset,
+  children,
 }: {
   value: PropertyFilters;
   onChange: (next: PropertyFilters) => void;
   cities: string[];
   /** Lead sources to filter by: the fixed list plus any typed-in ones. */
   sources: Option[];
+  /** Clears the filters and the page's search; shown only when something is on. */
+  onReset?: () => void;
+  children: React.ReactNode;
 }) {
   const set = <K extends keyof PropertyFilters>(k: K, v: PropertyFilters[K]) => onChange({ ...value, [k]: v });
-  const dirty = JSON.stringify(value) !== JSON.stringify(DEFAULT_FILTERS);
   const chip = (k: keyof PropertyFilters, label: string) => (
     <FilterChip key={k} on={!!value[k]} onClick={() => set(k, !value[k])}>
       {label}
@@ -250,10 +125,44 @@ export function PropertyFiltersBar({
 
   return (
     <FilterBar
-      moreCount={MORE_FILTERS.filter((k) => value[k] !== DEFAULT_FILTERS[k]).length}
-      onReset={dirty ? () => onChange(DEFAULT_FILTERS) : undefined}
+      className="border-0 bg-transparent p-0 shadow-none"
+      moreCount={(Object.keys(DEFAULT_FILTERS) as (keyof PropertyFilters)[]).filter((k) => value[k] !== DEFAULT_FILTERS[k]).length}
+      onReset={onReset}
       more={
         <>
+          <NativeSelect
+            value={value.status}
+            onChange={(e) => set("status", e.target.value as PropertyFilters["status"])}
+            aria-label="מצב בשוק"
+            className="w-36"
+          >
+            <option value="">כל המצבים בשוק</option>
+            {Object.entries(PROPERTY_STATUS).map(([k, v]) => (
+              <option key={k} value={k}>
+                {v.label}
+              </option>
+            ))}
+          </NativeSelect>
+          <Input value={value.city} onChange={(e) => set("city", e.target.value)} list="bar-cities" placeholder="כל הערים" aria-label="עיר" className="w-28" />
+          <datalist id="bar-cities">
+            {cities.map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
+          <Input value={value.neighborhood} onChange={(e) => set("neighborhood", e.target.value)} placeholder="כל השכונות" aria-label="שכונה" className="w-28" />
+          <NativeSelect value={value.type} onChange={(e) => set("type", e.target.value)} aria-label="סוג נכס" className="w-28">
+            <option value="">כל הסוגים</option>
+            {PROPERTY_TYPES.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
+            ))}
+          </NativeSelect>
+          <div className="flex items-center gap-1">
+            <CurrencyInput value={value.priceMin} onChange={(v) => set("priceMin", v)} placeholder="מחיר מ-" aria-label="מחיר מינימלי" className="w-24" />
+            <span className="text-muted-foreground">–</span>
+            <CurrencyInput value={value.priceMax} onChange={(v) => set("priceMax", v)} placeholder="עד" aria-label="מחיר מקסימלי" className="w-24" />
+          </div>
           <NativeSelect
             value={value.engagement}
             onChange={(e) => set("engagement", e.target.value as PropertyFilters["engagement"])}
@@ -291,57 +200,7 @@ export function PropertyFiltersBar({
         </>
       }
     >
-      <NativeSelect
-        value={value.status}
-        onChange={(e) => set("status", e.target.value as PropertyFilters["status"])}
-        aria-label="סטטוס"
-        className="w-28"
-      >
-        <option value="">כל הסטטוסים</option>
-        {Object.entries(PROPERTY_STATUS).map(([k, v]) => (
-          <option key={k} value={k}>
-            {v.label}
-          </option>
-        ))}
-      </NativeSelect>
-      <Input value={value.city} onChange={(e) => set("city", e.target.value)} list="bar-cities" placeholder="כל הערים" aria-label="עיר" className="w-28" />
-      <datalist id="bar-cities">
-        {cities.map((c) => (
-          <option key={c} value={c} />
-        ))}
-      </datalist>
-      <Input value={value.neighborhood} onChange={(e) => set("neighborhood", e.target.value)} placeholder="כל השכונות" aria-label="שכונה" className="w-28" />
-      <NativeSelect value={value.type} onChange={(e) => set("type", e.target.value)} aria-label="סוג נכס" className="w-28">
-        <option value="">כל הסוגים</option>
-        {PROPERTY_TYPES.map((t) => (
-          <option key={t.value} value={t.value}>
-            {t.label}
-          </option>
-        ))}
-      </NativeSelect>
-      <div className="flex items-center gap-1">
-        <CurrencyInput value={value.priceMin} onChange={(v) => set("priceMin", v)} placeholder="מחיר מ-" aria-label="מחיר מינימלי" className="w-24" />
-        <span className="text-muted-foreground">–</span>
-        <CurrencyInput value={value.priceMax} onChange={(v) => set("priceMax", v)} placeholder="עד" aria-label="מחיר מקסימלי" className="w-24" />
-      </div>
-    </FilterBar>
-  );
-}
-
-function Group({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
       {children}
-    </div>
-  );
-}
-
-function ToggleRow({ label, checked, onChange }: { label: string; checked: boolean; onChange: (c: boolean) => void }) {
-  return (
-    <label className="flex cursor-pointer items-center justify-between text-sm">
-      {label}
-      <Switch checked={checked} onCheckedChange={onChange} />
-    </label>
+    </FilterBar>
   );
 }
