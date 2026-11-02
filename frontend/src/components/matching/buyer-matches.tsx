@@ -1,6 +1,6 @@
 "use client";
 
-import { isActiveBuyer } from "@/lib/labels";
+import { isActiveBuyer, isOffered } from "@/lib/labels";
 import { useQuery } from "@tanstack/react-query";
 import { SparklesIcon } from "lucide-react";
 import Link from "next/link";
@@ -46,7 +46,11 @@ export function BuyerMatches({ property }: { property: Property }) {
       {isLoading ? null : matches.length === 0 ? (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
           <SparklesIcon className="size-4" />
-          {property.status === "active" ? "אין כרגע קונים שהנכס עונה על כל הדרישות שלהם" : "התאמות מוצגות רק לנכסים פעילים"}
+          {isOffered(property)
+            ? "אין כרגע קונים שהנכס עונה על כל הדרישות שלהם"
+            : property.engagement === "recruiting"
+              ? "הנכס בתהליך גיוס: יוצע לקונים אחרי שתהיה בלעדיות או הסכמה"
+              : "התאמות מוצגות רק לנכסים פעילים"}
         </p>
       ) : (
         <ul className="flex flex-col divide-y rounded-lg border">

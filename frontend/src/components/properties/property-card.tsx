@@ -1,7 +1,7 @@
 import { ArrowDownIcon, ImageOffIcon } from "lucide-react";
 import { StatusBadge } from "@/components/crm/status-badge";
 import { formatAddress, formatILS } from "@/lib/format";
-import { PROPERTY_STATUS } from "@/lib/labels";
+import { PROPERTY_ENGAGEMENT, PROPERTY_STATUS } from "@/lib/labels";
 import type { Property } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Money } from "@/components/crm/money";
@@ -41,6 +41,10 @@ export function PropertyCard({
     p.floor != null && (p.total_floors ? `קומה ${p.floor}/${p.total_floors}` : `קומה ${p.floor}`),
   ].filter(Boolean);
   const features = FEATURES.filter(([k]) => p[k]).map(([, label]) => label);
+  // Not offered to buyers yet: say so on the card.
+  const recruiting = p.engagement === "recruiting" && (
+    <StatusBadge map={PROPERTY_ENGAGEMENT} value={p.engagement} className="bg-white" />
+  );
   if (p.parking_spots) features.push(p.parking_spots > 1 ? `${p.parking_spots} חניות` : "חניה");
 
   return (
@@ -61,7 +65,10 @@ export function PropertyCard({
           )}
           <div className="absolute inset-x-2 top-2 flex justify-between gap-1">
             {p.is_exclusive ? <ExclusivityPill end={p.exclusivity_end} onImage /> : <span />}
-            {p.status !== "active" && <StatusBadge map={PROPERTY_STATUS} value={p.status} className="bg-white" />}
+            <span className="flex gap-1">
+              {recruiting}
+              {p.status !== "active" && <StatusBadge map={PROPERTY_STATUS} value={p.status} className="bg-white" />}
+            </span>
           </div>
         </div>
       ) : (
@@ -73,6 +80,7 @@ export function PropertyCard({
           </span>
           <span className="flex gap-1">
             {p.is_exclusive && <ExclusivityPill end={p.exclusivity_end} />}
+            {recruiting}
             {p.status !== "active" && <StatusBadge map={PROPERTY_STATUS} value={p.status} className="bg-white" />}
           </span>
         </div>

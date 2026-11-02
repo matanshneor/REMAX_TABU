@@ -12,6 +12,17 @@ export const PROPERTY_STATUS: Labeled<Enum<"property_status">> = {
   sold: { label: "נמכר", tone: "purple" },
 };
 
+/** The agreement with the seller. "בתהליך גיוס" isn't offered to buyers yet. */
+export const PROPERTY_ENGAGEMENT: Labeled<Enum<"property_engagement">> = {
+  exclusive: { label: "בלעדיות", tone: "blue" },
+  consent: { label: "הסכמה", tone: "green" },
+  recruiting: { label: "בתהליך גיוס", tone: "orange" },
+};
+
+/** Offered to buyers (matches, alerts): on the market and with an agreement (exclusivity or consent). */
+export const isOffered = (p: { status: Enum<"property_status">; engagement: Enum<"property_engagement"> }) =>
+  p.status === "active" && p.engagement !== "recruiting";
+
 export const BUYER_STATUS: Labeled<Enum<"buyer_status">> = {
   new: { label: "חדש", tone: "blue" },
   hot: { label: "חם", tone: "red" },
