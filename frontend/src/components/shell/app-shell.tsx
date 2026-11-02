@@ -4,7 +4,8 @@ import { AuthProvider, useAuth } from "@/components/auth-provider";
 import { PendingApproval } from "@/components/auth/pending-approval";
 import { SignupApprovalGate } from "@/components/admin/signup-approval-gate";
 import { isAdmin } from "@/lib/permissions";
-import { MenuIcon } from "lucide-react";
+import { CircleHelpIcon, MenuIcon } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -49,6 +50,9 @@ function Shell({ children }: { children: React.ReactNode }) {
           <div className="ms-auto flex items-center gap-3">
             <Greeting name={profile.full_name} />
             <span aria-hidden className="hidden h-6 w-px bg-border md:block" />
+            <Button variant="ghost" size="icon" aria-label="מדריך" title="מדריך" render={<Link href="/help" />} nativeButton={false}>
+              <CircleHelpIcon className="size-5" />
+            </Button>
             <NotificationsBell />
           </div>
         </header>
