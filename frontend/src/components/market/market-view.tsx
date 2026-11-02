@@ -12,20 +12,21 @@ import { PropertyPanel } from "@/components/properties/property-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAgentName, useSaveRecord } from "@/lib/data";
+import { useSaveRecord } from "@/lib/data";
+import { isAdmin } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/client";
 import type { MarketListing } from "@/lib/types";
 import { useNewParam, usePanelParam } from "@/lib/use-panel-param";
 import { ListingPanel } from "./listing-panel";
 import { MarketList } from "./market-list";
 
-type View = "open" | "mine" | "done" | "all";
+type View = "open" | "not_interested" | "added" | "all";
 
-const VIEWS: Record<View, (l: MarketListing, myId?: string) => boolean> = {
-  // Still to work: new, or called and waiting.
+const VIEWS: Record<View, (l: MarketListing) => boolean> = {
+  // Still to call ("contacted" is from before the two outcomes; it stays open).
   open: (l) => l.status === "new" || l.status === "contacted",
-  mine: (l, myId) => l.assigned_to === myId && (l.status === "new" || l.status === "contacted"),
-  done: (l) => l.status === "added" || l.status === "not_interested",
+  not_interested: (l) => l.status === "not_interested",
+  added: (l) => l.status === "added",
   all: () => true,
 };
 
@@ -49,11 +50,13 @@ function sellerFromListing(l: MarketListing): Record<string, unknown> {
   };
 }
 
-/** "מאגר יד2": new private listings to call; the ones whose owners want the service become sellers. */
+/**
+ * "מאגר יד2": new private listings to call. Anyone may call; whoever did marks the outcome —
+ * "הוסף למוכרים שלי" (it becomes their seller) or "דיברתי – לא מעוניין".
+ */
 export function MarketView() {
   const { profile } = useAuth();
   const router = useRouter();
-  const agentName = useAgentName();
   const [openId, setOpenId] = usePanelParam();
   const [creating, setCreating] = useNewParam();
   const [view, setView] = useState<View>("open");
@@ -74,11 +77,25 @@ export function MarketView() {
   const rows = useMemo(() => {
     const t = text.trim().toLowerCase();
     return listings
-      .filter((l) => VIEWS[view](l, profile?.id))
+      .filter((l) => VIEWS[view](l))
       .filter((l) => !t || [l.title, l.street, l.neighborhood, l.city, l.advertiser, l.phone].some((s) => s?.toLowerCase().includes(t)));
-  }, [listings, view, text, profile?.id]);
+  }, [listings, view, text]);
 
-  const count = (v: View) => listings.filter((l) => VIEWS[v](l, profile?.id)).length;
+  const count = (v: View) => listings.filter((l) => VIEWS[v](l)).length;
+
+  function notInterested(l: MarketListing) {
+    // Who marked it is kept (assigned_to) but not shown.
+    saveListing.mutate(
+      { id: l.id, values: { status: "not_interested", assigned_to: profile?.id } },
+      {
+        onSuccess: () =>
+          toast("סומן: לא מעוניין", {
+            action: { label: "ביטול", onClick: () => saveListing.mutate({ id: l.id, values: { status: l.status, assigned_to: l.assigned_to } }) },
+          }),
+      },
+    );
+  }
+  const canOpenSeller = (l: MarketListing) => l.assigned_to === profile?.id || isAdmin(profile);
 
   return (
     <>
@@ -104,8 +121,8 @@ export function MarketView() {
           onChange={setView}
           options={[
             { value: "open", label: "לטיפול", count: count("open") },
-            { value: "mine", label: "שלי", count: count("mine") },
-            { value: "done", label: "טופלו", count: count("done") },
+            { value: "added", label: "נוספו למוכרים", count: count("added") },
+            { value: "not_interested", label: "לא מעוניינים", count: count("not_interested") },
             { value: "all", label: "הכל", count: listings.length },
           ]}
         />
@@ -126,19 +143,7 @@ export function MarketView() {
           hint={listings.length ? "נסו תצוגה אחרת." : "מודעות חדשות מיד2 ייכנסו לכאן לבד. אפשר גם להוסיף מודעה ידנית."}
         />
       ) : (
-        <MarketList
-          rows={rows}
-          agentName={agentName}
-          myId={profile?.id}
-          onOpen={setOpenId}
-          onTake={(l) =>
-            saveListing.mutate(
-              { id: l.id, values: { assigned_to: profile?.id } },
-              { onSuccess: () => toast.success("המודעה אצלך") },
-            )
-          }
-          onAddToSellers={setToSeller}
-        />
+        <MarketList rows={rows} onOpen={setOpenId} onAddToSellers={setToSeller} onNotInterested={notInterested} canOpenSeller={canOpenSeller} />
       )}
 
       <ListingPanel
@@ -156,6 +161,11 @@ export function MarketView() {
           setOpenId(null);
           setToSeller(l);
         }}
+        onNotInterested={(l) => {
+          setOpenId(null);
+          notInterested(l);
+        }}
+        canOpenSeller={canOpenSeller}
       />
       <PropertyPanel
         id={null}
@@ -167,7 +177,8 @@ export function MarketView() {
           setToSeller(null);
           // Mark the listing done and linked, then show the new seller's card.
           saveListing.mutate(
-            { id: listing.id, values: { status: "added", property_id: propertyId, assigned_to: listing.assigned_to ?? profile?.id } },
+            // Who added it is kept (assigned_to), so the seller link shows for them.
+            { id: listing.id, values: { status: "added", property_id: propertyId, assigned_to: profile?.id } },
             { onSettled: () => router.push(`/properties?open=${propertyId}`) },
           );
         }}

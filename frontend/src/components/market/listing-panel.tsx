@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2Icon, ExternalLinkIcon, PlusIcon } from "lucide-react";
+import { Building2Icon, ExternalLinkIcon, PlusIcon, RotateCcwIcon, ThumbsDownIcon } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
 import { Panel, SaveFooter } from "@/components/crm/panel";
@@ -27,12 +27,16 @@ export function ListingPanel({
   onClose,
   onCreated,
   onAddToSellers,
+  onNotInterested,
+  canOpenSeller,
 }: {
   id: string | null;
   creating?: boolean;
   onClose: () => void;
   onCreated: (id: string) => void;
   onAddToSellers: (l: MarketListing) => void;
+  onNotInterested: (l: MarketListing) => void;
+  canOpenSeller: (l: MarketListing) => boolean;
 }) {
   const { profile } = useAuth();
   const { data: listing, isLoading } = useRecord<MarketListing>("market_listings", creating ? null : id);
@@ -84,16 +88,30 @@ export function ListingPanel({
                 פתח ביד2
               </Button>
             )}
-            {listing.status === "added" && listing.property_id ? (
-              <Button variant="outline" size="sm" render={<Link href={`/properties?open=${listing.property_id}`} />} nativeButton={false}>
-                <Building2Icon />
-                לכרטיס המוכר
+            {listing.status === "new" || listing.status === "contacted" ? (
+              <>
+                <Button variant="outline" size="sm" onClick={() => onNotInterested(listing)}>
+                  <ThumbsDownIcon />
+                  דיברתי – לא מעוניין
+                </Button>
+                <Button size="sm" onClick={() => onAddToSellers(listing)}>
+                  <PlusIcon />
+                  הוסף למוכרים שלי
+                </Button>
+              </>
+            ) : listing.status === "not_interested" ? (
+              <Button variant="outline" size="sm" onClick={() => save.mutate({ id: listing.id, values: { status: "new" } })}>
+                <RotateCcwIcon />
+                החזר לטיפול
               </Button>
             ) : (
-              <Button size="sm" onClick={() => onAddToSellers(listing)}>
-                <PlusIcon />
-                הוסף למוכרים
-              </Button>
+              listing.property_id &&
+              canOpenSeller(listing) && (
+                <Button variant="outline" size="sm" render={<Link href={`/properties?open=${listing.property_id}`} />} nativeButton={false}>
+                  <Building2Icon />
+                  לכרטיס המוכר
+                </Button>
+              )
             )}
           </>
         )

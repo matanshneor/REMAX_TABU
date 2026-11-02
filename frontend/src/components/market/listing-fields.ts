@@ -1,12 +1,10 @@
 import type { FormSection } from "@/components/form/types";
-import { LISTING_STATUS, PROPERTY_TYPES, toOptions } from "@/lib/labels";
+import { PROPERTY_TYPES } from "@/lib/labels";
 
 export const LISTING_SECTIONS: FormSection[] = [
   {
-    title: "טיפול",
+    title: "הערות",
     fields: [
-      { name: "status", label: "מצב", type: "select", options: toOptions(LISTING_STATUS), noEmpty: true, span: 2 },
-      { name: "assigned_to", label: "סוכן מטפל", type: "agent", span: 2 },
       { name: "notes", label: "הערות", type: "textarea", span: 6, placeholder: "לדוגמה: דיברתי עם הבעלים, יחזור אליי ביום ראשון" },
     ],
   },
