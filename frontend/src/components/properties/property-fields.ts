@@ -1,6 +1,8 @@
 import type { FormSection } from "@/components/form/types";
 import { LEAD_SOURCES, OTHER_SOURCE, PISGAT_AREAS, PROPERTY_STATUS, PROPERTY_TYPES, toOptions } from "@/lib/labels";
 
+/** No field is required: a seller can always be saved, even half filled in. */
+
 /** Only the recruiting agent / admin may change these (enforced by a DB trigger). */
 export const MANAGER_ONLY_FIELDS = ["recruiter_id", "is_exclusive", "exclusivity_start", "exclusivity_end"];
 
@@ -22,7 +24,7 @@ export const PROPERTY_SECTIONS: FormSection[] = [
   {
     title: "מיקום",
     fields: [
-      { name: "city", label: "עיר", type: "text", required: true, span: 2 },
+      { name: "city", label: "עיר", type: "text", span: 2 },
       // Suggest the Pisgat Ze'ev areas buyers pick from, so matching compares the same names.
       { name: "neighborhood", label: "שכונה", type: "text", span: 2, suggestions: PISGAT_AREAS.map((a) => ({ value: a.value, label: a.value })) },
       { name: "property_type", label: "סוג נכס", type: "select", options: PROPERTY_TYPES, span: 2 },
@@ -78,7 +80,7 @@ export const PROPERTY_SECTIONS: FormSection[] = [
   {
     title: "סטטוס ובלעדיות",
     fields: [
-      { name: "status", label: "סטטוס", type: "select", options: toOptions(PROPERTY_STATUS), required: true, span: 2 },
+      { name: "status", label: "סטטוס", type: "select", options: toOptions(PROPERTY_STATUS), noEmpty: true, span: 2 },
       { name: "recruiter_id", label: "סוכן מגייס", type: "team", span: 2 },
       { name: "lead_source", label: "מקור", type: "select", options: LEAD_SOURCES, other: OTHER_SOURCE, placeholder: "לדוגמה: חבר של משה", span: 2 },
       { name: "is_exclusive", label: "בלעדיות", type: "boolean", span: 2 },

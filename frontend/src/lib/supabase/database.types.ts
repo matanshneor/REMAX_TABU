@@ -565,7 +565,7 @@ export type Database = {
           apartment_number: string | null
           balcony_count: number | null
           balcony_sqm: number | null
-          city: string
+          city: string | null
           created_at: string
           created_by: string | null
           current_price: number | null
@@ -609,7 +609,7 @@ export type Database = {
           apartment_number?: string | null
           balcony_count?: number | null
           balcony_sqm?: number | null
-          city: string
+          city?: string | null
           created_at?: string
           created_by?: string | null
           current_price?: number | null
@@ -653,7 +653,7 @@ export type Database = {
           apartment_number?: string | null
           balcony_count?: number | null
           balcony_sqm?: number | null
-          city?: string
+          city?: string | null
           created_at?: string
           created_by?: string | null
           current_price?: number | null

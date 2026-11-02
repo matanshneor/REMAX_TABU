@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { errorMessage } from "@/lib/data";
-import { formatAddress } from "@/lib/format";
+import { formatFullAddress } from "@/lib/format";
 import { canEditTask } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/client";
 import { useNewParam, usePanelParam } from "@/lib/use-panel-param";
@@ -245,7 +245,7 @@ export function TasksView() {
                                   className="flex items-center gap-1 hover:text-foreground hover:underline"
                                 >
                                   <Building2Icon className="size-3" />
-                                  {formatAddress(t.properties)}, {t.properties.city}
+                                  {formatFullAddress(t.properties)}
                                 </Link>
                               )}
                             </div>

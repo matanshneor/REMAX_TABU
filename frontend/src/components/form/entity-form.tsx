@@ -126,7 +126,7 @@ function Field({
         <SelectWithOther id={id} field={field} value={str} onChange={onChange} disabled={disabled} />
       ) : (
         <NativeSelect id={id} value={str} onChange={(e) => onChange(e.target.value)} disabled={disabled}>
-          {!field.required && <option value="">—</option>}
+          {!field.required && !field.noEmpty && <option value="">—</option>}
           {field.options?.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
@@ -278,7 +278,7 @@ function SelectWithOther({
         }}
         disabled={disabled}
       >
-        {!field.required && <option value="">—</option>}
+        {!field.required && !field.noEmpty && <option value="">—</option>}
         {field.options?.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}

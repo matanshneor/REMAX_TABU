@@ -2,7 +2,7 @@
 
 import { NavigationIcon, PhoneIcon } from "lucide-react";
 import { WhatsAppIcon } from "@/components/crm/whatsapp-button";
-import { formatAddress } from "@/lib/format";
+import { formatFullAddress } from "@/lib/format";
 import { whatsappUrl } from "@/lib/whatsapp";
 
 type Linked = {
@@ -11,7 +11,7 @@ type Linked = {
     street: string | null;
     house_number: string | null;
     apartment_number?: string | null;
-    city: string;
+    city: string | null;
     seller?: { owner_name: string | null; owner_phone: string | null } | null;
   } | null;
 };
@@ -27,7 +27,7 @@ export function TaskContactActions({ buyer, property }: Linked) {
   const phone = buyer?.phone ?? property?.seller?.owner_phone ?? null;
   const who = buyer?.full_name ?? property?.seller?.owner_name ?? "";
   const wa = phone ? whatsappUrl(phone) : null;
-  const address = property && property.street ? `${formatAddress({ ...property, apartment_number: null })}, ${property.city}` : null;
+  const address = property && property.street ? formatFullAddress({ ...property, apartment_number: null }) : null;
   if (!phone && !address) return null;
 
   return (

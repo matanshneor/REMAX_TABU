@@ -10,7 +10,7 @@ import { PanelSection } from "@/components/crm/panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAgentName, useSaveRecord } from "@/lib/data";
-import { formatAddress, formatDateTime } from "@/lib/format";
+import { formatDateTime, formatFullAddress } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 
 /** Viewing history (buyer ↔ property). Pass exactly one of buyerId / propertyId. */
@@ -103,7 +103,7 @@ export function ViewingsList({ buyerId, propertyId }: { buyerId?: string; proper
               <div className="min-w-0 flex-1">
                 {buyerId && v.properties ? (
                   <Link href={`/properties?open=${v.properties.id}`} className="font-medium hover:underline">
-                    {formatAddress(v.properties)}, {v.properties.city}
+                    {formatFullAddress(v.properties)}
                   </Link>
                 ) : v.buyers ? (
                   <Link href={`/buyers?open=${v.buyers.id}`} className="font-medium hover:underline">
