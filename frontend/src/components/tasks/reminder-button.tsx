@@ -1,6 +1,6 @@
 "use client";
 
-import { BellPlusIcon } from "lucide-react";
+import { ListPlusIcon } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { Segmented } from "@/components/crm/segmented";
@@ -13,29 +13,35 @@ import { Textarea } from "@/components/ui/textarea";
 import { useSaveRecord } from "@/lib/data";
 import { QuickDate } from "./quick-date";
 
-/** "Remind me" from a buyer's or seller's card: creates a private task linked to it. */
+/** "צור משימה" in a buyer's or seller's card: creates a private task linked to them. */
 export function ReminderButton({
   buyerId,
   propertyId,
   defaultTitle,
+  label,
+  heading,
 }: {
   buyerId?: string;
   propertyId?: string;
   defaultTitle: string;
+  /** The button, e.g. "צור משימה". */
+  label: string;
+  /** The window's title, e.g. "משימה לדני כהן". */
+  heading: string;
 }) {
   const [open, setOpen] = useState(false);
   return (
     <>
       <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
-        <BellPlusIcon />
-        תזכורת
+        <ListPlusIcon />
+        {label}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
           {open && (
             <NewTaskForm
-              heading="תזכורת חדשה"
-              submitLabel="שמור תזכורת"
+              heading={heading}
+              submitLabel="הוסף משימה"
               buyerId={buyerId}
               propertyId={propertyId}
               defaultTitle={defaultTitle}
@@ -50,7 +56,7 @@ export function ReminderButton({
 
 /**
  * A private task: what, when (quick date buttons), optionally who it's about, and details.
- * Used by "תזכורת", the "+ משימה" in a card and "משימה חדשה" on the tasks page.
+ * Used by the card's "צור משימה" button and "משימה חדשה" on the tasks page.
  */
 export function NewTaskForm({
   heading,
