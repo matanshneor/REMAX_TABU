@@ -1,5 +1,5 @@
 import type { FormSection } from "@/components/form/types";
-import { LEAD_SOURCES, OTHER_SOURCE, PISGAT_AREAS, PROPERTY_ENGAGEMENT, PROPERTY_STATUS, PROPERTY_TYPES, toOptions } from "@/lib/labels";
+import { OTHER_SOURCE, SELLER_SOURCES, SOURCE_DETAIL, PISGAT_AREAS, PROPERTY_ENGAGEMENT, PROPERTY_STATUS, PROPERTY_TYPES, toOptions } from "@/lib/labels";
 
 /** No field is required: a seller can always be saved, even half filled in. */
 
@@ -84,7 +84,7 @@ export const PROPERTY_SECTIONS: FormSection[] = [
       { name: "engagement", label: "סוג התקשרות", type: "select", options: toOptions(PROPERTY_ENGAGEMENT), noEmpty: true, span: 2 },
       { name: "status", label: "מצב בשוק", type: "select", options: toOptions(PROPERTY_STATUS), noEmpty: true, span: 2 },
       { name: "recruiter_id", label: "סוכן מגייס", type: "team", span: 2 },
-      { name: "lead_source", label: "מקור", type: "select", options: LEAD_SOURCES, other: OTHER_SOURCE, placeholder: "לדוגמה: חבר של משה", span: 2 },
+      { name: "lead_source", label: "מקור", type: "select", options: SELLER_SOURCES, other: OTHER_SOURCE, detail: SOURCE_DETAIL, placeholder: "לדוגמה: חבר של משה", span: 2 },
       { name: "is_exclusive", label: "בלעדיות", type: "boolean", span: 2 },
       { name: "exclusivity_start", label: "תחילת בלעדיות", type: "date", span: 2 },
       { name: "exclusivity_end", label: "סיום בלעדיות", type: "date", span: 2 },

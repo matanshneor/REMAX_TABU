@@ -36,6 +36,11 @@ export type FieldDef = {
   suggestions?: Option[];
   /** Select only: adds this choice (e.g. "אחר") which opens a text box; the typed text is saved as the value. */
   other?: string;
+  /**
+   * Select with `other` only: choices that also ask "who/what", e.g. { "הפניה": "ממי ההפניה?" }.
+   * Picking one opens a text box; the value is saved as "הפניה: דוד כהן" (or just "הפניה").
+   */
+  detail?: Record<string, string>;
   /** Date only: a button (e.g. "מיידי") that sets this boolean field instead of a date, and clears the date. */
   now?: { field: string; label: string };
   /** Select only: no empty "—" choice, so it always has a value — without being marked required. */
