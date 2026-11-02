@@ -60,8 +60,8 @@ export const PROPERTY_SECTIONS: FormSection[] = [
     ],
   },
   {
-    // Filling in a count or a size ticks "גינה" / "מרפסת" on save (a DB trigger), so search and matching see it.
-    title: "גינה ומרפסות",
+    // Filling in a count or a size ticks "גינה" / "מרפסת" / "יחידת דיור" on save (a DB trigger), so search and matching see it.
+    title: "גינה, מרפסות ויחידות דיור",
     fields: [
       { name: "has_garden", label: "גינה", type: "boolean", span: 2 },
       { name: "garden_count", label: "מספר גינות", type: "number", span: 2 },
@@ -69,6 +69,9 @@ export const PROPERTY_SECTIONS: FormSection[] = [
       { name: "has_balcony", label: "מרפסת", type: "boolean", span: 2 },
       { name: "balcony_count", label: "מספר מרפסות", type: "number", span: 2 },
       { name: "balcony_sqm", label: "גודל המרפסות (מ״ר)", type: "number", span: 2 },
+      { name: "has_rental_unit", label: "יחידות דיור", type: "boolean", span: 2 },
+      { name: "rental_unit_count", label: "מספר יחידות", type: "number", span: 2 },
+      { name: "rental_unit_sqm", label: "גודל סה״כ (מ״ר)", type: "number", span: 2 },
     ],
   },
   PROPERTY_DESCRIPTION_SECTION,
