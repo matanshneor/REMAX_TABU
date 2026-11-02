@@ -199,7 +199,7 @@ export function BuyersView() {
   return (
     <>
       <PageHeader
-        title={admin ? "כל הקונים במשרד" : "הקונים שלי"}
+        title={admin ? "קונים" : "הקונים שלי"}
         count={buyers.filter(isActiveBuyer).length}
         actions={
           <>
