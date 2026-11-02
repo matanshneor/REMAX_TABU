@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Switch } from "@/components/ui/switch";
-import { type Option, PROPERTY_STATUS, PROPERTY_TYPES } from "@/lib/labels";
+import { type Option, PROPERTY_ENGAGEMENT, PROPERTY_STATUS, PROPERTY_TYPES } from "@/lib/labels";
 import type { Enum, Property } from "@/lib/types";
 
 export type PropertyFilters = {
@@ -15,6 +15,7 @@ export type PropertyFilters = {
   neighborhood: string;
   type: string;
   source: string;
+  engagement: Enum<"property_engagement"> | "";
   status: Enum<"property_status"> | "";
   priceMin: string;
   priceMax: string;
@@ -36,6 +37,7 @@ export const DEFAULT_FILTERS: PropertyFilters = {
   neighborhood: "",
   type: "",
   source: "",
+  engagement: "",
   status: "active",
   priceMin: "",
   priceMax: "",
@@ -63,6 +65,7 @@ export function applyFilters<T extends Property>(list: T[], f: PropertyFilters, 
       has(p.neighborhood, f.neighborhood) &&
       (!f.type || p.property_type === f.type) &&
       (!f.source || p.lead_source === f.source) &&
+      (!f.engagement || p.engagement === f.engagement) &&
       (!f.status || p.status === f.status) &&
       (pMin == null || (p.current_price ?? 0) >= pMin) &&
       (pMax == null || (p.current_price ?? Infinity) <= pMax) &&
@@ -118,7 +121,7 @@ export function PropertyFiltersPanel({
         )}
       </div>
 
-      <Group label="סטטוס">
+      <Group label="מצב בשוק">
         <NativeSelect value={value.status} onChange={(e) => set("status", e.target.value as PropertyFilters["status"])}>
           <option value="">הכל</option>
           {Object.entries(PROPERTY_STATUS).map(([k, v]) => (
@@ -148,6 +151,17 @@ export function PropertyFiltersPanel({
           {PROPERTY_TYPES.map((t) => (
             <option key={t.value} value={t.value}>
               {t.label}
+            </option>
+          ))}
+        </NativeSelect>
+      </Group>
+
+      <Group label="סוג התקשרות">
+        <NativeSelect value={value.engagement} onChange={(e) => set("engagement", e.target.value as PropertyFilters["engagement"])}>
+          <option value="">הכל</option>
+          {Object.entries(PROPERTY_ENGAGEMENT).map(([k, v]) => (
+            <option key={k} value={k}>
+              {v.label}
             </option>
           ))}
         </NativeSelect>
@@ -207,7 +221,7 @@ export function PropertyFiltersPanel({
 }
 
 /** Filters that live behind "עוד סינונים" in the bar: shown on the button when any is on. */
-const MORE_FILTERS: (keyof PropertyFilters)[] = ["source", "roomsMin", "sizeMin", ...TOGGLES.map(([k]) => k), "exclusiveOnly", "mineOnly"];
+const MORE_FILTERS: (keyof PropertyFilters)[] = ["engagement", "source", "roomsMin", "sizeMin", ...TOGGLES.map(([k]) => k), "exclusiveOnly", "mineOnly"];
 
 /** Desktop: the filters in a bar above the grid, so the listings use the full width. */
 export function PropertyFiltersBar({
@@ -236,6 +250,19 @@ export function PropertyFiltersBar({
       onReset={dirty ? () => onChange(DEFAULT_FILTERS) : undefined}
       more={
         <>
+          <NativeSelect
+            value={value.engagement}
+            onChange={(e) => set("engagement", e.target.value as PropertyFilters["engagement"])}
+            aria-label="סוג התקשרות"
+            className="w-36"
+          >
+            <option value="">כל סוגי ההתקשרות</option>
+            {Object.entries(PROPERTY_ENGAGEMENT).map(([k, v]) => (
+              <option key={k} value={k}>
+                {v.label}
+              </option>
+            ))}
+          </NativeSelect>
           <NativeSelect value={value.source} onChange={(e) => set("source", e.target.value)} aria-label="מקור" className="w-36">
             <option value="">כל המקורות</option>
             {sources.map((o) => (

@@ -1,3 +1,4 @@
+import { isOffered } from "./labels";
 import type { Buyer, Property } from "./types";
 
 /** Buyers may go up to this much over their stated budget. */
@@ -30,6 +31,7 @@ type BuyerReq = Pick<
 type PropertyFacts = Pick<
   Property,
   | "status"
+  | "engagement"
   | "neighborhood"
   | "current_price"
   | "rooms"
@@ -54,7 +56,7 @@ const NO_MATCH: Match = { ok: false, score: 0, reasons: [] };
  * "nice to have" features and price headroom raise the score.
  */
 export function matchBuyerToProperty(buyer: BuyerReq, property: PropertyFacts): Match {
-  if (property.status !== "active") return NO_MATCH;
+  if (!isOffered(property)) return NO_MATCH;
 
   const reasons: MatchReason[] = [];
   let score = 0;

@@ -21,7 +21,7 @@ export function PropertyMatches({ buyer }: { buyer: Buyer }) {
   const { data: properties = [], isLoading } = useQuery({
     queryKey: ["properties", "active-for-matching"],
     queryFn: async (): Promise<Property[]> => {
-      const { data, error } = await createClient().from("properties").select("*").eq("status", "active");
+      const { data, error } = await createClient().from("properties").select("*").eq("status", "active").neq("engagement", "recruiting");
       if (error) throw error;
       return data;
     },

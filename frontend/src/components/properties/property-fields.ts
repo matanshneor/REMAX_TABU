@@ -1,8 +1,8 @@
 import type { FormSection } from "@/components/form/types";
-import { LEAD_SOURCES, OTHER_SOURCE, PISGAT_AREAS, PROPERTY_STATUS, PROPERTY_TYPES, toOptions } from "@/lib/labels";
+import { LEAD_SOURCES, OTHER_SOURCE, PISGAT_AREAS, PROPERTY_ENGAGEMENT, PROPERTY_STATUS, PROPERTY_TYPES, toOptions } from "@/lib/labels";
 
 /** Only the recruiting agent / admin may change these (enforced by a DB trigger). */
-export const MANAGER_ONLY_FIELDS = ["recruiter_id", "is_exclusive", "exclusivity_start", "exclusivity_end"];
+export const MANAGER_ONLY_FIELDS = ["recruiter_id", "engagement", "is_exclusive", "exclusivity_start", "exclusivity_end"];
 
 /** Shown right under the photos in the property panel; at the end of the "new seller" form. */
 export const PROPERTY_DESCRIPTION_SECTION: FormSection = {
@@ -72,9 +72,11 @@ export const PROPERTY_SECTIONS: FormSection[] = [
   },
   PROPERTY_DESCRIPTION_SECTION,
   {
-    title: "סטטוס ובלעדיות",
+    title: "התקשרות ובלעדיות",
     fields: [
-      { name: "status", label: "סטטוס", type: "select", options: toOptions(PROPERTY_STATUS), required: true, span: 2 },
+      // Picking "בלעדיות" turns the exclusivity switch on (and back), in the form and in the DB.
+      { name: "engagement", label: "סוג התקשרות", type: "select", options: toOptions(PROPERTY_ENGAGEMENT), required: true, span: 2 },
+      { name: "status", label: "מצב בשוק", type: "select", options: toOptions(PROPERTY_STATUS), required: true, span: 2 },
       { name: "recruiter_id", label: "סוכן מגייס", type: "team", span: 2 },
       { name: "lead_source", label: "מקור", type: "select", options: LEAD_SOURCES, other: OTHER_SOURCE, placeholder: "לדוגמה: חבר של משה", span: 2 },
       { name: "is_exclusive", label: "בלעדיות", type: "boolean", span: 2 },
@@ -110,7 +112,19 @@ const AGENT_CREATE_PROPERTY_SECTIONS = CREATE_PROPERTY_SECTIONS.map((s) =>
 );
 export const propertyCreateSections = (admin: boolean) => (admin ? CREATE_PROPERTY_SECTIONS : AGENT_CREATE_PROPERTY_SECTIONS);
 
-export const NEW_PROPERTY = { status: "active", parking_spots: 0 };
+export const NEW_PROPERTY = { engagement: "recruiting", status: "active", parking_spots: 0 };
+
+/** Form changes: "סוג התקשרות" and the exclusivity switch follow each other. */
+export function withExclusivityLink(set: (name: string, value: unknown) => void, values: Record<string, unknown>) {
+  return (name: string, value: unknown) => {
+    set(name, value);
+    if (name === "engagement") set("is_exclusive", value === "exclusive");
+    if (name === "is_exclusive") {
+      if (value) set("engagement", "exclusive");
+      else if (values.engagement === "exclusive") set("engagement", "consent");
+    }
+  };
+}
 
 export const OWNER_SECTIONS: FormSection[] = [
   {
