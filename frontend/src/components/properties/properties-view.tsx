@@ -15,7 +15,6 @@ import { sourceOptions } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/client";
 import type { Property } from "@/lib/types";
 import { useNewParam, usePanelParam } from "@/lib/use-panel-param";
-import { PropertiesKpis } from "./properties-kpis";
 import { PropertyCard } from "./property-card";
 import { applyFilters, DEFAULT_FILTERS, PropertyFiltersBar, PropertyFiltersPanel } from "./property-filters";
 import { MEDIA_BUCKET } from "./property-images";
@@ -66,7 +65,6 @@ export function PropertiesView() {
     <>
       <PageHeader
         title="מוכרים"
-        description="כל הנכסים במאגר, כולל נכסים שאינם בבלעדיות המשרד"
         // Same number as the sidebar: listings that are on the market now.
         count={properties.filter((p) => p.status === "active").length}
         actions={
@@ -84,8 +82,6 @@ export function PropertiesView() {
           </>
         }
       />
-
-      {!isLoading && !error && <PropertiesKpis properties={properties} />}
 
       {/* Desktop: the filter bar above the grid. Smaller screens: behind the "סינון" button. */}
       <div className="hidden lg:block">
