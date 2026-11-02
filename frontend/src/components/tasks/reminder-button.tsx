@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useSaveRecord } from "@/lib/data";
 import { QuickDate } from "./quick-date";
 
-/** "+ משימה ל…" in a buyer's or seller's card: creates a private task linked to them. */
+/** "צור משימה" in a buyer's or seller's card: creates a private task linked to them. */
 export function ReminderButton({
   buyerId,
   propertyId,
@@ -24,7 +24,7 @@ export function ReminderButton({
   buyerId?: string;
   propertyId?: string;
   defaultTitle: string;
-  /** The button, e.g. "משימה לדני". */
+  /** The button, e.g. "צור משימה". */
   label: string;
   /** The window's title, e.g. "משימה לדני כהן". */
   heading: string;
@@ -56,7 +56,7 @@ export function ReminderButton({
 
 /**
  * A private task: what, when (quick date buttons), optionally who it's about, and details.
- * Used by the card's "משימה ל…" buttons and "משימה חדשה" on the tasks page.
+ * Used by the card's "צור משימה" button and "משימה חדשה" on the tasks page.
  */
 export function NewTaskForm({
   heading,

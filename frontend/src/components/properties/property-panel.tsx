@@ -174,7 +174,7 @@ export function PropertyPanel({
             <ReminderButton
               propertyId={property.id}
               defaultTitle={`מעקב: ${formatAddress(property)}`}
-              label="משימה לנכס"
+              label="צור משימה"
               heading={`משימה לנכס ב${formatAddress(property)}`}
             />
           </>
