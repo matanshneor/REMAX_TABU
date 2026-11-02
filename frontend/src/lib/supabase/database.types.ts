@@ -449,8 +449,13 @@ export type Database = {
           city: string | null
           created_at: string
           created_by: string | null
+          dismissed_at: string | null
+          dismissed_by: string | null
+          dismissed_reason: string | null
           floor: number | null
           id: string
+          image_path: string | null
+          image_url: string | null
           listed_at: string
           neighborhood: string | null
           notes: string | null
@@ -473,8 +478,13 @@ export type Database = {
           city?: string | null
           created_at?: string
           created_by?: string | null
+          dismissed_at?: string | null
+          dismissed_by?: string | null
+          dismissed_reason?: string | null
           floor?: number | null
           id?: string
+          image_path?: string | null
+          image_url?: string | null
           listed_at?: string
           neighborhood?: string | null
           notes?: string | null
@@ -497,8 +507,13 @@ export type Database = {
           city?: string | null
           created_at?: string
           created_by?: string | null
+          dismissed_at?: string | null
+          dismissed_by?: string | null
+          dismissed_reason?: string | null
           floor?: number | null
           id?: string
+          image_path?: string | null
+          image_url?: string | null
           listed_at?: string
           neighborhood?: string | null
           notes?: string | null
@@ -966,6 +981,26 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_system: { Args: never; Returns: boolean }
       phone_key: { Args: { p: string }; Returns: string }
+      office_listings: {
+        Args: never
+        Returns: {
+          agent_name: string
+          city: string
+          current_price: number
+          engagement: Database["public"]["Enums"]["property_engagement"]
+          floor: number
+          has_balcony: boolean
+          has_elevator: boolean
+          has_safe_room: boolean
+          id: string
+          neighborhood: string
+          property_type: string
+          recruiting_agent_id: string
+          rooms: number
+          size_sqm: number
+          status: Database["public"]["Enums"]["property_status"]
+        }[]
+      }
       rotate_calendar_token: { Args: never; Returns: string }
       property_fits_buyer: {
         Args: {

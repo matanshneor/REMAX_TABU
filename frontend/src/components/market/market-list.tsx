@@ -1,108 +1,108 @@
 "use client";
 
-import { Building2Icon, ExternalLinkIcon, HandIcon, PlusIcon } from "lucide-react";
-import Link from "next/link";
-import { Pill, StatusBadge } from "@/components/crm/status-badge";
-import { Button } from "@/components/ui/button";
+import { ImageOffIcon } from "lucide-react";
+import { Pill } from "@/components/crm/status-badge";
 import { formatILS, formatRelative } from "@/lib/format";
-import { LISTING_STATUS } from "@/lib/labels";
 import type { MarketListing } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 /** "דירה 4 חד׳" from the ad's title, or from its type and rooms. */
 export function listingTitle(l: MarketListing): string {
   return l.title || [l.property_type ?? "נכס", l.rooms && `${l.rooms} חד׳`].filter(Boolean).join(" ");
 }
 
-/**
- * The pool as a work list: what the ad is, how old it is, who's on it, and the next step
- * (open the ad, take it, add it to sellers).
- */
-export function MarketList({
+export function listingPlace(l: MarketListing): string {
+  return [l.street, l.neighborhood, l.city].filter(Boolean).join(", ");
+}
+
+/** The listing's photo: one uploaded by hand (signed URL), else the one from Yad2's e-mail. */
+export function listingPhoto(l: MarketListing, signed: Record<string, string>): string | undefined {
+  return (l.image_path && signed[l.image_path]) || l.image_url || undefined;
+}
+
+function Yad2Tag() {
+  return <span className="rounded-md bg-[#ff7100] px-1.5 py-0.5 text-[11px] font-bold text-white">יד2</span>;
+}
+
+/** New listings as cards, like the sellers page; a click opens the listing's card. */
+export function MarketGrid({
   rows,
-  agentName,
-  myId,
+  photos,
   onOpen,
-  onTake,
-  onAddToSellers,
 }: {
   rows: MarketListing[];
-  agentName: (id: string | null) => string;
-  myId?: string;
+  photos: Record<string, string>;
   onOpen: (id: string) => void;
-  onTake: (l: MarketListing) => void;
-  onAddToSellers: (l: MarketListing) => void;
 }) {
   return (
-    <ul className="divide-y overflow-hidden rounded-xl border bg-card shadow-[0_1px_2px_rgb(15_26_46/0.04),0_8px_24px_-14px_rgb(15_26_46/0.12)]">
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
       {rows.map((l) => {
-        const place = [l.street, l.neighborhood, l.city].filter(Boolean).join(", ");
-        // Rooms are already in the title.
-        const specs = [
-          l.size_sqm && `${l.size_sqm} מ״ר`,
-          l.floor != null && `קומה ${l.floor}`,
-        ].filter(Boolean);
-        const done = l.status === "added" || l.status === "not_interested";
+        const photo = listingPhoto(l, photos);
+        const fresh = <Pill tone="blue" className="bg-white">חדש · {formatRelative(l.listed_at)}</Pill>;
+        const specs = [l.size_sqm && `${l.size_sqm} מ״ר`, l.floor != null && (l.floor === 0 ? "קומת קרקע" : `קומה ${l.floor}`)].filter(Boolean);
         return (
-          <li
+          <button
             key={l.id}
             onClick={() => onOpen(l.id)}
-            className={cn("flex cursor-pointer flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 hover:bg-muted/50", done && "opacity-70")}
+            className="group flex flex-col overflow-hidden rounded-xl border bg-card text-start shadow-[0_1px_2px_rgb(15_26_46/0.04),0_8px_24px_-14px_rgb(15_26_46/0.12)] transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-[0_2px_4px_rgb(15_26_46/0.05),0_18px_36px_-14px_rgb(15_26_46/0.25)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           >
-            <div className="min-w-0 flex-1 basis-64">
-              <div className="flex items-center gap-2">
-                <StatusBadge map={LISTING_STATUS} value={l.status} />
-                <p className="truncate font-medium">{listingTitle(l)}</p>
-                {l.advertiser && <span className="truncate text-xs text-muted-foreground">· {l.advertiser}</span>}
+            {photo ? (
+              <div className="relative aspect-[16/10] bg-muted">
+                {/* Outside or short-lived signed URLs; next/image optimization isn't useful here. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={photo} alt="" className="absolute inset-0 size-full object-cover" />
+                <div className="absolute inset-x-2 top-2 flex justify-between gap-1">
+                  {fresh}
+                  <Yad2Tag />
+                </div>
               </div>
-              <p className="mt-0.5 truncate text-sm text-muted-foreground">
-                {[place, ...specs].filter(Boolean).join(" · ") || "אין עדיין פרטים — פתחו את המודעה"}
-              </p>
+            ) : (
+              <div className="flex items-center justify-between gap-2 border-b bg-secondary/50 px-3 py-2">
+                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <ImageOffIcon className="size-3.5" />
+                  אין תמונה
+                </span>
+                {fresh}
+              </div>
+            )}
+            <div className="flex flex-1 flex-col gap-1 p-3.5">
+              <p className="font-display text-xl text-primary tabular-nums">{l.price ? formatILS(l.price) : "מחיר לא צוין"}</p>
+              <p className="truncate font-medium">{listingTitle(l)}</p>
+              <p className="truncate text-sm text-muted-foreground">{listingPlace(l) || "אין עדיין כתובת — פתחו את המודעה"}</p>
+              {specs.length > 0 && <p className="text-sm tabular-nums">{specs.join(" · ")}</p>}
             </div>
-
-            <div className="w-28 shrink-0 text-sm font-semibold tabular-nums text-primary">{l.price ? formatILS(l.price) : "—"}</div>
-            <div className="w-24 shrink-0 text-xs text-muted-foreground">{formatRelative(l.listed_at)}</div>
-
-            <div onClick={(e) => e.stopPropagation()} className="flex shrink-0 items-center justify-end gap-1.5 sm:w-80">
-              {l.assigned_to ? (
-                <Pill tone={l.assigned_to === myId ? "blue" : "neutral"}>{l.assigned_to === myId ? "אצלי" : agentName(l.assigned_to)}</Pill>
-              ) : (
-                !done && (
-                  <Button variant="outline" size="sm" onClick={() => onTake(l)}>
-                    <HandIcon />
-                    קח אליי
-                  </Button>
-                )
-              )}
-              {l.url && (
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  render={<a href={l.url} target="_blank" rel="noopener" />}
-                  nativeButton={false}
-                  aria-label="פתח את המודעה ביד2"
-                  title="פתח את המודעה ביד2"
-                >
-                  <ExternalLinkIcon />
-                </Button>
-              )}
-              {l.status === "added" && l.property_id ? (
-                <Button variant="outline" size="sm" render={<Link href={`/properties?open=${l.property_id}`} />} nativeButton={false}>
-                  <Building2Icon />
-                  לכרטיס המוכר
-                </Button>
-              ) : (
-                l.status !== "not_interested" && (
-                  <Button size="sm" onClick={() => onAddToSellers(l)}>
-                    <PlusIcon />
-                    הוסף למוכרים
-                  </Button>
-                )
-              )}
-            </div>
-          </li>
+          </button>
         );
       })}
+    </div>
+  );
+}
+
+/**
+ * Handled listings, small, under the grid: what it was, and who handled it when
+ * (and why, for "לא רלוונטי"). A click opens the listing's card.
+ */
+export function HandledList({
+  rows,
+  detail,
+  onOpen,
+}: {
+  rows: MarketListing[];
+  detail: (l: MarketListing) => React.ReactNode;
+  onOpen: (id: string) => void;
+}) {
+  return (
+    <ul className="divide-y overflow-hidden rounded-xl border bg-card text-sm">
+      {rows.map((l) => (
+        <li key={l.id}>
+          <button onClick={() => onOpen(l.id)} className="flex w-full flex-wrap items-center gap-x-3 gap-y-0.5 px-4 py-2.5 text-start hover:bg-muted/50">
+            <span className="min-w-0 flex-1 truncate">
+              {listingTitle(l)}
+              {listingPlace(l) && <span className="text-muted-foreground"> · {listingPlace(l)}</span>}
+            </span>
+            <span className="text-xs text-muted-foreground">{detail(l)}</span>
+          </button>
+        </li>
+      ))}
     </ul>
   );
 }
