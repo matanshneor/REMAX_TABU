@@ -11,6 +11,7 @@ export type OfficeAgent = Row<"office_agents">;
 export type Buyer = Row<"buyers">;
 export type BuyerNote = Row<"buyer_notes">;
 export type Property = Row<"properties">;
+export type MarketListing = Row<"market_listings">;
 export type OwnerDetails = Row<"property_owner_details">;
 export type Viewing = Row<"buyer_property_viewings">;
 export type Task = Row<"tasks">;
