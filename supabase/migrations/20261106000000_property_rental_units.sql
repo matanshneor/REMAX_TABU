@@ -29,8 +29,7 @@ begin
 end;
 $$;
 
-drop trigger properties_sync_outdoor on public.properties;
-create trigger properties_sync_outdoor
+create or replace trigger properties_sync_outdoor
   before insert or update of garden_count, garden_sqm, balcony_count, balcony_sqm, has_garden, has_balcony,
                              rental_unit_count, rental_unit_sqm, has_rental_unit
   on public.properties
