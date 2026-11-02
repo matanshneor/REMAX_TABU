@@ -18,6 +18,8 @@ import { createClient } from "@/lib/supabase/client";
 import { useNewParam, usePanelParam } from "@/lib/use-panel-param";
 import { cn } from "@/lib/utils";
 import { CalendarSyncButton } from "./calendar-sync";
+import { type FinishedBuyerTask, LogToBuyerDialog } from "./log-to-buyer-dialog";
+import { TaskContactActions } from "./task-contact-actions";
 import { NewTaskForm } from "./reminder-button";
 import { TaskPanel } from "./task-panel";
 
@@ -28,7 +30,9 @@ const COMPLETE_DELAY_MS = 450;
 async function fetchTasks(userId: string) {
   const { data, error } = await createClient()
     .from("tasks")
-    .select("*, buyers(id, full_name), properties(id, street, house_number, apartment_number, city)")
+    .select(
+      "*, buyers(id, full_name, phone), properties(id, street, house_number, apartment_number, city, property_owner_details(owner_name, owner_phone))",
+    )
     .eq("assigned_to", userId)
     .order("due_at", { ascending: true, nullsFirst: false });
   if (error) throw error;
@@ -75,6 +79,7 @@ export function TasksView() {
   const [showDone, setShowDone] = useState(false);
   // Tasks being checked off play a short strike-through + fade before moving to "done".
   const [completing, setCompleting] = useState<Set<string>>(new Set());
+  const [logFor, setLogFor] = useState<FinishedBuyerTask | null>(null);
 
   function setDone(id: string, is_done: boolean) {
     if (!is_done || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -201,7 +206,11 @@ export function TasksView() {
                             <Checkbox
                               checked={done}
                               disabled={!canEditTask(profile, t) || completing.has(t.id)}
-                              onCheckedChange={(c) => setDone(t.id, Boolean(c))}
+                              onCheckedChange={(c) => {
+                                // Checking off a task linked to a buyer asks what happened, for their call log.
+                                if (c && t.buyers) setLogFor({ buyerId: t.buyers.id, buyerName: t.buyers.full_name, taskTitle: t.title });
+                                setDone(t.id, Boolean(c));
+                              }}
                               aria-label={done ? "סמן כלא בוצעה" : "סמן כבוצעה"}
                               className="size-5 rounded-full"
                             />
@@ -241,6 +250,12 @@ export function TasksView() {
                               )}
                             </div>
                           </div>
+                          {!t.is_done && (
+                            <TaskContactActions
+                              buyer={t.buyers}
+                              property={t.properties && { ...t.properties, seller: t.properties.property_owner_details }}
+                            />
+                          )}
                           {t.due_at && !t.is_done && (
                             <span
                               className={cn(
@@ -269,6 +284,7 @@ export function TasksView() {
           {creating && <NewTaskForm heading="משימה חדשה" submitLabel="הוסף משימה" onDone={() => setCreating(false)} />}
         </DialogContent>
       </Dialog>
+      <LogToBuyerDialog task={logFor} onClose={() => setLogFor(null)} />
       <TaskPanel id={openId} onClose={() => setOpenId(null)} />
     </div>
   );

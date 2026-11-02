@@ -201,7 +201,7 @@ export function BuyerPanel({
             </div>
           )}
           <BuyerNotes buyerId={buyer.id} />
-          <LinkedTasks buyerId={buyer.id} title="המשימות שלי על הקונה" />
+          <LinkedTasks buyer={buyer} title="המשימות שלי על הקונה" />
           <PropertyMatches buyer={buyer} />
           <ViewingsList buyerId={buyer.id} />
           {admin && (
