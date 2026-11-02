@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, Columns3Icon, PlusIcon, SearchIcon, UsersIcon } from "lucide-react";
+import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, Columns3Icon, PlusIcon, SearchIcon, SparklesIcon, UsersIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { ExportButton } from "@/components/crm/export-button";
@@ -16,7 +16,9 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useRecruiterName, useTeam } from "@/lib/data";
-import { formatILSCompact, formatRelative } from "@/lib/format";
+import { formatDate, formatILSCompact, formatRelative } from "@/lib/format";
+import { matchBuyerToProperty } from "@/lib/matching";
+import { useOfficeListings } from "@/components/matching/office-listings";
 import { StatusBadge } from "@/components/crm/status-badge";
 import { BUYER_STATUS, isActiveBuyer, PISGAT_AREAS, PROPERTY_TYPES, sourceOptions } from "@/lib/labels";
 import { isAdmin } from "@/lib/permissions";
@@ -25,10 +27,9 @@ import type { Buyer, Enum } from "@/lib/types";
 import { useNewParam, usePanelParam } from "@/lib/use-panel-param";
 import { cn } from "@/lib/utils";
 import { BuyerPanel } from "./buyer-panel";
-import { MatchBanner } from "./match-banner";
 
 /** Columns shown by default; the rest are in the buyer's card or behind "all columns". */
-const COMPACT_COLUMNS = new Set(["name", "status", "contact", "phone", "area", "rooms", "budget", "agent"]);
+const COMPACT_COLUMNS = new Set(["name", "rooms", "area", "budget", "matches", "added", "phone"]);
 
 /** An open buyer with no call logged for this long is marked as neglected. */
 const STALE_DAYS = 14;
@@ -40,6 +41,17 @@ const lastContact = (b: BuyerRow) => b.buyer_notes[0]?.created_at ?? b.created_a
 const isStale = (b: BuyerRow) =>
   isActiveBuyer(b) && Date.now() - new Date(lastContact(b)).getTime() > STALE_DAYS * 86_400_000;
 const SHOW_ALL_KEY = "buyers:show-all-columns";
+
+type StatusFilter = "all" | "active" | "stale" | Enum<"buyer_status">;
+
+/** The status buttons in the bar; any other single status is picked under "סינונים". */
+const STATUS_TABS: { value: StatusFilter; label: string }[] = [
+  { value: "active", label: "בטיפול" },
+  { value: "hot", label: "חמים" },
+  { value: "stale", label: "מוזנחים" },
+  { value: "all", label: "כולל סגורים" },
+];
+const isTab = (v: StatusFilter) => STATUS_TABS.some((t) => t.value === v);
 
 /** Admin-only filter: everyone, unassigned leads, or one agent's buyers. */
 type AgentFilter = "all" | "unassigned" | (string & {});
@@ -91,10 +103,12 @@ export function BuyersView() {
   const [creating, setCreating] = useNewParam();
   const [text, setText] = useState("");
   const [agentFilter, setAgentFilter] = useState<AgentFilter>("all");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "stale" | Enum<"buyer_status">>("active");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
   const [more, setMore] = useState(NO_MORE_FILTERS);
   const setMoreFilter = <K extends keyof MoreFilters>(k: K, v: MoreFilters[K]) => setMore((m) => ({ ...m, [k]: v }));
-  const moreCount = (Object.keys(NO_MORE_FILTERS) as (keyof MoreFilters)[]).filter((k) => more[k] !== NO_MORE_FILTERS[k]).length;
+  const moreCount =
+    (Object.keys(NO_MORE_FILTERS) as (keyof MoreFilters)[]).filter((k) => more[k] !== NO_MORE_FILTERS[k]).length +
+    (isTab(statusFilter) ? 0 : 1);
   const filtering = text !== "" || agentFilter !== "all" || statusFilter !== "active" || moreCount > 0;
   function resetFilters() {
     setText("");
@@ -121,6 +135,14 @@ export function BuyersView() {
       return data;
     },
   });
+
+  // How many offered properties (the whole office's) fit each buyer: shown in the row.
+  const { data: listings = [] } = useOfficeListings();
+  const matches = useMemo(
+    () => new Map(buyers.map((b) => [b.id, isActiveBuyer(b) ? listings.filter((p) => matchBuyerToProperty(b, p).ok).length : 0])),
+    [buyers, listings],
+  );
+  const ctx = useMemo(() => ({ agentName, matches }), [agentName, matches]);
 
   // RLS already limits agents to their own buyers; the agent filter is for the admin.
   const byOwnership = useMemo(
@@ -186,9 +208,9 @@ export function BuyersView() {
     const col = sort && COLUMNS.find((c) => c.key === sort.key);
     if (!col?.sortValue) return filtered;
     return [...filtered].sort((a, b) =>
-      compareValues(col.sortValue!(a, agentName), col.sortValue!(b, agentName), sort!.dir),
+      compareValues(col.sortValue!(a, ctx), col.sortValue!(b, ctx), sort!.dir),
     );
-  }, [filtered, sort, agentName]);
+  }, [filtered, sort, ctx]);
 
   function toggleSort(key: string) {
     setSort((s) => (s?.key !== key ? { key, dir: 1 } : s.dir === 1 ? { key, dir: -1 } : null));
@@ -228,6 +250,19 @@ export function BuyersView() {
         }
         more={
           <>
+            <NativeSelect
+              value={isTab(statusFilter) ? "" : statusFilter}
+              onChange={(e) => setStatusFilter((e.target.value || "active") as StatusFilter)}
+              aria-label="סטטוס"
+              className="w-36"
+            >
+              <option value="">כל סטטוס</option>
+              {Object.entries(BUYER_STATUS).map(([value, { label }]) => (
+                <option key={value} value={value}>
+                  {label} ({byOwnership.filter((b) => b.status === value).length})
+                </option>
+              ))}
+            </NativeSelect>
             <NativeSelect value={more.area} onChange={(e) => setMoreFilter("area", e.target.value)} aria-label="אזור" className="w-32">
               <option value="">כל האזורים</option>
               {PISGAT_AREAS.map((a) => (
@@ -280,24 +315,32 @@ export function BuyersView() {
           />
         </div>
 
-        <NativeSelect
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-          className="w-full sm:w-44"
-          aria-label="סינון לפי סטטוס"
-        >
-          {/* Default: only buyers still being worked on. Closed ones stay one click away. */}
-          <option value="active">בטיפול ({byOwnership.filter(isActiveBuyer).length})</option>
-          <option value="stale">
-            מוזנחים — {STALE_DAYS}+ יום בלי שיחה ({byOwnership.filter(isStale).length})
-          </option>
-          <option value="all">כולל סגורים ({byOwnership.length})</option>
-          {Object.entries(BUYER_STATUS).map(([value, { label }]) => (
-            <option key={value} value={value}>
-              {label} ({byOwnership.filter((b) => b.status === value).length})
-            </option>
-          ))}
-        </NativeSelect>
+        {/* Default: only buyers still being worked on. Closed ones stay one click away. */}
+        <div role="group" aria-label="סינון לפי סטטוס" className="flex shrink-0 rounded-lg bg-muted p-0.5">
+          {STATUS_TABS.map(({ value, label }) => {
+            const n =
+              value === "active" ? byOwnership.filter(isActiveBuyer).length
+              : value === "stale" ? byOwnership.filter(isStale).length
+              : value === "all" ? null
+              : byOwnership.filter((b) => b.status === value).length;
+            return (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={statusFilter === value}
+                onClick={() => setStatusFilter(value)}
+                className={cn(
+                  "flex h-7 items-center gap-1.5 rounded-md px-2.5 text-sm transition-colors",
+                  statusFilter === value ? "bg-card font-semibold text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground",
+                  value === "stale" && n ? "text-brand-red" : undefined,
+                )}
+              >
+                {label}
+                {n != null && <span className="text-xs tabular-nums opacity-70">{n}</span>}
+              </button>
+            );
+          })}
+        </div>
 
         {admin && (
           <NativeSelect
@@ -376,7 +419,7 @@ export function BuyersView() {
                         key={c.key}
                         className={cn(i === 0 && "ps-4", i === columns.length - 1 && "pe-4", c.className?.(b))}
                       >
-                        {c.cell(b, agentName)}
+                        {c.cell(b, ctx)}
                       </TableCell>
                     ))}
                   </TableRow>
@@ -390,13 +433,11 @@ export function BuyersView() {
               <strong className="text-foreground tabular-nums">{buyers.length}</strong> קונים
             </span>
             <span>
-              {showAll ? "" : "מייל, קומה, דרישות ומימון מופיעים בכרטיס הקונה · "}לחץ על כותרת עמודה כדי למיין
+              {showAll ? "" : "שאר הפרטים בכרטיס הקונה · "}לחץ על כותרת עמודה כדי למיין
             </span>
           </div>
         </div>
       )}
-
-      {!isLoading && !error && <MatchBanner buyers={byOwnership.filter(isActiveBuyer)} onOpen={setOpenId} />}
 
       <BuyerPanel
         id={openId}
@@ -419,12 +460,16 @@ type Column = {
   header: string;
   headClassName?: string;
   className?: (b: BuyerRow) => string | undefined;
-  cell: (b: BuyerRow, agentName: AgentNameFn) => React.ReactNode;
+  cell: (b: BuyerRow, ctx: RowContext) => React.ReactNode;
   /** Makes the column sortable by clicking its header. */
-  sortValue?: (b: BuyerRow, agentName: AgentNameFn) => string | number | null;
+  sortValue?: (b: BuyerRow, ctx: RowContext) => string | number | null;
 };
 
-type AgentNameFn = (b: BuyerRow) => string;
+type RowContext = {
+  agentName: (b: BuyerRow) => string;
+  /** Offered properties that fit the buyer, by buyer id. */
+  matches: Map<string, number>;
+};
 
 /** Assigned to someone on the team (signed up or not). */
 const isAssigned = (b: BuyerRow) => !!(b.recruiter_id || b.owner_agent_id);
@@ -447,7 +492,7 @@ function SortIcon({ dir }: { dir: 1 | -1 | null }) {
 const COLUMNS: Column[] = [
   {
     key: "name",
-    header: "שם",
+    header: "קונה",
     className: () => "font-medium",
     sortValue: (b) => b.full_name,
     cell: (b) => (
@@ -459,48 +504,6 @@ const COLUMNS: Column[] = [
         </span>
       </span>
     ),
-  },
-  {
-    key: "status",
-    header: "סטטוס",
-    sortValue: (b) => Object.keys(BUYER_STATUS).indexOf(b.status),
-    cell: (b) => <StatusBadge map={BUYER_STATUS} value={b.status} />,
-  },
-  {
-    key: "contact",
-    header: "שיחה אחרונה",
-    sortValue: (b) => new Date(lastContact(b)).getTime(),
-    cell: (b) => <LastContact buyer={b} />,
-  },
-  {
-    key: "phone",
-    header: "טלפון",
-    className: () => "text-muted-foreground",
-    cell: (b) => (
-      <div className="flex items-center gap-1.5">
-        <span dir="ltr" className="tabular-nums">
-          {b.phone ?? "—"}
-        </span>
-        <WhatsAppButton phone={b.phone} size="icon-sm" solid label={`וואטסאפ ל${b.full_name}`} />
-      </div>
-    ),
-  },
-  {
-    key: "email",
-    header: "מייל",
-    className: () => "max-w-28 text-muted-foreground",
-    // LTR block so a long address is cut at its end ("avi@exam…"), not its start.
-    cell: (b) => (
-      <span dir="ltr" title={b.email ?? undefined} className="block truncate text-end">
-        {b.email ?? "—"}
-      </span>
-    ),
-  },
-  {
-    key: "area",
-    header: "אזור בפסגה",
-    headClassName: "w-16",
-    cell: (b) => <AreaTags areas={b.preferred_neighborhoods} />,
   },
   {
     key: "rooms",
@@ -517,11 +520,76 @@ const COLUMNS: Column[] = [
       ),
   },
   {
+    key: "area",
+    header: "אזור בפסגה",
+    headClassName: "w-16",
+    cell: (b) => <AreaTags areas={b.preferred_neighborhoods} />,
+  },
+  {
     key: "budget",
     header: "תקציב",
     className: () => "tabular-nums",
     sortValue: (b) => b.max_budget,
     cell: (b) => <span className="font-semibold text-primary">{formatILSCompact(b.max_budget)}</span>,
+  },
+  {
+    key: "matches",
+    header: "התאמות",
+    sortValue: (b, { matches }) => matches.get(b.id) || null,
+    cell: (b, { matches }) => {
+      const n = matches.get(b.id);
+      return n ? (
+        <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold text-secondary-foreground">
+          <SparklesIcon className="size-3" />
+          {n === 1 ? "נכס אחד מתאים" : `${n} נכסים מתאימים`}
+        </span>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      );
+    },
+  },
+  {
+    key: "added",
+    header: "נוסף בתאריך",
+    className: () => "whitespace-nowrap text-muted-foreground tabular-nums",
+    sortValue: (b) => new Date(b.created_at).getTime(),
+    cell: (b) => formatDate(b.created_at),
+  },
+  {
+    key: "phone",
+    header: "טלפון",
+    className: () => "text-muted-foreground",
+    cell: (b) => (
+      <div className="flex items-center gap-1.5">
+        <span dir="ltr" className="tabular-nums">
+          {b.phone ?? "—"}
+        </span>
+        <WhatsAppButton phone={b.phone} size="icon-sm" solid label={`וואטסאפ ל${b.full_name}`} />
+      </div>
+    ),
+  },
+  {
+    key: "status",
+    header: "סטטוס",
+    sortValue: (b) => Object.keys(BUYER_STATUS).indexOf(b.status),
+    cell: (b) => <StatusBadge map={BUYER_STATUS} value={b.status} />,
+  },
+  {
+    key: "contact",
+    header: "שיחה אחרונה",
+    sortValue: (b) => new Date(lastContact(b)).getTime(),
+    cell: (b) => <LastContact buyer={b} />,
+  },
+  {
+    key: "email",
+    header: "מייל",
+    className: () => "max-w-28 text-muted-foreground",
+    // LTR block so a long address is cut at its end ("avi@exam…"), not its start.
+    cell: (b) => (
+      <span dir="ltr" title={b.email ?? undefined} className="block truncate text-end">
+        {b.email ?? "—"}
+      </span>
+    ),
   },
   {
     key: "floor",
@@ -553,8 +621,8 @@ const COLUMNS: Column[] = [
     key: "agent",
     header: "סוכן",
     className: (b) => (isAssigned(b) ? undefined : "font-medium text-brand-red"),
-    sortValue: (b, agentName) => (isAssigned(b) ? agentName(b) : null),
-    cell: (b, agentName) => (isAssigned(b) ? agentName(b) : "לא משויך"),
+    sortValue: (b, { agentName }) => (isAssigned(b) ? agentName(b) : null),
+    cell: (b, { agentName }) => (isAssigned(b) ? agentName(b) : "לא משויך"),
   },
 ];
 
