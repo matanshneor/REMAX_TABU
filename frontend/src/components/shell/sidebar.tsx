@@ -184,16 +184,12 @@ function NavGroup({
             ) : (
               label
             )}
-            {!sub && count != null && count > 0 &&
-              (ALERTS.has(href) ? (
-                <span className="ms-auto me-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-brand-red px-1.5 text-xs font-semibold text-white tabular-nums">
-                  {count}
-                </span>
-              ) : (
-                <span className={cn("ms-auto me-1.5 text-sm font-normal tabular-nums", active ? "text-white/60" : "text-sidebar-foreground/50")}>
-                  {count}
-                </span>
-              ))}
+            {/* No plain tallies in the menu: only what needs the user (sign-ups to approve). */}
+            {!sub && !!count && ALERTS.has(href) && (
+              <span className="ms-auto me-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-brand-red px-1.5 text-xs font-semibold text-white tabular-nums">
+                {count}
+              </span>
+            )}
           </Link>
         );
       })}
