@@ -39,13 +39,16 @@ function onlyImages(files: FileList | null): File[] {
   return images;
 }
 
-/** Shrinks and uploads photos for a property. Each on its own: one failure doesn't lose the others. */
-export async function uploadPropertyImages(propertyId: string, files: File[]) {
+/**
+ * Shrinks and uploads photos into a folder of the property photos bucket (a property's id, or
+ * listings/<id> for "מאגר יד2"). Each on its own: one failure doesn't lose the others.
+ */
+export async function uploadPropertyImages(folder: string, files: File[]) {
   const results = await Promise.allSettled(
     files.map(async (f) => {
       const small = await shrinkImage(f);
       if (small.size > MAX_BYTES) throw new Error("too big");
-      return uploadFile(MEDIA_BUCKET, propertyId, small);
+      return uploadFile(MEDIA_BUCKET, folder, small);
     }),
   );
   const paths = results.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));

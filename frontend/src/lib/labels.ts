@@ -20,6 +20,9 @@ export const LISTING_STATUS: Labeled<Enum<"listing_status">> = {
   added: { label: "נוסף למוכרים", tone: "green" },
 };
 
+/** Why a listing in "מאגר יד2" isn't relevant (a reason is required; "אחר" is typed in). */
+export const DISMISS_REASONS = ["לא מעוניין בשירות", "כבר עובד עם מתווך", "לא ענה", "כבר נמכר", "מודעה של מתווך"];
+
 /** The agreement with the seller. "בתהליך גיוס" isn't offered to buyers yet. */
 export const PROPERTY_ENGAGEMENT: Labeled<Enum<"property_engagement">> = {
   exclusive: { label: "בלעדיות", tone: "blue" },

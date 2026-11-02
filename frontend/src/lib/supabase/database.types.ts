@@ -449,8 +449,13 @@ export type Database = {
           city: string | null
           created_at: string
           created_by: string | null
+          dismissed_at: string | null
+          dismissed_by: string | null
+          dismissed_reason: string | null
           floor: number | null
           id: string
+          image_path: string | null
+          image_url: string | null
           listed_at: string
           neighborhood: string | null
           notes: string | null
@@ -473,8 +478,13 @@ export type Database = {
           city?: string | null
           created_at?: string
           created_by?: string | null
+          dismissed_at?: string | null
+          dismissed_by?: string | null
+          dismissed_reason?: string | null
           floor?: number | null
           id?: string
+          image_path?: string | null
+          image_url?: string | null
           listed_at?: string
           neighborhood?: string | null
           notes?: string | null
@@ -497,8 +507,13 @@ export type Database = {
           city?: string | null
           created_at?: string
           created_by?: string | null
+          dismissed_at?: string | null
+          dismissed_by?: string | null
+          dismissed_reason?: string | null
           floor?: number | null
           id?: string
+          image_path?: string | null
+          image_url?: string | null
           listed_at?: string
           neighborhood?: string | null
           notes?: string | null
