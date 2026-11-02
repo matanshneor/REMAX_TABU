@@ -5,7 +5,7 @@ import { CurrencyInput } from "@/components/form/currency-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
-import { type Option, PROPERTY_ENGAGEMENT, PROPERTY_STATUS, PROPERTY_TYPES } from "@/lib/labels";
+import { type Option, PROPERTY_ENGAGEMENT, PROPERTY_STATUS, PROPERTY_TYPES, sourceKind } from "@/lib/labels";
 import type { Enum, Property } from "@/lib/types";
 
 export type PropertyFilters = {
@@ -64,7 +64,7 @@ export function applyFilters<T extends Property>(list: T[], f: PropertyFilters, 
       has(p.city, f.city) &&
       has(p.neighborhood, f.neighborhood) &&
       (!f.type || p.property_type === f.type) &&
-      (!f.source || p.lead_source === f.source) &&
+      (!f.source || sourceKind(p.lead_source) === f.source) &&
       (!f.engagement || p.engagement === f.engagement) &&
       (!f.status || p.status === f.status) &&
       (pMin == null || (p.current_price ?? 0) >= pMin) &&

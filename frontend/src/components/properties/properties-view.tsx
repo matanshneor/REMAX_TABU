@@ -11,7 +11,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRecruiterName, useSignedUrls } from "@/lib/data";
-import { sourceOptions } from "@/lib/labels";
+import { SELLER_SOURCES, sourceOptions } from "@/lib/labels";
 import { isAdmin } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/client";
 import type { Property } from "@/lib/types";
@@ -68,7 +68,7 @@ export function PropertiesView() {
     () => [...new Set(properties.map((p) => p.city).filter((c): c is string => !!c))].sort(),
     [properties],
   );
-  const sources = useMemo(() => sourceOptions(properties.map((p) => p.lead_source)), [properties]);
+  const sources = useMemo(() => sourceOptions(properties.map((p) => p.lead_source), SELLER_SOURCES), [properties]);
   const coverPaths = useMemo(() => rows.flatMap((p) => p.image_paths.slice(0, 1)), [rows]);
   const { data: urls = {} } = useSignedUrls(MEDIA_BUCKET, coverPaths);
 

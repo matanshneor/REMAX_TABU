@@ -260,9 +260,17 @@ function SelectWithOther({
   onChange: (value: unknown) => void;
   disabled?: boolean;
 }) {
-  const listed = !value || !!field.options?.some((o) => o.value === value);
+  // "הפניה: דוד כהן" is the listed "הפניה" plus who; the text box edits only the who.
+  const sep = value.indexOf(":");
+  const head = sep >= 0 ? value.slice(0, sep).trim() : value;
+  const detailOf = field.detail?.[head] !== undefined ? head : null;
+  // Only the space after ":" is dropped, so typing "דוד כהן" keeps its space.
+  const who = detailOf && sep >= 0 ? value.slice(sep + 1).replace(/^ /, "") : "";
+  const listed = !value || !!detailOf || !!field.options?.some((o) => o.value === value);
   // Just picked "other" and nothing typed yet; a typed value that's in the list shows as that choice.
   const [typing, setTyping] = useState(false);
+  // Just picked a choice that asks "who" (focus its box then, not when an existing card opens).
+  const [asking, setAsking] = useState(false);
   const other = !listed || (typing && !value);
   const OTHER = "__other__";
 
@@ -270,10 +278,11 @@ function SelectWithOther({
     <div className="flex flex-col gap-1.5">
       <NativeSelect
         id={id}
-        value={other ? OTHER : value}
+        value={other ? OTHER : (detailOf ?? value)}
         onChange={(e) => {
           const picked = e.target.value === OTHER;
           setTyping(picked);
+          setAsking(!!field.detail?.[e.target.value]);
           onChange(picked ? "" : e.target.value);
         }}
         disabled={disabled}
@@ -286,6 +295,17 @@ function SelectWithOther({
         ))}
         <option value={OTHER}>{field.other}</option>
       </NativeSelect>
+      {detailOf && (
+        <Input
+          value={who}
+          onChange={(e) => onChange(e.target.value.trim() ? `${detailOf}: ${e.target.value}` : detailOf)}
+          onBlur={() => setAsking(false)}
+          disabled={disabled}
+          placeholder={field.detail![detailOf]}
+          aria-label={field.detail![detailOf]}
+          autoFocus={asking}
+        />
+      )}
       {other && (
         <Input
           value={value}
