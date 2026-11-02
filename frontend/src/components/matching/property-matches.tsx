@@ -13,13 +13,20 @@ import { createClient } from "@/lib/supabase/client";
 import type { Buyer, Property } from "@/lib/types";
 import { propertyMessage } from "@/lib/whatsapp";
 import { MatchReasons } from "./match-reasons";
+import { useOfficeListings } from "./office-listings";
 
 const MAX_MATCHES = 10;
 
-/** In a buyer's card: active sellers that fit what the buyer is looking for. */
+/**
+ * In a buyer's card: offered sellers across the office that fit what the buyer is looking for.
+ * Sellers are private to their agent: one's own (or, for the admin, any) shows its address and a
+ * WhatsApp send; a colleague's shows its facts and whose listing it is, to coordinate with them.
+ */
 export function PropertyMatches({ buyer }: { buyer: Buyer }) {
-  const { data: properties = [], isLoading } = useQuery({
-    queryKey: ["properties", "active-for-matching"],
+  const { data: listings = [], isLoading } = useOfficeListings();
+  // The properties this user may open (RLS: their own, or all for the admin).
+  const { data: visible = [] } = useQuery({
+    queryKey: ["properties", "visible-for-matching"],
     queryFn: async (): Promise<Property[]> => {
       const { data, error } = await createClient().from("properties").select("*").eq("status", "active").neq("engagement", "recruiting");
       if (error) throw error;
@@ -27,15 +34,14 @@ export function PropertyMatches({ buyer }: { buyer: Buyer }) {
     },
   });
 
-  const matches = useMemo(
-    () =>
-      properties
-        .map((p) => ({ property: p, match: matchBuyerToProperty(buyer, p) }))
-        .filter((m) => m.match.ok)
-        .sort((a, b) => b.match.score - a.match.score)
-        .slice(0, MAX_MATCHES),
-    [properties, buyer],
-  );
+  const matches = useMemo(() => {
+    const full = new Map(visible.map((p) => [p.id, p]));
+    return listings
+      .map((l) => ({ listing: l, property: full.get(l.id), match: matchBuyerToProperty(buyer, l) }))
+      .filter((m) => m.match.ok)
+      .sort((a, b) => b.match.score - a.match.score)
+      .slice(0, MAX_MATCHES);
+  }, [listings, visible, buyer]);
 
   return (
     <PanelSection title={`מוכרים שמתאימים${matches.length ? ` (${matches.length})` : ""}`}>
@@ -46,25 +52,36 @@ export function PropertyMatches({ buyer }: { buyer: Buyer }) {
         </p>
       ) : (
         <ul className="flex flex-col divide-y rounded-lg border">
-          {matches.map(({ property: p, match }) => (
-            <li key={p.id} className="flex items-start gap-3 px-3 py-2.5 text-sm">
+          {matches.map(({ listing: l, property: p, match }) => (
+            <li key={l.id} className="flex items-start gap-3 px-3 py-2.5 text-sm">
               <div className="min-w-0 flex-1">
-                <Link href={`/properties?open=${p.id}`} className="font-medium hover:underline">
-                  {formatAddress(p)}
-                </Link>
+                {p ? (
+                  <Link href={`/properties?open=${p.id}`} className="font-medium hover:underline">
+                    {formatAddress(p)}
+                  </Link>
+                ) : (
+                  <p className="font-medium">
+                    {[l.property_type ?? "נכס", l.rooms && `${l.rooms} חד׳`].filter(Boolean).join(" ")}
+                    <span className="ms-1.5 font-normal text-muted-foreground">· אצל {l.agent_name ?? "סוכן במשרד"}</span>
+                  </p>
+                )}
                 <p className="text-xs text-muted-foreground">
-                  {[p.neighborhood, p.rooms && `${p.rooms} חד׳`, p.floor != null && `קומה ${p.floor}`].filter(Boolean).join(" · ")}
+                  {[l.neighborhood, p && l.rooms && `${l.rooms} חד׳`, l.size_sqm && `${l.size_sqm} מ״ר`, l.floor != null && `קומה ${l.floor}`]
+                    .filter(Boolean)
+                    .join(" · ")}
                 </p>
                 <MatchReasons reasons={match.reasons} />
               </div>
               <div className="flex shrink-0 items-center gap-2">
-                <Money value={p.current_price} className="font-display text-base text-primary" />
-                <WhatsAppButton
-                  phone={buyer.phone}
-                  text={propertyMessage(p, buyer.full_name)}
-                  size="icon-sm"
-                  label={`שלח ל${buyer.full_name} בוואטסאפ`}
-                />
+                <Money value={l.current_price} className="font-display text-base text-primary" />
+                {p && (
+                  <WhatsAppButton
+                    phone={buyer.phone}
+                    text={propertyMessage(p, buyer.full_name)}
+                    size="icon-sm"
+                    label={`שלח ל${buyer.full_name} בוואטסאפ`}
+                  />
+                )}
               </div>
             </li>
           ))}
@@ -73,4 +90,3 @@ export function PropertyMatches({ buyer }: { buyer: Buyer }) {
     </PanelSection>
   );
 }
-

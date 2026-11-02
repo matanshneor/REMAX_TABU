@@ -1,22 +1,15 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { SparklesIcon } from "lucide-react";
 import { useMemo } from "react";
 import { matchBuyerToProperty } from "@/lib/matching";
-import { createClient } from "@/lib/supabase/client";
-import type { Buyer, Property } from "@/lib/types";
+import type { Buyer } from "@/lib/types";
+import { useOfficeListings } from "@/components/matching/office-listings";
 
 /** Under the buyers table: which of the user's open buyers have matching sellers right now. */
 export function MatchBanner({ buyers, onOpen }: { buyers: Buyer[]; onOpen: (id: string) => void }) {
-  const { data: properties = [] } = useQuery({
-    queryKey: ["properties", "active-for-matching"],
-    queryFn: async (): Promise<Property[]> => {
-      const { data, error } = await createClient().from("properties").select("*").eq("status", "active").neq("engagement", "recruiting");
-      if (error) throw error;
-      return data;
-    },
-  });
+  // The whole office's listings, not just the agent's own: buyers can fit a colleague's seller.
+  const { data: properties = [] } = useOfficeListings();
 
   const withMatches = useMemo(
     () =>
