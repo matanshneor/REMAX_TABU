@@ -496,12 +496,9 @@ const COLUMNS: Column[] = [
     className: () => "font-medium",
     sortValue: (b) => b.full_name,
     cell: (b) => (
-      <span className="flex items-center gap-2.5">
-        <BuyerAvatar name={b.full_name} />
-        <span className="min-w-0">
-          <span className="block font-semibold">{b.full_name}</span>
-          <BuyerSubtitle buyer={b} />
-        </span>
+      <span className="block min-w-0">
+        <span className="block font-semibold">{b.full_name}</span>
+        <BuyerSubtitle buyer={b} />
       </span>
     ),
   },
@@ -638,25 +635,6 @@ function LastContact({ buyer }: { buyer: BuyerRow }) {
       {logged ? formatRelative(lastContact(buyer)) : "אין שיחות"}
     </span>
   );
-}
-
-function BuyerAvatar({ name }: { name: string }) {
-  return (
-    <span
-      aria-hidden
-      className="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-bold text-secondary-foreground ring-1 ring-primary/10"
-    >
-      {initials(name)}
-    </span>
-  );
-}
-
-function initials(name: string) {
-  const parts = name
-    .replace(/\(.*?\)/g, "")
-    .trim()
-    .split(/\s+/);
-  return (parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "");
 }
 
 /** Under the name: the first line of the notes, wrapped onto more lines rather than cut off. */
