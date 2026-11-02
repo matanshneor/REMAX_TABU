@@ -28,14 +28,20 @@ function presetDate(key: Preset): Date {
   return key === "tomorrow" ? at(1, 9) : at(7, 9);
 }
 
+/** One-tap times once a day is picked; any other time goes in the time box. */
+const TIMES = ["09:00", "12:00", "16:00", "19:00"];
+
+const pad = (n: number) => String(n).padStart(2, "0");
+const timeOf = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
 const toLocalInput = (d: Date) => {
-  const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
 /**
- * Due-date picker for tasks: one-tap presets plus "other date".
- * Value is an ISO string or null (no due date). Tapping the active preset clears it.
+ * Due-date picker for tasks: one-tap days plus "other date". Once a day is picked, a row of
+ * times opens (09:00, 12:00, 16:00, 19:00 or any time).
+ * Value is an ISO string or null (no due date). Tapping the active day clears it.
  */
 export function QuickDate({ value, onChange }: { value: string | null; onChange: (iso: string | null) => void }) {
   const [active, setActive] = useState<Preset | "custom" | null>(null);
@@ -59,26 +65,49 @@ export function QuickDate({ value, onChange }: { value: string | null; onChange:
       on ? "border-primary bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:text-foreground",
     );
 
+  function setTime(time: string) {
+    if (!value || !time) return;
+    const [h, m] = time.split(":").map(Number);
+    const d = new Date(value);
+    d.setHours(h, m, 0, 0);
+    onChange(d.toISOString());
+  }
+
+  const time = value ? timeOf(new Date(value)) : "";
+
   return (
-    <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="מועד">
-      {PRESETS.map((p) => (
-        <button key={p.key} type="button" className={chip(current === p.key)} aria-pressed={current === p.key} onClick={() => pick(p.key)}>
-          {p.label}
-        </button>
-      ))}
-      {current === "custom" ? (
-        <Input
-          type="datetime-local"
-          autoFocus
-          className="h-8 w-48"
-          aria-label="תאריך ושעה"
-          value={value ? toLocalInput(new Date(value)) : ""}
-          onChange={(e) => onChange(e.target.value ? new Date(e.target.value).toISOString() : null)}
-        />
-      ) : (
-        <button type="button" className={chip(false)} onClick={() => setActive("custom")}>
-          תאריך אחר…
-        </button>
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="מועד">
+        {PRESETS.map((p) => (
+          <button key={p.key} type="button" className={chip(current === p.key)} aria-pressed={current === p.key} onClick={() => pick(p.key)}>
+            {p.label}
+          </button>
+        ))}
+        {current === "custom" ? (
+          <Input
+            type="datetime-local"
+            autoFocus
+            className="h-8 w-48"
+            aria-label="תאריך ושעה"
+            value={value ? toLocalInput(new Date(value)) : ""}
+            onChange={(e) => onChange(e.target.value ? new Date(e.target.value).toISOString() : null)}
+          />
+        ) : (
+          <button type="button" className={chip(false)} onClick={() => setActive("custom")}>
+            תאריך אחר…
+          </button>
+        )}
+      </div>
+      {value && current && current !== "custom" && (
+        <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="שעה">
+          <span className="text-xs text-muted-foreground">בשעה</span>
+          {TIMES.map((t) => (
+            <button key={t} type="button" className={cn(chip(time === t), "tabular-nums")} aria-pressed={time === t} onClick={() => setTime(t)}>
+              {t}
+            </button>
+          ))}
+          <Input type="time" className="h-8 w-32 tabular-nums" aria-label="שעה אחרת" value={time} onChange={(e) => setTime(e.target.value)} />
+        </div>
       )}
     </div>
   );
