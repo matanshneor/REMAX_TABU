@@ -659,10 +659,10 @@ function initials(name: string) {
   return (parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "");
 }
 
-/** Second line under the name: the start of the notes. */
+/** Under the name: the first line of the notes, wrapped onto more lines rather than cut off. */
 function BuyerSubtitle({ buyer }: { buyer: Buyer }) {
   const note = buyer.notes?.split("\n")[0];
-  return note ? <span className="block max-w-36 truncate text-xs text-muted-foreground">{note}</span> : null;
+  return note ? <span className="block max-w-60 text-xs leading-snug font-normal whitespace-normal text-muted-foreground">{note}</span> : null;
 }
 
 function AreaTags({ areas }: { areas: string[] }) {
