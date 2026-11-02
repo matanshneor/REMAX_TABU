@@ -38,6 +38,7 @@ export function propertyFeatures(p: Property): string[] {
     p.has_elevator && "מעלית",
     p.has_storage && "מחסן",
     p.is_renovated && "משופצת",
+    p.eviction_immediate && "פינוי מיידי",
   ].filter((f): f is string => !!f);
 }
 

@@ -45,7 +45,8 @@ export const PROPERTY_SECTIONS: FormSection[] = [
     fields: [
       { name: "current_price", label: "מחיר נוכחי", type: "currency", span: 2 },
       { name: "previous_price", label: "מחיר קודם", type: "currency", span: 2 },
-      { name: "eviction_date", label: "תאריך פינוי", type: "date", span: 2 },
+      { name: "eviction_date", label: "תאריך פינוי", type: "date", span: 2, now: { field: "eviction_immediate", label: "מיידי" } },
+      { name: "eviction_immediate", label: "פינוי מיידי", type: "boolean", hidden: true },
     ],
   },
   {

@@ -571,6 +571,7 @@ export type Database = {
           current_price: number | null
           description: string | null
           eviction_date: string | null
+          eviction_immediate: boolean
           exclusivity_end: string | null
           exclusivity_start: string | null
           floor: number | null
@@ -611,6 +612,7 @@ export type Database = {
           current_price?: number | null
           description?: string | null
           eviction_date?: string | null
+          eviction_immediate?: boolean
           exclusivity_end?: string | null
           exclusivity_start?: string | null
           floor?: number | null
@@ -651,6 +653,7 @@ export type Database = {
           current_price?: number | null
           description?: string | null
           eviction_date?: string | null
+          eviction_immediate?: boolean
           exclusivity_end?: string | null
           exclusivity_start?: string | null
           floor?: number | null

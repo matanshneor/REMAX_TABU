@@ -44,17 +44,30 @@ export function EntityForm({
             <legend className="mb-1 text-xs font-semibold tracking-wide text-muted-foreground">{section.title}</legend>
           )}
           <div className="grid grid-cols-6 gap-x-3 gap-y-3">
-            {section.fields.map((field) => (
-              <div key={field.name} className={cn(SPAN[field.span ?? 3], field.type === "boolean" && "self-end")}>
-                <Field
-                  field={field}
-                  id={`${idPrefix}-${field.name}`}
-                  value={values[field.name]}
-                  onChange={(v) => onChange(field.name, v)}
-                  disabled={readOnly || lockedFields.includes(field.name)}
-                />
-              </div>
-            ))}
+            {section.fields
+              .filter((field) => !field.hidden)
+              .map((field) => (
+                <div key={field.name} className={cn(SPAN[field.span ?? 3], field.type === "boolean" && "self-end")}>
+                  <Field
+                    field={field}
+                    id={`${idPrefix}-${field.name}`}
+                    value={values[field.name]}
+                    onChange={(v) => onChange(field.name, v)}
+                    disabled={readOnly || lockedFields.includes(field.name)}
+                    now={
+                      field.now && {
+                        on: Boolean(values[field.now.field]),
+                        // "Now" and a date exclude each other: turning it on clears the date.
+                        toggle: () => {
+                          const on = !values[field.now!.field];
+                          onChange(field.now!.field, on);
+                          if (on) onChange(field.name, "");
+                        },
+                      }
+                    }
+                  />
+                </div>
+              ))}
           </div>
         </fieldset>
       ))}
@@ -68,12 +81,15 @@ function Field({
   value,
   onChange,
   disabled,
+  now,
 }: {
   field: FieldDef;
   id: string;
   value: unknown;
   onChange: (value: unknown) => void;
   disabled?: boolean;
+  /** The field's `now` button: whether it's on, and switching it. */
+  now?: { on: boolean; toggle: () => void };
 }) {
   if (field.type === "boolean") {
     return (
@@ -158,6 +174,36 @@ function Field({
       break;
     case "currency":
       control = <CurrencyInput id={id} value={str} onChange={onChange} disabled={disabled} placeholder={field.placeholder} />;
+      break;
+    case "date":
+      if (now && field.now) {
+        control = (
+          <div className="flex gap-1.5">
+            <button
+              type="button"
+              onClick={now.toggle}
+              disabled={disabled}
+              aria-pressed={now.on}
+              className={cn(
+                "h-8 shrink-0 rounded-lg border px-2.5 text-sm font-medium transition-colors disabled:opacity-60",
+                now.on ? "border-primary bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {field.now.label}
+            </button>
+            <Input
+              id={id}
+              type="date"
+              value={now.on ? "" : str}
+              onChange={(e) => onChange(e.target.value)}
+              disabled={disabled || now.on}
+              className="min-w-0"
+            />
+          </div>
+        );
+        break;
+      }
+      control = <Input id={id} type="date" value={str} onChange={(e) => onChange(e.target.value)} disabled={disabled} />;
       break;
     default: {
       const inputType = field.type === "datetime" ? "datetime-local" : field.type;
