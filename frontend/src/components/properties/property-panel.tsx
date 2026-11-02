@@ -16,7 +16,7 @@ import { ViewingsList } from "@/components/viewings/viewings-list";
 import { Button } from "@/components/ui/button";
 import { errorMessage, useDeleteRecord, useRecord, useRecruiterName, useSaveRecord } from "@/lib/data";
 import { formatAddress, formatILS } from "@/lib/format";
-import { PROPERTY_STATUS } from "@/lib/labels";
+import { PROPERTY_ENGAGEMENT, PROPERTY_STATUS } from "@/lib/labels";
 import { canEditProperty, canManageProperty, isAdmin } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/client";
 import type { Property } from "@/lib/types";
@@ -28,6 +28,7 @@ import {
   PROPERTY_DESCRIPTION_SECTION,
   PROPERTY_SECTIONS,
   propertyCreateSections,
+  withExclusivityLink,
   SELLER_CREATE_FIELDS,
   SELLER_CREATE_SECTION,
 } from "./property-fields";
@@ -73,6 +74,7 @@ export function PropertyPanel({
     creating ? NEW_PROPERTY : property,
     creating ? "new" : `${property?.id}:${property?.updated_at}`,
   );
+  const setField = withExclusivityLink(form.set, form.values);
   const save = useSaveRecord<Property>("properties");
   const saveQuiet = useSaveRecord("properties", { silent: true });
   const remove = useDeleteRecord("properties");
@@ -129,12 +131,12 @@ export function PropertyPanel({
           </>
         }
       >
-        <EntityForm sections={[SELLER_CREATE_SECTION]} values={form.values} onChange={form.set} idPrefix="new-property" />
+        <EntityForm sections={[SELLER_CREATE_SECTION]} values={form.values} onChange={setField} idPrefix="new-property" />
         <div className="mt-6">
           <PendingImages files={photos} onChange={setPhotos} />
         </div>
-        <EntityForm sections={description} values={form.values} onChange={form.set} idPrefix="new-property" />
-        <EntityForm sections={details} values={form.values} onChange={form.set} idPrefix="new-property" />
+        <EntityForm sections={description} values={form.values} onChange={setField} idPrefix="new-property" />
+        <EntityForm sections={details} values={form.values} onChange={setField} idPrefix="new-property" />
       </Panel>
     );
   }
@@ -152,6 +154,7 @@ export function PropertyPanel({
         property && (
           <>
             <StatusBadge map={PROPERTY_STATUS} value={property.status} />
+            {property.engagement !== "exclusive" && <StatusBadge map={PROPERTY_ENGAGEMENT} value={property.engagement} />}
             {property.is_exclusive && (
               <ExclusivityPill end={property.exclusivity_end} showDate />
             )}
@@ -206,14 +209,14 @@ export function PropertyPanel({
           <EntityForm
             sections={[PROPERTY_DESCRIPTION_SECTION]}
             values={form.values}
-            onChange={form.set}
+            onChange={setField}
             readOnly={!editable}
             idPrefix="property"
           />
           <EntityForm
             sections={DETAIL_SECTIONS}
             values={form.values}
-            onChange={form.set}
+            onChange={setField}
             readOnly={!editable}
             // Only the admin picks the recruiter; the recruiting agent still manages exclusivity.
             lockedFields={

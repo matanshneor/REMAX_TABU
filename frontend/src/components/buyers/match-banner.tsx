@@ -12,7 +12,7 @@ export function MatchBanner({ buyers, onOpen }: { buyers: Buyer[]; onOpen: (id: 
   const { data: properties = [] } = useQuery({
     queryKey: ["properties", "active-for-matching"],
     queryFn: async (): Promise<Property[]> => {
-      const { data, error } = await createClient().from("properties").select("*").eq("status", "active");
+      const { data, error } = await createClient().from("properties").select("*").eq("status", "active").neq("engagement", "recruiting");
       if (error) throw error;
       return data;
     },

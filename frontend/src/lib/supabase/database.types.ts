@@ -570,6 +570,7 @@ export type Database = {
           created_by: string | null
           current_price: number | null
           description: string | null
+          engagement: Database["public"]["Enums"]["property_engagement"]
           eviction_date: string | null
           eviction_immediate: boolean
           exclusivity_end: string | null
@@ -614,6 +615,7 @@ export type Database = {
           created_by?: string | null
           current_price?: number | null
           description?: string | null
+          engagement?: Database["public"]["Enums"]["property_engagement"]
           eviction_date?: string | null
           eviction_immediate?: boolean
           exclusivity_end?: string | null
@@ -658,6 +660,7 @@ export type Database = {
           created_by?: string | null
           current_price?: number | null
           description?: string | null
+          engagement?: Database["public"]["Enums"]["property_engagement"]
           eviction_date?: string | null
           eviction_immediate?: boolean
           exclusivity_end?: string | null
@@ -897,6 +900,7 @@ export type Database = {
         | "passed_first"
         | "hired"
         | "rejected"
+      property_engagement: "exclusive" | "consent" | "recruiting"
       property_status: "active" | "frozen" | "sold"
       requirement: "must" | "nice" | "any"
       transaction_type: "income" | "expense"
@@ -1044,6 +1048,7 @@ export const Constants = {
         "hired",
         "rejected",
       ],
+      property_engagement: ["exclusive", "consent", "recruiting"],
       property_status: ["active", "frozen", "sold"],
       requirement: ["must", "nice", "any"],
       transaction_type: ["income", "expense"],
