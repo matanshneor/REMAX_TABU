@@ -28,6 +28,8 @@ type NavItem = {
   icon: React.ComponentType<{ className?: string }>;
   /** Another site: opens in a new tab. */
   external?: boolean;
+  /** The label agents see (they see only their own), e.g. "הקונים שלי". */
+  agentLabel?: string;
   /** A second, smaller line under the label, from the item's count (shown only when there is one). */
   hint?: (count: number) => string;
 };
@@ -38,8 +40,8 @@ function Yad2Mark() {
 }
 
 const MAIN: NavItem[] = [
-  { href: "/buyers", label: "קונים", icon: UsersIcon },
-  { href: "/properties", label: "מוכרים", icon: Building2Icon },
+  { href: "/buyers", label: "קונים", agentLabel: "הקונים שלי", icon: UsersIcon },
+  { href: "/properties", label: "מוכרים", agentLabel: "המוכרים שלי", icon: Building2Icon },
   { href: "/tasks", label: "משימות", icon: ListChecksIcon },
   { href: "/team", label: "צוות המשרד", icon: UsersRoundIcon },
   { href: AD_TOOL_URL, label: "יצירת מודעת פרסום", icon: MegaphoneIcon, external: true },
@@ -85,7 +87,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       {/* Scrolls on short screens, so the account row below is never cut off. */}
       <nav className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-3 py-6">
         <NavGroup
-          items={MAIN}
+          items={isAdmin(profile) ? MAIN : MAIN.map((i) => ({ ...i, label: i.agentLabel ?? i.label }))}
           pathname={pathname}
           counts={counts}
           onNavigate={onNavigate}
