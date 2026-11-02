@@ -78,7 +78,7 @@ export function FilterChip({ on, onClick, children }: { on: boolean; onClick: ()
       onClick={onClick}
       aria-pressed={on}
       className={cn(
-        "h-8 rounded-full border px-2.5 text-xs font-medium transition-colors",
+        "inline-flex h-8 items-center gap-1 rounded-full border px-2.5 text-xs font-medium transition-colors",
         on ? "border-primary bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:text-foreground",
       )}
     >

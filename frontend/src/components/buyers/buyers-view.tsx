@@ -42,16 +42,17 @@ const isStale = (b: BuyerRow) =>
   isActiveBuyer(b) && Date.now() - new Date(lastContact(b)).getTime() > STALE_DAYS * 86_400_000;
 const SHOW_ALL_KEY = "buyers:show-all-columns";
 
-type StatusFilter = "all" | "active" | "stale" | Enum<"buyer_status">;
+type StatusFilter = "all" | "active" | Enum<"buyer_status">;
 
-/** The status buttons in the bar; any other single status is picked under "סינונים". */
-const STATUS_TABS: { value: StatusFilter; label: string }[] = [
-  { value: "active", label: "בטיפול" },
-  { value: "hot", label: "חמים" },
-  { value: "stale", label: "מוזנחים" },
-  { value: "all", label: "כולל סגורים" },
+/**
+ * "סטטוס" under "סינונים", with the same statuses as the buyer's card. Untouched, it shows
+ * the buyers still looking (חדש, חם, פושר); "כל הסטטוסים" adds those who already bought.
+ */
+const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
+  { value: "active", label: "סטטוס" },
+  ...Object.entries(BUYER_STATUS).map(([value, { label }]) => ({ value: value as StatusFilter, label })),
+  { value: "all", label: "כל הסטטוסים" },
 ];
-const isTab = (v: StatusFilter) => STATUS_TABS.some((t) => t.value === v);
 
 /** Admin-only filter: everyone, unassigned leads, or one agent's buyers. */
 type AgentFilter = "all" | "unassigned" | (string & {});
@@ -108,7 +109,8 @@ export function BuyersView() {
   const setMoreFilter = <K extends keyof MoreFilters>(k: K, v: MoreFilters[K]) => setMore((m) => ({ ...m, [k]: v }));
   const moreCount =
     (Object.keys(NO_MORE_FILTERS) as (keyof MoreFilters)[]).filter((k) => more[k] !== NO_MORE_FILTERS[k]).length +
-    (isTab(statusFilter) ? 0 : 1);
+    (statusFilter !== "active" ? 1 : 0) +
+    (agentFilter !== "all" ? 1 : 0);
   const filtering = text !== "" || agentFilter !== "all" || statusFilter !== "active" || moreCount > 0;
   function resetFilters() {
     setText("");
@@ -182,8 +184,7 @@ export function BuyersView() {
     const [budgetMin, budgetMax, roomsMin] = [num(more.budgetMin), num(more.budgetMax), num(more.roomsMin)];
     return byOwnership.filter((b) => {
       if (statusFilter === "active" && !isActiveBuyer(b)) return false;
-      if (statusFilter === "stale" && !isStale(b)) return false;
-      if (!["all", "active", "stale"].includes(statusFilter) && b.status !== statusFilter) return false;
+      if (!["all", "active"].includes(statusFilter) && b.status !== statusFilter) return false;
       if (more.area && !b.preferred_neighborhoods.includes(more.area)) return false;
       if (more.type && b.property_type !== more.type) return false;
       if (budgetMin != null && (b.max_budget ?? 0) < budgetMin) return false;
@@ -240,29 +241,34 @@ export function BuyersView() {
       />
 
       <FilterBar
+        className="border-0 bg-transparent p-0 shadow-none"
         moreCount={moreCount}
         onReset={filtering ? resetFilters : undefined}
-        end={
-          <Button variant="outline" onClick={toggleShowAll} aria-pressed={showAll}>
-            <Columns3Icon />
-            {showAll ? "פחות עמודות" : "כל העמודות"}
-          </Button>
-        }
         more={
           <>
             <NativeSelect
-              value={isTab(statusFilter) ? "" : statusFilter}
-              onChange={(e) => setStatusFilter((e.target.value || "active") as StatusFilter)}
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
               aria-label="סטטוס"
-              className="w-36"
+              className="w-40"
             >
-              <option value="">כל סטטוס</option>
-              {Object.entries(BUYER_STATUS).map(([value, { label }]) => (
+              {STATUS_OPTIONS.map(({ value, label }) => (
                 <option key={value} value={value}>
-                  {label} ({byOwnership.filter((b) => b.status === value).length})
+                  {label}
                 </option>
               ))}
             </NativeSelect>
+            {admin && (
+              <NativeSelect value={agentFilter} onChange={(e) => setAgentFilter(e.target.value)} className="w-44" aria-label="סינון לפי סוכן">
+                <option value="all">כל הסוכנים ({buyers.length})</option>
+                <option value="unassigned">לא משויכים ({buyers.filter((b) => !isAssigned(b)).length})</option>
+                {team.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.full_name} ({buyers.filter((b) => b.recruiter_id === t.id).length})
+                  </option>
+                ))}
+              </NativeSelect>
+            )}
             <NativeSelect value={more.area} onChange={(e) => setMoreFilter("area", e.target.value)} aria-label="אזור" className="w-32">
               <option value="">כל האזורים</option>
               {PISGAT_AREAS.map((a) => (
@@ -302,62 +308,23 @@ export function BuyersView() {
                 {label}
               </FilterChip>
             ))}
+            <FilterDivider />
+            <FilterChip on={showAll} onClick={toggleShowAll}>
+              <Columns3Icon className="size-3.5" />
+              כל העמודות
+            </FilterChip>
           </>
         }
       >
-        <div className="relative basis-full sm:min-w-52 sm:basis-0 sm:flex-1">
+        <div className="relative min-w-0 flex-1">
           <SearchIcon className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="חיפוש שם, טלפון, מייל או אזור…"
-            className="ps-9"
+            className="bg-card ps-9"
           />
         </div>
-
-        {/* Default: only buyers still being worked on. Closed ones stay one click away. */}
-        <div role="group" aria-label="סינון לפי סטטוס" className="flex shrink-0 rounded-lg bg-muted p-0.5">
-          {STATUS_TABS.map(({ value, label }) => {
-            const n =
-              value === "active" ? byOwnership.filter(isActiveBuyer).length
-              : value === "stale" ? byOwnership.filter(isStale).length
-              : value === "all" ? null
-              : byOwnership.filter((b) => b.status === value).length;
-            return (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={statusFilter === value}
-                onClick={() => setStatusFilter(value)}
-                className={cn(
-                  "flex h-7 items-center gap-1.5 rounded-md px-2.5 text-sm transition-colors",
-                  statusFilter === value ? "bg-card font-semibold text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground",
-                  value === "stale" && n ? "text-brand-red" : undefined,
-                )}
-              >
-                {label}
-                {n != null && <span className="text-xs tabular-nums opacity-70">{n}</span>}
-              </button>
-            );
-          })}
-        </div>
-
-        {admin && (
-          <NativeSelect
-            value={agentFilter}
-            onChange={(e) => setAgentFilter(e.target.value)}
-            className="w-full sm:w-44"
-            aria-label="סינון לפי סוכן"
-          >
-            <option value="all">כל הסוכנים ({buyers.length})</option>
-            <option value="unassigned">לא משויכים ({buyers.filter((b) => !isAssigned(b)).length})</option>
-            {team.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.full_name} ({buyers.filter((b) => b.recruiter_id === t.id).length})
-              </option>
-            ))}
-          </NativeSelect>
-        )}
       </FilterBar>
 
       {error ? (
@@ -496,10 +463,7 @@ const COLUMNS: Column[] = [
     className: () => "font-medium",
     sortValue: (b) => b.full_name,
     cell: (b) => (
-      <span className="block min-w-0">
-        <span className="block font-semibold">{b.full_name}</span>
-        <BuyerSubtitle buyer={b} />
-      </span>
+      <span className="font-semibold">{b.full_name}</span>
     ),
   },
   {
@@ -519,7 +483,7 @@ const COLUMNS: Column[] = [
   {
     key: "area",
     header: "אזור בפסגה",
-    headClassName: "w-16",
+    className: () => "whitespace-nowrap",
     cell: (b) => <AreaTags areas={b.preferred_neighborhoods} />,
   },
   {
@@ -637,26 +601,11 @@ function LastContact({ buyer }: { buyer: BuyerRow }) {
   );
 }
 
-/** Under the name: the first line of the notes, wrapped onto more lines rather than cut off. */
-function BuyerSubtitle({ buyer }: { buyer: Buyer }) {
-  const note = buyer.notes?.split("\n")[0];
-  return note ? <span className="block max-w-60 text-xs leading-snug font-normal whitespace-normal text-muted-foreground">{note}</span> : null;
-}
-
+/** Areas as plain text ("מרכז, מזרח"); all of them reads "כל הפסגה". */
 function AreaTags({ areas }: { areas: string[] }) {
   if (!areas.length) return <span className="text-muted-foreground">—</span>;
-  return (
-    <span className="flex flex-wrap gap-1">
-      {areas.map((a) => (
-        <span
-          key={a}
-          className="rounded-md bg-secondary px-1.5 py-0.5 text-[11px] font-medium text-secondary-foreground"
-        >
-          {AREA_SHORT.get(a) ?? a}
-        </span>
-      ))}
-    </span>
-  );
+  if (PISGAT_AREAS.every((a) => areas.includes(a.value))) return <>כל הפסגה</>;
+  return <>{areas.map((a) => AREA_SHORT.get(a) ?? a).join(", ")}</>;
 }
 
 function YesNo({ value }: { value: boolean }) {
