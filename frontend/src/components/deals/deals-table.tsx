@@ -4,7 +4,7 @@ import Link from "next/link";
 import { SimpleTable } from "@/components/admin/simple-table";
 import { Money } from "@/components/crm/money";
 import { useAgentName } from "@/lib/data";
-import { formatAddress, formatDate } from "@/lib/format";
+import { formatDate, formatFullAddress } from "@/lib/format";
 import type { DealRow } from "./deals-data";
 
 /**
@@ -33,7 +33,7 @@ export function DealsTable({
           cell: (d) =>
             d.properties ? (
               <Link href={`/properties?open=${d.properties.id}`} onClick={(e) => e.stopPropagation()} className="hover:underline">
-                {formatAddress(d.properties)}, {d.properties.city}
+                {formatFullAddress(d.properties)}
               </Link>
             ) : (
               <span className="text-muted-foreground">—</span>

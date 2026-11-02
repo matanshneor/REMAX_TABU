@@ -56,7 +56,10 @@ export function PropertiesView() {
     () => applyFilters(properties, filters, profile?.id).sort(SORTERS[sort]),
     [properties, filters, profile?.id, sort],
   );
-  const cities = useMemo(() => [...new Set(properties.map((p) => p.city))].sort(), [properties]);
+  const cities = useMemo(
+    () => [...new Set(properties.map((p) => p.city).filter((c): c is string => !!c))].sort(),
+    [properties],
+  );
   const sources = useMemo(() => sourceOptions(properties.map((p) => p.lead_source)), [properties]);
   const coverPaths = useMemo(() => rows.flatMap((p) => p.image_paths.slice(0, 1)), [rows]);
   const { data: urls = {} } = useSignedUrls(MEDIA_BUCKET, coverPaths);

@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { icsCalendar } from "@/lib/calendar";
-import { formatAddress } from "@/lib/format";
+import { formatFullAddress } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
 const EVENT_MINUTES = 30;
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/calendar
   const property = one(task.properties);
   const candidate = one(task.candidates);
   const seller = one(property?.property_owner_details);
-  const address = property && `${formatAddress(property)}, ${property.city}`;
+  const address = property && formatFullAddress(property);
   const related = [
     buyer && `קונה: ${buyer.full_name}${buyer.phone ? ` (${buyer.phone})` : ""}`,
     address && `נכס: ${address}`,

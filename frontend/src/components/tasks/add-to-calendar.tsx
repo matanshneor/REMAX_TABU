@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useRecord } from "@/lib/data";
 import { googleCalendarUrl, taskEvent } from "@/lib/calendar";
-import { formatAddress } from "@/lib/format";
+import { formatAddress, formatFullAddress } from "@/lib/format";
 import type { Buyer, Property, Task } from "@/lib/types";
 
 type TaskForCalendar = Pick<Task, "id" | "title" | "due_at" | "description" | "buyer_id" | "property_id">;
@@ -27,7 +27,7 @@ export function AddToCalendar({ task }: { task: TaskForCalendar }) {
       [buyer && `קונה: ${buyer.full_name}${buyer.phone ? ` (${buyer.phone})` : ""}`, property && `נכס: ${formatAddress(property)}`].filter(
         (s): s is string => !!s,
       ),
-      property ? `${formatAddress(property)}, ${property.city}` : undefined,
+      property ? formatFullAddress(property) : undefined,
     );
 
   return (

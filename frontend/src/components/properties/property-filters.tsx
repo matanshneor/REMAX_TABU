@@ -23,6 +23,7 @@ export type PropertyFilters = {
   safeRoom: boolean;
   balcony: boolean;
   garden: boolean;
+  rentalUnit: boolean;
   elevator: boolean;
   parking: boolean;
   storage: boolean;
@@ -44,6 +45,7 @@ export const DEFAULT_FILTERS: PropertyFilters = {
   safeRoom: false,
   balcony: false,
   garden: false,
+  rentalUnit: false,
   elevator: false,
   parking: false,
   storage: false,
@@ -71,6 +73,7 @@ export function applyFilters<T extends Property>(list: T[], f: PropertyFilters, 
       (!f.safeRoom || p.has_safe_room) &&
       (!f.balcony || p.has_balcony) &&
       (!f.garden || p.has_garden) &&
+      (!f.rentalUnit || p.has_rental_unit) &&
       (!f.elevator || p.has_elevator) &&
       (!f.parking || p.parking_spots > 0) &&
       (!f.storage || p.has_storage) &&
@@ -84,6 +87,7 @@ const TOGGLES: [keyof PropertyFilters, string][] = [
   ["safeRoom", "ממ״ד"],
   ["balcony", "מרפסת"],
   ["garden", "גינה"],
+  ["rentalUnit", "יחידת דיור"],
   ["elevator", "מעלית"],
   ["parking", "חניה"],
   ["storage", "מחסן"],

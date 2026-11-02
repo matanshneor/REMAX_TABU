@@ -11,9 +11,11 @@ const FEATURES: [keyof Property, string][] = [
   ["has_safe_room", "ממ״ד"],
   ["has_balcony", "מרפסת"],
   ["has_garden", "גינה"],
+  ["has_rental_unit", "יחידת דיור"],
   ["has_elevator", "מעלית"],
   ["has_storage", "מחסן"],
   ["is_renovated", "משופץ"],
+  ["eviction_immediate", "פינוי מיידי"],
 ];
 
 export function PropertyCard({

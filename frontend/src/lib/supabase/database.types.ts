@@ -565,12 +565,13 @@ export type Database = {
           apartment_number: string | null
           balcony_count: number | null
           balcony_sqm: number | null
-          city: string
+          city: string | null
           created_at: string
           created_by: string | null
           current_price: number | null
           description: string | null
           eviction_date: string | null
+          eviction_immediate: boolean
           exclusivity_end: string | null
           exclusivity_start: string | null
           floor: number | null
@@ -578,6 +579,7 @@ export type Database = {
           garden_sqm: number | null
           has_balcony: boolean
           has_garden: boolean
+          has_rental_unit: boolean
           has_elevator: boolean
           has_safe_room: boolean
           has_storage: boolean
@@ -591,6 +593,8 @@ export type Database = {
           parking_spots: number
           previous_price: number | null
           property_type: string | null
+          rental_unit_count: number | null
+          rental_unit_sqm: number | null
           recruiting_agent_id: string | null
           recruiter_id: string | null
           rooms: number | null
@@ -605,12 +609,13 @@ export type Database = {
           apartment_number?: string | null
           balcony_count?: number | null
           balcony_sqm?: number | null
-          city: string
+          city?: string | null
           created_at?: string
           created_by?: string | null
           current_price?: number | null
           description?: string | null
           eviction_date?: string | null
+          eviction_immediate?: boolean
           exclusivity_end?: string | null
           exclusivity_start?: string | null
           floor?: number | null
@@ -618,6 +623,7 @@ export type Database = {
           garden_sqm?: number | null
           has_balcony?: boolean
           has_garden?: boolean
+          has_rental_unit?: boolean
           has_elevator?: boolean
           has_safe_room?: boolean
           has_storage?: boolean
@@ -631,6 +637,8 @@ export type Database = {
           parking_spots?: number
           previous_price?: number | null
           property_type?: string | null
+          rental_unit_count?: number | null
+          rental_unit_sqm?: number | null
           recruiting_agent_id?: string | null
           recruiter_id?: string | null
           rooms?: number | null
@@ -645,12 +653,13 @@ export type Database = {
           apartment_number?: string | null
           balcony_count?: number | null
           balcony_sqm?: number | null
-          city?: string
+          city?: string | null
           created_at?: string
           created_by?: string | null
           current_price?: number | null
           description?: string | null
           eviction_date?: string | null
+          eviction_immediate?: boolean
           exclusivity_end?: string | null
           exclusivity_start?: string | null
           floor?: number | null
@@ -658,6 +667,7 @@ export type Database = {
           garden_sqm?: number | null
           has_balcony?: boolean
           has_garden?: boolean
+          has_rental_unit?: boolean
           has_elevator?: boolean
           has_safe_room?: boolean
           has_storage?: boolean
@@ -671,6 +681,8 @@ export type Database = {
           parking_spots?: number
           previous_price?: number | null
           property_type?: string | null
+          rental_unit_count?: number | null
+          rental_unit_sqm?: number | null
           recruiting_agent_id?: string | null
           recruiter_id?: string | null
           rooms?: number | null

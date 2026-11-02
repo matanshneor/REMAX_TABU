@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { NativeSelect } from "@/components/ui/native-select";
 import { useAgents, useTeam } from "@/lib/data";
-import { formatAddress } from "@/lib/format";
+import { formatFullAddress } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 
 type Kind = "agent" | "team" | "buyer" | "property";
@@ -27,7 +27,7 @@ function useRelationOptions(kind: Kind) {
         .select("id, street, house_number, apartment_number, city")
         .order("city");
       if (error) throw error;
-      return data.map((p) => ({ value: p.id, label: `${formatAddress(p)}, ${p.city}` }));
+      return data.map((p) => ({ value: p.id, label: formatFullAddress(p) }));
     },
   });
 

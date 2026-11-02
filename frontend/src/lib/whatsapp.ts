@@ -34,10 +34,12 @@ export function propertyFeatures(p: Property): string[] {
     p.has_safe_room && "ממ״ד",
     p.has_balcony && counted(p.balcony_count, "מרפסת", "מרפסות", p.balcony_sqm),
     p.has_garden && counted(p.garden_count, "גינה", "גינות", p.garden_sqm),
+    p.has_rental_unit && counted(p.rental_unit_count, "יחידת דיור", "יחידות דיור", p.rental_unit_sqm),
     p.parking_spots > 0 && (p.parking_spots > 1 ? `${p.parking_spots} חניות` : "חניה"),
     p.has_elevator && "מעלית",
     p.has_storage && "מחסן",
     p.is_renovated && "משופצת",
+    p.eviction_immediate && "פינוי מיידי",
   ].filter((f): f is string => !!f);
 }
 

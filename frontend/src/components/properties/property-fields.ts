@@ -1,6 +1,8 @@
 import type { FormSection } from "@/components/form/types";
 import { LEAD_SOURCES, OTHER_SOURCE, PISGAT_AREAS, PROPERTY_STATUS, PROPERTY_TYPES, toOptions } from "@/lib/labels";
 
+/** No field is required: a seller can always be saved, even half filled in. */
+
 /** Only the recruiting agent / admin may change these (enforced by a DB trigger). */
 export const MANAGER_ONLY_FIELDS = ["recruiter_id", "is_exclusive", "exclusivity_start", "exclusivity_end"];
 
@@ -22,7 +24,7 @@ export const PROPERTY_SECTIONS: FormSection[] = [
   {
     title: "מיקום",
     fields: [
-      { name: "city", label: "עיר", type: "text", required: true, span: 2 },
+      { name: "city", label: "עיר", type: "text", span: 2 },
       // Suggest the Pisgat Ze'ev areas buyers pick from, so matching compares the same names.
       { name: "neighborhood", label: "שכונה", type: "text", span: 2, suggestions: PISGAT_AREAS.map((a) => ({ value: a.value, label: a.value })) },
       { name: "property_type", label: "סוג נכס", type: "select", options: PROPERTY_TYPES, span: 2 },
@@ -45,7 +47,8 @@ export const PROPERTY_SECTIONS: FormSection[] = [
     fields: [
       { name: "current_price", label: "מחיר נוכחי", type: "currency", span: 2 },
       { name: "previous_price", label: "מחיר קודם", type: "currency", span: 2 },
-      { name: "eviction_date", label: "תאריך פינוי", type: "date", span: 2 },
+      { name: "eviction_date", label: "תאריך פינוי", type: "date", span: 2, now: { field: "eviction_immediate", label: "מיידי" } },
+      { name: "eviction_immediate", label: "פינוי מיידי", type: "boolean", hidden: true },
     ],
   },
   {
@@ -59,8 +62,8 @@ export const PROPERTY_SECTIONS: FormSection[] = [
     ],
   },
   {
-    // Filling in a count or a size ticks "גינה" / "מרפסת" on save (a DB trigger), so search and matching see it.
-    title: "גינה ומרפסות",
+    // Filling in a count or a size ticks "גינה" / "מרפסת" / "יחידת דיור" on save (a DB trigger), so search and matching see it.
+    title: "גינה, מרפסות ויחידות דיור",
     fields: [
       { name: "has_garden", label: "גינה", type: "boolean", span: 2 },
       { name: "garden_count", label: "מספר גינות", type: "number", span: 2 },
@@ -68,13 +71,16 @@ export const PROPERTY_SECTIONS: FormSection[] = [
       { name: "has_balcony", label: "מרפסת", type: "boolean", span: 2 },
       { name: "balcony_count", label: "מספר מרפסות", type: "number", span: 2 },
       { name: "balcony_sqm", label: "גודל המרפסות (מ״ר)", type: "number", span: 2 },
+      { name: "has_rental_unit", label: "יחידות דיור", type: "boolean", span: 2 },
+      { name: "rental_unit_count", label: "מספר יחידות", type: "number", span: 2 },
+      { name: "rental_unit_sqm", label: "גודל סה״כ (מ״ר)", type: "number", span: 2 },
     ],
   },
   PROPERTY_DESCRIPTION_SECTION,
   {
     title: "סטטוס ובלעדיות",
     fields: [
-      { name: "status", label: "סטטוס", type: "select", options: toOptions(PROPERTY_STATUS), required: true, span: 2 },
+      { name: "status", label: "סטטוס", type: "select", options: toOptions(PROPERTY_STATUS), noEmpty: true, span: 2 },
       { name: "recruiter_id", label: "סוכן מגייס", type: "team", span: 2 },
       { name: "lead_source", label: "מקור", type: "select", options: LEAD_SOURCES, other: OTHER_SOURCE, placeholder: "לדוגמה: חבר של משה", span: 2 },
       { name: "is_exclusive", label: "בלעדיות", type: "boolean", span: 2 },

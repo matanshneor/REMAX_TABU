@@ -36,6 +36,12 @@ export type FieldDef = {
   suggestions?: Option[];
   /** Select only: adds this choice (e.g. "אחר") which opens a text box; the typed text is saved as the value. */
   other?: string;
+  /** Date only: a button (e.g. "מיידי") that sets this boolean field instead of a date, and clears the date. */
+  now?: { field: string; label: string };
+  /** Select only: no empty "—" choice, so it always has a value — without being marked required. */
+  noEmpty?: boolean;
+  /** Kept in the form's values but not drawn (another field controls it, e.g. via `now`). */
+  hidden?: boolean;
 };
 
 export type FormSection = {

@@ -57,6 +57,11 @@ export function formatAddress(p: {
   return p.apartment_number ? `${base}, דירה ${p.apartment_number}` : base || "ללא כתובת";
 }
 
+/** Address with the city ("הרצל 12, דירה 5, ירושלים"); the city is optional. */
+export function formatFullAddress(p: Parameters<typeof formatAddress>[0] & { city?: string | null }): string {
+  return [formatAddress(p), p.city].filter(Boolean).join(", ");
+}
+
 /** yyyy-mm-dd in local time, for <input type="date"> */
 export function toDateInput(value: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");
