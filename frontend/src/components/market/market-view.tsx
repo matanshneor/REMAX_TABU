@@ -104,7 +104,7 @@ export function MarketView() {
   return (
     <>
       <PageHeader
-        title="מאגר יד2"
+        title="מאגר יד 2"
         count={listings.filter(isOpen).length}
         actions={
           <Button

@@ -2,10 +2,8 @@
 
 import {
   Building2Icon,
-  CircleHelpIcon,
   ExternalLinkIcon,
   HandshakeIcon,
-  InboxIcon,
   ListChecksIcon,
   LogOutIcon,
   MegaphoneIcon,
@@ -30,16 +28,31 @@ type NavItem = {
   icon: React.ComponentType<{ className?: string }>;
   /** Another site: opens in a new tab. */
   external?: boolean;
+  /** A second, smaller line under the label, from the item's count (shown only when there is one). */
+  hint?: (count: number) => string;
 };
+
+/** Yad2's orange mark, in place of an icon. */
+function Yad2Mark({ className }: { className?: string }) {
+  return (
+    <span className={cn("flex items-center justify-center rounded-md bg-[#ff7100] text-[9px] font-extrabold text-white", className)}>
+      יד2
+    </span>
+  );
+}
 
 const MAIN: NavItem[] = [
   { href: "/buyers", label: "קונים", icon: UsersIcon },
   { href: "/properties", label: "מוכרים", icon: Building2Icon },
-  { href: "/market", label: "מאגר יד2", icon: InboxIcon },
   { href: "/tasks", label: "משימות", icon: ListChecksIcon },
   { href: "/team", label: "צוות המשרד", icon: UsersRoundIcon },
   { href: AD_TOOL_URL, label: "יצירת מודעת פרסום", icon: MegaphoneIcon, external: true },
-  { href: "/help", label: "מדריך", icon: CircleHelpIcon },
+  {
+    href: "/market",
+    label: "מאגר יד 2",
+    icon: Yad2Mark,
+    hint: (n) => (n === 1 ? "מודעה חדשה אחת לגיוס" : `${n} מודעות חדשות לגיוס`),
+  },
 ];
 
 const ADMIN: NavItem[] = [
@@ -133,7 +146,7 @@ function NavGroup({
   return (
     <div className="flex flex-col gap-1">
       {title && <p className="mb-1 px-3 text-xs font-medium text-sidebar-foreground/50">{title}</p>}
-      {items.map(({ href, label, icon: Icon, external }) => {
+      {items.map(({ href, label, icon: Icon, external, hint }) => {
         if (external) {
           return (
             <a
@@ -152,6 +165,7 @@ function NavGroup({
         }
         const active = pathname.startsWith(href);
         const count = counts[href];
+        const sub = hint && count ? hint(count) : null;
         return (
           <Link
             key={href}
@@ -159,15 +173,22 @@ function NavGroup({
             onClick={onNavigate}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "relative flex h-11 items-center gap-3 rounded-xl px-3 text-[15px] font-medium transition-colors",
+              "relative flex min-h-11 py-1 items-center gap-3 rounded-xl px-3 text-[15px] font-medium transition-colors",
               active
                 ? "bg-primary text-white shadow-[0_8px_20px_-10px_rgb(0_0_0/0.6)] after:absolute after:inset-y-2 after:end-0 after:w-1 after:rounded-full after:bg-brand-red"
                 : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-white",
             )}
           >
-            <Icon className="size-5" />
-            {label}
-            {count != null && count > 0 &&
+            <Icon className="size-5 shrink-0" />
+            {sub ? (
+              <span className="flex flex-col leading-tight">
+                {label}
+                <span className={cn("text-xs font-normal", active ? "text-white/70" : "text-[#ffb37a]")}>{sub}</span>
+              </span>
+            ) : (
+              label
+            )}
+            {!sub && count != null && count > 0 &&
               (ALERTS.has(href) ? (
                 <span className="ms-auto me-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-brand-red px-1.5 text-xs font-semibold text-white tabular-nums">
                   {count}
