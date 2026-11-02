@@ -20,7 +20,7 @@ import { formatDate, formatILSCompact, formatRelative } from "@/lib/format";
 import { matchBuyerToProperty } from "@/lib/matching";
 import { useOfficeListings } from "@/components/matching/office-listings";
 import { StatusBadge } from "@/components/crm/status-badge";
-import { BUYER_STATUS, isActiveBuyer, PISGAT_AREAS, PROPERTY_TYPES, sourceOptions } from "@/lib/labels";
+import { BUYER_STATUS, isActiveBuyer, PISGAT_AREAS, PROPERTY_TYPES, sourceKind, sourceOptions } from "@/lib/labels";
 import { isAdmin } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/client";
 import type { Buyer, Enum } from "@/lib/types";
@@ -190,7 +190,7 @@ export function BuyersView() {
       if (budgetMin != null && (b.max_budget ?? 0) < budgetMin) return false;
       if (budgetMax != null && (b.max_budget ?? Infinity) > budgetMax) return false;
       if (roomsMin != null && (b.min_rooms ?? 0) < roomsMin) return false;
-      if (more.source && b.lead_source !== more.source) return false;
+      if (more.source && sourceKind(b.lead_source) !== more.source) return false;
       if (more.safeRoom && b.needs_safe_room !== "must") return false;
       if (more.balcony && b.needs_balcony !== "must") return false;
       if (more.elevator && b.needs_elevator !== "must") return false;

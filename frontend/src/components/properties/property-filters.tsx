@@ -176,8 +176,8 @@ export function PropertyFiltersBar({
               </option>
             ))}
           </NativeSelect>
-          <NativeSelect value={value.source} onChange={(e) => set("source", e.target.value)} aria-label="מקור" className="w-36">
-            <option value="">כל המקורות</option>
+          <NativeSelect value={value.source} onChange={(e) => set("source", e.target.value)} aria-label="מקור ליד" className="w-36">
+            <option value="">כל מקורות הליד</option>
             {sources.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
