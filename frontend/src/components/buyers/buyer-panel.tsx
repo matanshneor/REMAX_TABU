@@ -164,7 +164,12 @@ export function BuyerPanel({
               </Button>
             )}
             <WhatsAppButton phone={buyer.phone} />
-            <ReminderButton buyerId={buyer.id} defaultTitle={`לחזור ל${buyer.full_name.split(" ")[0]}`} />
+            <ReminderButton
+              buyerId={buyer.id}
+              defaultTitle={`לחזור ל${buyer.full_name.split(" ")[0]}`}
+              label={`משימה ל${buyer.full_name.split(" ")[0]}`}
+              heading={`משימה ל${buyer.full_name}`}
+            />
           </>
         )
       }

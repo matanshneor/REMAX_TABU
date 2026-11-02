@@ -46,6 +46,9 @@ const ADMIN: NavItem[] = [
   { href: "/agents", label: "ניהול סוכנים", icon: UserCheckIcon },
 ];
 
+/** Counts that need the user (sign-ups waiting for approval) get a red badge; the rest are a quiet tally. */
+const ALERTS = new Set(["/agents"]);
+
 /** Fixed menu on desktop; on smaller screens the same content opens from the header's ☰ button. */
 export function Sidebar() {
   return (
@@ -162,16 +165,16 @@ function NavGroup({
           >
             <Icon className="size-5" />
             {label}
-            {count != null && count > 0 && (
-              <span
-                className={cn(
-                  "ms-auto me-1 flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-semibold tabular-nums",
-                  active ? "bg-brand-red text-white" : "bg-white/10 text-sidebar-foreground",
-                )}
-              >
-                {count}
-              </span>
-            )}
+            {count != null && count > 0 &&
+              (ALERTS.has(href) ? (
+                <span className="ms-auto me-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-brand-red px-1.5 text-xs font-semibold text-white tabular-nums">
+                  {count}
+                </span>
+              ) : (
+                <span className={cn("ms-auto me-1.5 text-sm font-normal tabular-nums", active ? "text-white/60" : "text-sidebar-foreground/50")}>
+                  {count}
+                </span>
+              ))}
           </Link>
         );
       })}

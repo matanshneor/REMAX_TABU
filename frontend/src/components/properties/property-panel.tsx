@@ -171,7 +171,12 @@ export function PropertyPanel({
             )}
             <ShareWhatsAppButton property={property} />
             <CreateAdButton property={property} />
-            <ReminderButton propertyId={property.id} defaultTitle={`מעקב: ${formatAddress(property)}`} />
+            <ReminderButton
+              propertyId={property.id}
+              defaultTitle={`מעקב: ${formatAddress(property)}`}
+              label="משימה לנכס"
+              heading={`משימה לנכס ב${formatAddress(property)}`}
+            />
           </>
         )
       }
