@@ -25,7 +25,6 @@ import type { Buyer, Enum } from "@/lib/types";
 import { useNewParam, usePanelParam } from "@/lib/use-panel-param";
 import { cn } from "@/lib/utils";
 import { BuyerPanel } from "./buyer-panel";
-import { BuyersKpis } from "./buyers-kpis";
 import { MatchBanner } from "./match-banner";
 
 /** Columns shown by default; the rest are in the buyer's card or behind "all columns". */
@@ -202,7 +201,6 @@ export function BuyersView() {
       <PageHeader
         title={admin ? "כל הקונים במשרד" : "הקונים שלי"}
         count={buyers.filter(isActiveBuyer).length}
-        description={admin ? "כל הלידים של המשרד, עם התאמה אוטומטית למוכרים בפסגת זאב" : undefined}
         actions={
           <>
             <ExportButton entity="buyers" />
@@ -218,8 +216,6 @@ export function BuyersView() {
           </>
         }
       />
-
-      {!isLoading && !error && <BuyersKpis buyers={byOwnership} />}
 
       <FilterBar
         moreCount={moreCount}
