@@ -56,11 +56,14 @@ async function saveSeller(propertyId: string, payload: Record<string, unknown>) 
 export function PropertyPanel({
   id,
   creating = false,
+  prefill,
   onClose,
   onCreated,
 }: {
   id: string | null;
   creating?: boolean;
+  /** New seller only: values to start from (e.g. a listing from "מאגר יד2"). */
+  prefill?: Record<string, unknown>;
   onClose: () => void;
   onCreated?: (id: string) => void;
 }) {
@@ -69,10 +72,11 @@ export function PropertyPanel({
   const { data: property, isLoading } = useRecord<Property>("properties", creating ? null : id);
   const createSections = propertyCreateSections(isAdmin(profile));
   const createForm = useMemo(() => [SELLER_CREATE_SECTION, ...createSections], [createSections]);
+  const newValues = useMemo(() => ({ ...NEW_PROPERTY, ...prefill }), [prefill]);
   const form = useFormValues(
     creating ? createForm : PROPERTY_SECTIONS,
-    creating ? NEW_PROPERTY : property,
-    creating ? "new" : `${property?.id}:${property?.updated_at}`,
+    creating ? newValues : property,
+    creating ? `new:${JSON.stringify(prefill ?? {})}` : `${property?.id}:${property?.updated_at}`,
   );
   const setField = withExclusivityLink(form.set, form.values);
   const save = useSaveRecord<Property>("properties");

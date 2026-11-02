@@ -442,6 +442,96 @@ export type Database = {
           },
         ]
       }
+      market_listings: {
+        Row: {
+          advertiser: string | null
+          assigned_to: string | null
+          city: string | null
+          created_at: string
+          created_by: string | null
+          floor: number | null
+          id: string
+          listed_at: string
+          neighborhood: string | null
+          notes: string | null
+          phone: string | null
+          price: number | null
+          property_id: string | null
+          property_type: string | null
+          rooms: number | null
+          size_sqm: number | null
+          source: string
+          status: Database["public"]["Enums"]["listing_status"]
+          street: string | null
+          title: string | null
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          advertiser?: string | null
+          assigned_to?: string | null
+          city?: string | null
+          created_at?: string
+          created_by?: string | null
+          floor?: number | null
+          id?: string
+          listed_at?: string
+          neighborhood?: string | null
+          notes?: string | null
+          phone?: string | null
+          price?: number | null
+          property_id?: string | null
+          property_type?: string | null
+          rooms?: number | null
+          size_sqm?: number | null
+          source?: string
+          status?: Database["public"]["Enums"]["listing_status"]
+          street?: string | null
+          title?: string | null
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          advertiser?: string | null
+          assigned_to?: string | null
+          city?: string | null
+          created_at?: string
+          created_by?: string | null
+          floor?: number | null
+          id?: string
+          listed_at?: string
+          neighborhood?: string | null
+          notes?: string | null
+          phone?: string | null
+          price?: number | null
+          property_id?: string | null
+          property_type?: string | null
+          rooms?: number | null
+          size_sqm?: number | null
+          source?: string
+          status?: Database["public"]["Enums"]["listing_status"]
+          street?: string | null
+          title?: string | null
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_listings_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "market_listings_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string | null
@@ -900,6 +990,7 @@ export type Database = {
         | "passed_first"
         | "hired"
         | "rejected"
+      listing_status: "new" | "contacted" | "not_interested" | "added"
       property_engagement: "exclusive" | "consent" | "recruiting"
       property_status: "active" | "frozen" | "sold"
       requirement: "must" | "nice" | "any"
@@ -1048,6 +1139,7 @@ export const Constants = {
         "hired",
         "rejected",
       ],
+      listing_status: ["new", "contacted", "not_interested", "added"],
       property_engagement: ["exclusive", "consent", "recruiting"],
       property_status: ["active", "frozen", "sold"],
       requirement: ["must", "nice", "any"],

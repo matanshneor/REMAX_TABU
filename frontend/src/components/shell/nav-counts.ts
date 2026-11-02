@@ -35,6 +35,18 @@ export function useNavCounts() {
     },
   });
 
+  const listings = useQuery({
+    queryKey: ["market_listings", "count", "new"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("market_listings")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "new");
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
   const tasks = useQuery({
     queryKey: ["tasks", "count", "open"],
     enabled: !!profile,
@@ -66,6 +78,7 @@ export function useNavCounts() {
   return {
     "/buyers": buyers.data,
     "/properties": properties.data,
+    "/market": listings.data,
     "/tasks": tasks.data,
     "/agents": pending.data,
   } as Record<string, number | undefined>;

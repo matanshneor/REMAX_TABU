@@ -12,6 +12,14 @@ export const PROPERTY_STATUS: Labeled<Enum<"property_status">> = {
   sold: { label: "נמכר", tone: "purple" },
 };
 
+/** Where a listing in "מאגר יד2" stands. */
+export const LISTING_STATUS: Labeled<Enum<"listing_status">> = {
+  new: { label: "חדש", tone: "blue" },
+  contacted: { label: "נוצר קשר", tone: "orange" },
+  not_interested: { label: "לא מעוניין", tone: "gray" },
+  added: { label: "נוסף למוכרים", tone: "green" },
+};
+
 /** The agreement with the seller. "בתהליך גיוס" isn't offered to buyers yet. */
 export const PROPERTY_ENGAGEMENT: Labeled<Enum<"property_engagement">> = {
   exclusive: { label: "בלעדיות", tone: "blue" },
