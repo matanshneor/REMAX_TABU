@@ -108,11 +108,8 @@ export const PROPERTY_TYPES = list(
 );
 
 /** Where a buyer or seller came from. Anything else is typed in under "אחר" and saved as written. */
-export const LEAD_SOURCES = list("יד2", "פייסבוק", "אינסטגרם", "אתר", "רימקס ישראל", "הפניה", "שלט", "הגיע למשרד");
+export const LEAD_SOURCES = list("יד2", "פייסבוק", "אינסטגרם", "לקוח עבר", "רימקס ישראל", "הפניה", "שלט", "הגיע למשרד");
 export const OTHER_SOURCE = "אחר (לכתוב בעצמי)";
-
-/** Where a seller came from: like buyers, but "לקוח עבר" instead of "אתר". */
-export const SELLER_SOURCES = list("יד2", "פייסבוק", "אינסטגרם", "לקוח עבר", "רימקס ישראל", "הפניה", "שלט", "הגיע למשרד");
 
 /** Sources that also say who: "הפניה" is saved as "הפניה: דוד כהן". */
 export const SOURCE_DETAIL: Record<string, string> = { הפניה: "ממי ההפניה? לדוגמה: דוד כהן" };
@@ -123,7 +120,7 @@ export function sourceKind(value: string | null): string | null {
   return head && head in SOURCE_DETAIL ? head : value;
 }
 
-/** A list (buyers' by default) plus every typed-in source already in use, for filters. */
+/** The list above plus every typed-in source already in use, for filters. */
 export function sourceOptions(used: (string | null)[], base: Option[] = LEAD_SOURCES): Option[] {
   const extra = [
     ...new Set(used.map(sourceKind).filter((s): s is string => !!s && !base.some((o) => o.value === s))),

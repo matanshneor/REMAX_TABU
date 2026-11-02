@@ -1,5 +1,5 @@
 import type { FormSection } from "@/components/form/types";
-import { BUYER_STATUS, LEAD_SOURCES, OTHER_SOURCE, PISGAT_AREAS, PROPERTY_TYPES, REQUIREMENT, toOptions } from "@/lib/labels";
+import { BUYER_STATUS, LEAD_SOURCES, OTHER_SOURCE, PISGAT_AREAS, PROPERTY_TYPES, REQUIREMENT, SOURCE_DETAIL, toOptions } from "@/lib/labels";
 
 const REQUIREMENT_OPTIONS = toOptions(REQUIREMENT);
 
@@ -10,7 +10,7 @@ export const BUYER_SECTIONS: FormSection[] = [
       { name: "full_name", label: "שם מלא", type: "text", required: true },
       { name: "phone", label: "טלפון", type: "tel", placeholder: "050-0000000" },
       { name: "email", label: "אימייל", type: "email" },
-      { name: "lead_source", label: "מקור ליד", type: "select", options: LEAD_SOURCES, other: OTHER_SOURCE, placeholder: "לדוגמה: חבר של משה" },
+      { name: "lead_source", label: "מקור ליד", type: "select", options: LEAD_SOURCES, other: OTHER_SOURCE, detail: SOURCE_DETAIL, placeholder: "לדוגמה: חבר של משה" },
       { name: "status", label: "סטטוס", type: "select", options: toOptions(BUYER_STATUS), required: true },
     ],
   },
