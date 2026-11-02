@@ -32,13 +32,9 @@ type NavItem = {
   hint?: (count: number) => string;
 };
 
-/** Yad2's orange mark, in place of an icon. */
-function Yad2Mark({ className }: { className?: string }) {
-  return (
-    <span className={cn("flex items-center justify-center rounded-md bg-[#ff7100] text-[9px] font-extrabold text-white", className)}>
-      יד2
-    </span>
-  );
+/** Yad2's orange tag, in place of an icon (sized by its text, like the tag on the pool's cards). */
+function Yad2Mark() {
+  return <span className="shrink-0 rounded-md bg-[#ff7100] px-1.5 py-px text-xs leading-snug font-extrabold text-white">יד2</span>;
 }
 
 const MAIN: NavItem[] = [
