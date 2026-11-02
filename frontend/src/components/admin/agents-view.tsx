@@ -42,7 +42,7 @@ export function AgentsView() {
 
   return (
     <>
-      <PageHeader title="סוכנים" description="גיוס מועמדים וניהול צוות המשרד" />
+      <PageHeader title="ניהול סוכנים" description="גיוס מועמדים וניהול צוות המשרד" />
 
       <CandidatesSection />
 

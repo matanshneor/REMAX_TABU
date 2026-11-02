@@ -62,7 +62,7 @@ export function SignupApprovalGate() {
                 דחייה
               </Button>
             </div>
-            <p className="text-center text-xs text-muted-foreground">אפשר לשנות את ההחלטה אחר כך במסך ״סוכנים״.</p>
+            <p className="text-center text-xs text-muted-foreground">אפשר לשנות את ההחלטה אחר כך במסך ״ניהול סוכנים״.</p>
           </>
         )}
       </DialogContent>

@@ -43,7 +43,7 @@ const MAIN: NavItem[] = [
 const ADMIN: NavItem[] = [
   { href: "/deals", label: "עסקאות", icon: HandshakeIcon },
   { href: "/finance", label: "הנהלת חשבונות", icon: WalletIcon },
-  { href: "/agents", label: "סוכנים", icon: UserCheckIcon },
+  { href: "/agents", label: "ניהול סוכנים", icon: UserCheckIcon },
 ];
 
 /** Fixed menu on desktop; on smaller screens the same content opens from the header's ☰ button. */
