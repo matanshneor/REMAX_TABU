@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GlobalSearch } from "./global-search";
+import { HoverLabel } from "./hover-label";
 import { NotificationsBell } from "./notifications-bell";
 import { Sidebar, SidebarContent } from "./sidebar";
 
@@ -50,10 +51,14 @@ function Shell({ children }: { children: React.ReactNode }) {
           <div className="ms-auto flex items-center gap-3">
             <Greeting name={profile.full_name} />
             <span aria-hidden className="hidden h-6 w-px bg-border md:block" />
-            <Button variant="ghost" size="icon" aria-label="מדריך" title="מדריך" render={<Link href="/help" />} nativeButton={false}>
-              <CircleHelpIcon className="size-5" />
-            </Button>
-            <NotificationsBell />
+            <HoverLabel label="מדריך">
+              <Button variant="ghost" size="icon" aria-label="מדריך" render={<Link href="/help" />} nativeButton={false}>
+                <CircleHelpIcon className="size-5" />
+              </Button>
+            </HoverLabel>
+            <HoverLabel label="התראות">
+              <NotificationsBell />
+            </HoverLabel>
           </div>
         </header>
         <main className="min-w-0 flex-1 px-4 py-5 lg:px-8 lg:py-6">{children}</main>
