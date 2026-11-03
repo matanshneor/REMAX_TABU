@@ -1,7 +1,7 @@
 "use client";
 
-import { ImageOffIcon } from "lucide-react";
 import { Money } from "@/components/crm/money";
+import { PropertyPlaceholder } from "@/components/properties/property-placeholder";
 import type { MarketListing } from "@/lib/types";
 
 /** "דירה 4 חד׳" from the ad's title, or from its type and rooms. */
@@ -61,25 +61,20 @@ export function MarketGrid({
             onClick={() => onOpen(l.id)}
             className="group flex flex-col overflow-hidden rounded-xl border bg-card text-start shadow-[0_1px_2px_rgb(15_26_46/0.04),0_8px_24px_-14px_rgb(15_26_46/0.12)] transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-[0_2px_4px_rgb(15_26_46/0.05),0_18px_36px_-14px_rgb(15_26_46/0.25)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           >
-            {photo ? (
-              <div className="relative aspect-[16/10] bg-muted">
-                {/* Outside or short-lived signed URLs; next/image optimization isn't useful here. */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
+            {/* No photo yet: the office's soft placeholder, without a caption, so all cards look alike. */}
+            <div className="relative aspect-[16/10] bg-muted">
+              {photo ? (
+                // Outside or short-lived signed URLs; next/image optimization isn't useful here.
+                // eslint-disable-next-line @next/next/no-img-element
                 <img src={photo} alt="" className="absolute inset-0 size-full object-cover" />
-                <div className="absolute inset-x-2 top-2 flex justify-between gap-1">
-                  {fresh || <span />}
-                  <Yad2Tag />
-                </div>
+              ) : (
+                <PropertyPlaceholder label="" className="absolute inset-0" />
+              )}
+              <div className="absolute inset-x-2 top-2 flex justify-between gap-1">
+                {fresh || <span />}
+                <Yad2Tag />
               </div>
-            ) : (
-              <div className="flex items-center justify-between gap-2 border-b bg-secondary/50 px-3 py-2">
-                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <ImageOffIcon className="size-3.5" />
-                  אין תמונה
-                </span>
-                {fresh}
-              </div>
-            )}
+            </div>
             <div className="flex flex-1 flex-col gap-1 p-3.5">
               {l.price ? (
                 <Money value={l.price} className="font-display text-xl text-primary" />
