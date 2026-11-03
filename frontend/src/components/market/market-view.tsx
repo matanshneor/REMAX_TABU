@@ -10,9 +10,11 @@ import { MEDIA_BUCKET } from "@/components/properties/property-images";
 import { PropertyPanel } from "@/components/properties/property-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAgentName, useSaveRecord, useSignedUrls } from "@/lib/data";
 import { formatDate } from "@/lib/format";
+import { DISMISS_REASONS } from "@/lib/labels";
 import { isAdmin } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/client";
 import type { MarketListing } from "@/lib/types";
@@ -21,6 +23,9 @@ import { cn } from "@/lib/utils";
 import { ListingPanel } from "./listing-panel";
 import { HandledList, MarketGrid } from "./market-list";
 import { isOpenListing as isOpen, seenListingsKey, useMarketListings, useSeenListings } from "./use-market";
+
+/** "אחר" in the reason filter: a reason typed in, not one of the list. */
+const OTHER_REASON = "__other__";
 
 /** A listing's details as a new seller's starting values. */
 function sellerFromListing(l: MarketListing): Record<string, unknown> {
@@ -71,6 +76,21 @@ export function MarketView() {
   const added = matches.filter((l) => l.status === "added");
   const dismissed = matches.filter((l) => l.status === "not_interested");
 
+  // Filters inside "לא רלוונטיים": why, who marked it, and when.
+  const [dismissFilter, setDismissFilter] = useState({ reason: "", by: "", days: "" });
+  const [now] = useState(() => Date.now());
+  const isListedReason = (r: string | null) => !!r && DISMISS_REASONS.includes(r);
+  const dismissedShown = dismissed.filter(
+    (l) =>
+      (!dismissFilter.reason ||
+        (dismissFilter.reason === OTHER_REASON ? !isListedReason(l.dismissed_reason) : l.dismissed_reason === dismissFilter.reason)) &&
+      (!dismissFilter.by || l.dismissed_by === dismissFilter.by) &&
+      (!dismissFilter.days ||
+        (!!l.dismissed_at && now - new Date(l.dismissed_at).getTime() <= Number(dismissFilter.days) * 86_400_000)),
+  );
+  const dismissers = [...new Set(dismissed.map((l) => l.dismissed_by).filter((id): id is string => !!id))];
+  const filteringDismissed = !!(dismissFilter.reason || dismissFilter.by || dismissFilter.days);
+
   // Listings this user has opened; the rest are "חדשות" (until the views load, all show as one list).
   const qc = useQueryClient();
   const seenKey = seenListingsKey(profile?.id);
@@ -95,7 +115,14 @@ export function MarketView() {
   // Sellers are private to their agent: the link shows for whoever moved it (and the admin).
   const canOpenSeller = (l: MarketListing) => l.assigned_to === profile?.id || isAdmin(profile);
 
-  const section = (key: keyof typeof shown, title: string, rows: MarketListing[], detail: (l: MarketListing) => React.ReactNode) =>
+  const section = (
+    key: keyof typeof shown,
+    title: string,
+    rows: MarketListing[],
+    detail: (l: MarketListing) => React.ReactNode,
+    /** Shown above the list when it's open; `listed` are the rows after them. */
+    filters?: { bar: React.ReactNode; listed: MarketListing[] },
+  ) =>
     rows.length > 0 && (
       <div>
         <button
@@ -107,7 +134,13 @@ export function MarketView() {
           {title}
           <span className="font-normal tabular-nums">{rows.length}</span>
         </button>
-        {shown[key] && <HandledList rows={rows} detail={detail} onOpen={setOpenId} />}
+        {shown[key] && filters && <div className="mb-2 flex flex-wrap items-center gap-2">{filters.bar}</div>}
+        {shown[key] &&
+          (filters && filters.listed.length === 0 ? (
+            <p className="rounded-xl border border-dashed px-4 py-3 text-sm text-muted-foreground">אין מודעות שמתאימות לסינון.</p>
+          ) : (
+            <HandledList rows={filters?.listed ?? rows} detail={detail} onOpen={setOpenId} />
+          ))}
       </div>
     );
 
@@ -177,12 +210,72 @@ export function MarketView() {
               ע״י <b className="font-medium text-foreground">{agentName(l.assigned_to)}</b> · {formatDate(l.updated_at)}
             </>
           ))}
-          {section("dismissed", "לא רלוונטיים", dismissed, (l) => (
-            <>
-              {l.dismissed_reason} · סומן ע״י <b className="font-medium text-foreground">{agentName(l.dismissed_by)}</b>
-              {l.dismissed_at && ` · ${formatDate(l.dismissed_at)}`}
-            </>
-          ))}
+          {section(
+            "dismissed",
+            "לא רלוונטיים",
+            dismissed,
+            (l) => (
+              <>
+                {l.dismissed_reason} · סומן ע״י <b className="font-medium text-foreground">{agentName(l.dismissed_by)}</b>
+                {l.dismissed_at && ` · ${formatDate(l.dismissed_at)}`}
+              </>
+            ),
+            {
+              listed: dismissedShown,
+              bar: (
+                <>
+                  <NativeSelect
+                    value={dismissFilter.reason}
+                    onChange={(e) => setDismissFilter((f) => ({ ...f, reason: e.target.value }))}
+                    aria-label="סיבה"
+                    className="w-48"
+                  >
+                    <option value="">כל הסיבות</option>
+                    {DISMISS_REASONS.map((r) => (
+                      <option key={r} value={r}>
+                        {r} ({dismissed.filter((l) => l.dismissed_reason === r).length})
+                      </option>
+                    ))}
+                    <option value={OTHER_REASON}>אחר ({dismissed.filter((l) => !isListedReason(l.dismissed_reason)).length})</option>
+                  </NativeSelect>
+                  <NativeSelect
+                    value={dismissFilter.by}
+                    onChange={(e) => setDismissFilter((f) => ({ ...f, by: e.target.value }))}
+                    aria-label="מי סימן"
+                    className="w-40"
+                  >
+                    <option value="">כל הסוכנים</option>
+                    {dismissers.map((id) => (
+                      <option key={id} value={id}>
+                        {agentName(id)} ({dismissed.filter((l) => l.dismissed_by === id).length})
+                      </option>
+                    ))}
+                  </NativeSelect>
+                  <NativeSelect
+                    value={dismissFilter.days}
+                    onChange={(e) => setDismissFilter((f) => ({ ...f, days: e.target.value }))}
+                    aria-label="מתי"
+                    className="w-36"
+                  >
+                    <option value="">כל הזמן</option>
+                    <option value="7">בשבוע האחרון</option>
+                    <option value="30">בחודש האחרון</option>
+                    <option value="90">ב-3 חודשים</option>
+                  </NativeSelect>
+                  {filteringDismissed && (
+                    <>
+                      <span className="text-xs text-muted-foreground tabular-nums">
+                        {dismissedShown.length} מתוך {dismissed.length}
+                      </span>
+                      <Button variant="ghost" size="sm" onClick={() => setDismissFilter({ reason: "", by: "", days: "" })}>
+                        נקה סינון
+                      </Button>
+                    </>
+                  )}
+                </>
+              ),
+            },
+          )}
         </div>
       )}
 
