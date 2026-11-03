@@ -1,6 +1,7 @@
 "use client";
 
 import { Money } from "@/components/crm/money";
+import { cn } from "@/lib/utils";
 import { PropertyPlaceholder } from "@/components/properties/property-placeholder";
 import type { MarketListing } from "@/lib/types";
 
@@ -61,14 +62,14 @@ export function MarketGrid({
             onClick={() => onOpen(l.id)}
             className="group flex flex-col overflow-hidden rounded-xl border bg-card text-start shadow-[0_1px_2px_rgb(15_26_46/0.04),0_8px_24px_-14px_rgb(15_26_46/0.12)] transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-[0_2px_4px_rgb(15_26_46/0.05),0_18px_36px_-14px_rgb(15_26_46/0.25)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           >
-            {/* No photo yet: the office's soft placeholder, without a caption, so all cards look alike. */}
-            <div className="relative aspect-[16/10] bg-muted">
+            {/* No photo yet: a low strip with the office's soft placeholder (no caption), so the details lead. */}
+            <div className={cn("relative bg-muted", photo ? "aspect-[16/9]" : "h-14")}>
               {photo ? (
                 // Outside or short-lived signed URLs; next/image optimization isn't useful here.
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={photo} alt="" className="absolute inset-0 size-full object-cover" />
               ) : (
-                <PropertyPlaceholder label="" className="absolute inset-0" />
+                <PropertyPlaceholder label="" className="absolute inset-0 [&_img]:size-6" />
               )}
               <div className="absolute inset-x-2 top-2 flex justify-between gap-1">
                 {fresh || <span />}
