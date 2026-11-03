@@ -186,17 +186,17 @@ export function MarketView() {
         <div className="flex flex-col gap-8">
           {fresh.length > 0 ? (
             <section>
-              {opened.length > 0 && <GridTitle title="חדשות" hint="עוד לא פתחת" count={fresh.length} />}
+              {opened.length > 0 && <GridTitle title="מודעות חדשות" hint="עוד לא נפתחו" count={fresh.length} />}
               <MarketGrid rows={fresh} photos={photos} seen={seen} onOpen={setOpenId} />
             </section>
           ) : (
             <p className="rounded-xl border border-dashed px-4 py-3 text-sm text-muted-foreground">
-              אין מודעות חדשות: פתחת את כל המודעות במאגר.
+              אין מודעות חדשות: כל המודעות במאגר כבר נפתחו.
             </p>
           )}
           {opened.length > 0 && (
             <section>
-              <GridTitle title="מודעות שפתחת" hint="עדיין לא הועברו למוכרים ולא סומנו לא רלוונטיות" count={opened.length} />
+              <GridTitle title="מודעות שנפתחו" hint="עדיין לא הועברו למוכרים ולא סומנו לא רלוונטיות" count={opened.length} />
               <MarketGrid rows={opened} photos={photos} seen={seen} onOpen={setOpenId} />
             </section>
           )}
@@ -322,7 +322,7 @@ export function MarketView() {
   );
 }
 
-/** A section title over a grid of listings: "חדשות 12 · עוד לא פתחת". */
+/** A section title over a grid of listings: "מודעות חדשות 12 · עוד לא נפתחו". */
 function GridTitle({ title, hint, count }: { title: string; hint: string; count: number }) {
   return (
     <h2 className="mb-3 flex flex-wrap items-baseline gap-x-2 text-base font-semibold">
