@@ -11,10 +11,13 @@ import { PropertyPanel } from "@/components/properties/property-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
+import { Label } from "@/components/ui/label";
+import { FilterBar } from "@/components/crm/filter-bar";
+import { CurrencyInput } from "@/components/form/currency-input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAgentName, useSaveRecord, useSignedUrls } from "@/lib/data";
 import { formatDate } from "@/lib/format";
-import { DISMISS_REASONS } from "@/lib/labels";
+import { DISMISS_REASONS, PROPERTY_TYPES } from "@/lib/labels";
 import { isAdmin } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/client";
 import type { MarketListing } from "@/lib/types";
@@ -23,6 +26,18 @@ import { cn } from "@/lib/utils";
 import { ListingPanel } from "./listing-panel";
 import { HandledList, MarketGrid } from "./market-list";
 import { isOpenListing as isOpen, seenListingsKey, useMarketListings, useSeenListings } from "./use-market";
+
+/** Filters behind "עוד סינונים", like the sellers page. */
+type PoolFilters = { city: string; neighborhood: string; type: string; priceMin: string; priceMax: string; roomsMin: string; sizeMin: string };
+const NO_POOL_FILTERS: PoolFilters = { city: "", neighborhood: "", type: "", priceMin: "", priceMax: "", roomsMin: "", sizeMin: "" };
+
+/** "entered" keeps the pool's order: newest in the pool first. */
+type PoolSort = "entered" | "price_asc" | "price_desc" | "rooms";
+const POOL_SORTERS: Record<Exclude<PoolSort, "entered">, (a: MarketListing, b: MarketListing) => number> = {
+  price_asc: (a, b) => (a.price ?? Infinity) - (b.price ?? Infinity),
+  price_desc: (a, b) => (b.price ?? 0) - (a.price ?? 0),
+  rooms: (a, b) => (b.rooms ?? 0) - (a.rooms ?? 0),
+};
 
 /** "אחר" in the reason filter: a reason typed in, not one of the list. */
 const OTHER_REASON = "__other__";
@@ -60,6 +75,11 @@ export function MarketView() {
   const [openId, setOpenId] = usePanelParam();
   const [creating, setCreating] = useNewParam();
   const [text, setText] = useState("");
+  const [more, setMore] = useState(NO_POOL_FILTERS);
+  const [sort, setSort] = useState<PoolSort>("entered");
+  const setMoreFilter = <K extends keyof PoolFilters>(k: K, v: PoolFilters[K]) => setMore((m) => ({ ...m, [k]: v }));
+  const moreCount = (Object.keys(NO_POOL_FILTERS) as (keyof PoolFilters)[]).filter((k) => more[k] !== NO_POOL_FILTERS[k]).length;
+  const filtering = text !== "" || moreCount > 0;
   const [shown, setShown] = useState({ added: false, dismissed: false });
   // The listing being turned into a seller (opens the "new seller" card, filled in).
   const [toSeller, setToSeller] = useState<MarketListing | null>(null);
@@ -70,8 +90,26 @@ export function MarketView() {
 
   const matches = useMemo(() => {
     const t = text.trim().toLowerCase();
-    return listings.filter((l) => !t || [l.title, l.street, l.neighborhood, l.city, l.advertiser, l.phone].some((s) => s?.toLowerCase().includes(t)));
-  }, [listings, text]);
+    // Phones are saved as 055-212-3456; typed digits should still find them.
+    const digits = t.replace(/\D/g, "");
+    const num = (v: string) => (v === "" ? null : Number(v));
+    const [pMin, pMax, rMin, sMin] = [num(more.priceMin), num(more.priceMax), num(more.roomsMin), num(more.sizeMin)];
+    const has = (v: string | null, q: string) => !q || (v ?? "").toLowerCase().includes(q.trim().toLowerCase());
+    const found = listings.filter(
+      (l) =>
+        (!t ||
+          (digits.length >= 3 && !!l.phone?.replace(/\D/g, "").includes(digits)) ||
+          [l.title, l.street, l.neighborhood, l.city, l.advertiser].some((s) => s?.toLowerCase().includes(t))) &&
+        has(l.city, more.city) &&
+        has(l.neighborhood, more.neighborhood) &&
+        (!more.type || l.property_type === more.type) &&
+        (pMin == null || (l.price ?? 0) >= pMin) &&
+        (pMax == null || (l.price ?? Infinity) <= pMax) &&
+        (rMin == null || (l.rooms ?? 0) >= rMin) &&
+        (sMin == null || (l.size_sqm ?? 0) >= sMin),
+    );
+    return sort === "entered" ? found : [...found].sort(POOL_SORTERS[sort]);
+  }, [listings, text, more, sort]);
   const open = useMemo(() => matches.filter(isOpen), [matches]);
   const added = matches.filter((l) => l.status === "added");
   const dismissed = matches.filter((l) => l.status === "not_interested");
@@ -163,10 +201,68 @@ export function MarketView() {
         }
       />
 
-      <div className="relative mb-4">
-        <SearchIcon className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="חיפוש רחוב, שכונה, מפרסם או טלפון…" className="ps-9" />
-      </div>
+      {/* The same bar as the sellers and buyers pages: search, sort, and the rest under "עוד סינונים". */}
+      <FilterBar
+        className="border-0 bg-transparent p-0 shadow-none"
+        moreCount={moreCount}
+        onReset={
+          filtering
+            ? () => {
+                setText("");
+                setMore(NO_POOL_FILTERS);
+              }
+            : undefined
+        }
+        more={
+          <>
+            <Input value={more.city} onChange={(e) => setMoreFilter("city", e.target.value)} placeholder="כל הערים" aria-label="עיר" className="w-28" />
+            <Input
+              value={more.neighborhood}
+              onChange={(e) => setMoreFilter("neighborhood", e.target.value)}
+              placeholder="כל השכונות"
+              aria-label="שכונה"
+              className="w-28"
+            />
+            <NativeSelect value={more.type} onChange={(e) => setMoreFilter("type", e.target.value)} aria-label="סוג נכס" className="w-28">
+              <option value="">כל הסוגים</option>
+              {PROPERTY_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </NativeSelect>
+            <div className="flex items-center gap-1">
+              <CurrencyInput value={more.priceMin} onChange={(v) => setMoreFilter("priceMin", v)} placeholder="מחיר מ-" aria-label="מחיר מינימלי" className="w-24" />
+              <span className="text-muted-foreground">–</span>
+              <CurrencyInput value={more.priceMax} onChange={(v) => setMoreFilter("priceMax", v)} placeholder="עד" aria-label="מחיר מקסימלי" className="w-24" />
+            </div>
+            <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              חדרים מ-
+              <Input type="number" min={0} step={0.5} value={more.roomsMin} onChange={(e) => setMoreFilter("roomsMin", e.target.value)} className="w-16" />
+            </Label>
+            <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              מ״ר מ-
+              <Input type="number" min={0} step={10} value={more.sizeMin} onChange={(e) => setMoreFilter("sizeMin", e.target.value)} className="w-20" />
+            </Label>
+          </>
+        }
+      >
+        <div className="relative min-w-0 flex-1">
+          <SearchIcon className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="חיפוש רחוב, שכונה, מפרסם או טלפון…"
+            className="bg-card ps-9"
+          />
+        </div>
+        <NativeSelect value={sort} onChange={(e) => setSort(e.target.value as PoolSort)} aria-label="מיון" className="w-48 bg-card">
+          <option value="entered">מיון: נכנסו למאגר לאחרונה</option>
+          <option value="price_asc">מיון: מחיר מהנמוך לגבוה</option>
+          <option value="price_desc">מיון: מחיר מהגבוה לנמוך</option>
+          <option value="rooms">מיון: מספר חדרים</option>
+        </NativeSelect>
+      </FilterBar>
 
       {error ? (
         <ErrorState error={error} />
