@@ -1,5 +1,6 @@
 "use client";
 
+import { ExternalLinkIcon } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -208,6 +209,7 @@ function Field({
     default: {
       const inputType = field.type === "datetime" ? "datetime-local" : field.type;
       const listId = field.suggestions ? `${id}-list` : undefined;
+      const link = field.type === "url" && /^https?:\/\/\S+$/i.test(str.trim()) ? str.trim() : null;
       control = (
         <div className="relative">
           <Input
@@ -221,8 +223,21 @@ function Field({
             min={field.type === "number" ? (field.min ?? 0) : undefined}
             list={listId}
             dir={["tel", "email", "url"].includes(field.type) ? "ltr" : undefined}
-            className={cn(["tel", "email", "url"].includes(field.type) && "text-end")}
+            className={cn(["tel", "email", "url"].includes(field.type) && "text-end", link && "pl-9")}
           />
+          {link && (
+            // A link field opens its page in a new tab.
+            <a
+              href={link}
+              target="_blank"
+              rel="noopener"
+              aria-label="פתיחת הקישור בלשונית חדשה"
+              title="פתיחת הקישור"
+              className="absolute top-1/2 left-1 flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-primary transition-colors hover:bg-secondary"
+            >
+              <ExternalLinkIcon className="size-4" />
+            </a>
+          )}
           {field.suggestions && (
             <datalist id={listId}>
               {field.suggestions.map((o) => (
@@ -239,6 +254,7 @@ function Field({
     <div className="flex flex-col">
       {label}
       {control}
+      {field.hint && <p className="mt-1 text-xs leading-snug text-muted-foreground">{field.hint}</p>}
     </div>
   );
 }

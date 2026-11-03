@@ -22,7 +22,13 @@ export const LISTING_SECTIONS: FormSection[] = [
       { name: "floor", label: "קומה", type: "number", min: -1, span: 2 },
       { name: "price", label: "מחיר", type: "currency", span: 2 },
       { name: "advertiser", label: "שם המפרסם", type: "text", span: 2 },
-      { name: "phone", label: "טלפון", type: "tel", span: 2 },
+      {
+        name: "phone",
+        label: "טלפון",
+        type: "tel",
+        span: 2,
+        hint: "ייתכן שזה מספר וירטואלי של יד2, שעובד רק כל עוד המודעה פעילה. בשיחה כדאי לבקש את המספר האמיתי ולעדכן כאן.",
+      },
     ],
   },
 ];
