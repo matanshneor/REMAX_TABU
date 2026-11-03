@@ -36,7 +36,7 @@ type NavItem = {
 
 /** Yad2's orange tag, in place of an icon (sized by its text, like the tag on the pool's cards). */
 function Yad2Mark() {
-  return <span className="shrink-0 rounded-md bg-[#ff7100] px-1.5 py-px text-xs leading-snug font-extrabold text-white">יד2</span>;
+  return <span className="shrink-0 rounded-md bg-[#ff7100] px-1.5 py-px text-xs leading-snug font-extrabold text-foreground">יד2</span>;
 }
 
 const MAIN: NavItem[] = [
@@ -143,7 +143,7 @@ function NavGroup({
 }) {
   return (
     <div className="flex flex-col gap-1">
-      {title && <p className="mb-1 px-3 text-xs font-medium text-sidebar-foreground/50">{title}</p>}
+      {title && <p className="mb-1 px-3 text-xs font-medium text-sidebar-foreground/75">{title}</p>}
       {items.map(({ href, label, icon: Icon, external, hint }) => {
         if (external) {
           return (

@@ -111,7 +111,12 @@ function Field({
   const label = (
     <Label htmlFor={id} className="mb-1.5 text-xs text-muted-foreground">
       {field.label}
-      {field.required && <span className="text-brand-red">*</span>}
+      {field.required && (
+        <>
+          <span aria-hidden className="text-brand-red">*</span>
+          <span className="sr-only">(שדה חובה)</span>
+        </>
+      )}
     </Label>
   );
 
@@ -251,7 +256,7 @@ function Field({
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col" data-field={field.name}>
       {label}
       {control}
       {field.hint && <p className="mt-1 text-xs leading-snug text-muted-foreground">{field.hint}</p>}

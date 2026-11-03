@@ -322,7 +322,7 @@ function PhotoTile({
           onTouchStart={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
           aria-label="הסר תמונה"
-          className="absolute top-1.5 end-1.5 rounded-full bg-black/60 p-1 text-white transition-opacity pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100"
+          className="absolute top-1.5 end-1.5 rounded-full bg-black/60 p-1 text-white transition-opacity focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-white pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100"
         >
           <XIcon className="size-3.5" />
         </button>
@@ -379,7 +379,7 @@ export function PendingImages({ files, onChange }: { files: File[]; onChange: (f
             type="button"
             onClick={() => onChange(files.filter((_, j) => j !== i))}
             aria-label="הסר תמונה"
-            className="absolute top-1.5 end-1.5 rounded-full bg-black/60 p-1 text-white transition-opacity pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100"
+            className="absolute top-1.5 end-1.5 rounded-full bg-black/60 p-1 text-white transition-opacity focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-white pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100"
           >
             <XIcon className="size-3.5" />
           </button>

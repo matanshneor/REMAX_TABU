@@ -134,7 +134,7 @@ export function PropertyFiltersBar({
             value={value.status}
             onChange={(e) => set("status", e.target.value as PropertyFilters["status"])}
             aria-label="מצב בשוק"
-            className="w-36"
+            className="w-full sm:w-36"
           >
             <option value="">כל המצבים בשוק</option>
             {Object.entries(PROPERTY_STATUS).map(([k, v]) => (
@@ -143,14 +143,14 @@ export function PropertyFiltersBar({
               </option>
             ))}
           </NativeSelect>
-          <Input value={value.city} onChange={(e) => set("city", e.target.value)} list="bar-cities" placeholder="כל הערים" aria-label="עיר" className="w-28" />
+          <Input value={value.city} onChange={(e) => set("city", e.target.value)} list="bar-cities" placeholder="כל הערים" aria-label="עיר" className="w-full sm:w-28" />
           <datalist id="bar-cities">
             {cities.map((c) => (
               <option key={c} value={c} />
             ))}
           </datalist>
-          <Input value={value.neighborhood} onChange={(e) => set("neighborhood", e.target.value)} placeholder="כל השכונות" aria-label="שכונה" className="w-28" />
-          <NativeSelect value={value.type} onChange={(e) => set("type", e.target.value)} aria-label="סוג נכס" className="w-28">
+          <Input value={value.neighborhood} onChange={(e) => set("neighborhood", e.target.value)} placeholder="כל השכונות" aria-label="שכונה" className="w-full sm:w-28" />
+          <NativeSelect value={value.type} onChange={(e) => set("type", e.target.value)} aria-label="סוג נכס" className="w-full sm:w-28">
             <option value="">כל הסוגים</option>
             {PROPERTY_TYPES.map((t) => (
               <option key={t.value} value={t.value}>
@@ -158,7 +158,7 @@ export function PropertyFiltersBar({
               </option>
             ))}
           </NativeSelect>
-          <div className="flex items-center gap-1">
+          <div className="flex w-full items-center gap-1 sm:w-auto">
             <CurrencyInput value={value.priceMin} onChange={(v) => set("priceMin", v)} placeholder="מחיר מ-" aria-label="מחיר מינימלי" className="w-24" />
             <span className="text-muted-foreground">–</span>
             <CurrencyInput value={value.priceMax} onChange={(v) => set("priceMax", v)} placeholder="עד" aria-label="מחיר מקסימלי" className="w-24" />
@@ -167,7 +167,7 @@ export function PropertyFiltersBar({
             value={value.engagement}
             onChange={(e) => set("engagement", e.target.value as PropertyFilters["engagement"])}
             aria-label="סוג התקשרות"
-            className="w-36"
+            className="w-full sm:w-36"
           >
             <option value="">כל סוגי ההתקשרות</option>
             {Object.entries(PROPERTY_ENGAGEMENT).map(([k, v]) => (
@@ -176,7 +176,7 @@ export function PropertyFiltersBar({
               </option>
             ))}
           </NativeSelect>
-          <NativeSelect value={value.source} onChange={(e) => set("source", e.target.value)} aria-label="מקור ליד" className="w-36">
+          <NativeSelect value={value.source} onChange={(e) => set("source", e.target.value)} aria-label="מקור ליד" className="w-full sm:w-36">
             <option value="">כל מקורות הליד</option>
             {sources.map((o) => (
               <option key={o.value} value={o.value}>

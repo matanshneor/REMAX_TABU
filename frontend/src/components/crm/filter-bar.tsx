@@ -40,7 +40,7 @@ export function FilterBar({
           onClick={() => setOpen((o) => !o)}
           aria-expanded={open}
           className={cn(
-            "flex h-8 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition-colors hover:bg-secondary",
+            "flex h-8 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition-colors hover:bg-secondary focus-visible:ring-3 focus-visible:ring-ring/50 outline-none pointer-coarse:h-11",
             moreCount > 0 && "border-primary text-primary",
           )}
         >
@@ -57,7 +57,7 @@ export function FilterBar({
             onClick={onReset}
             aria-label="איפוס הסינון"
             title="איפוס הסינון"
-            className="flex size-8 items-center justify-center rounded-lg text-primary transition-colors hover:bg-secondary"
+            className="flex size-8 items-center justify-center rounded-lg text-primary transition-colors hover:bg-secondary focus-visible:ring-3 focus-visible:ring-ring/50 outline-none pointer-coarse:size-11"
           >
             <RotateCcwIcon className="size-4" />
           </button>
@@ -78,7 +78,7 @@ export function FilterChip({ on, onClick, children }: { on: boolean; onClick: ()
       onClick={onClick}
       aria-pressed={on}
       className={cn(
-        "inline-flex h-8 items-center gap-1 rounded-full border px-2.5 text-xs font-medium transition-colors",
+        "inline-flex h-8 items-center gap-1 rounded-full border px-2.5 text-xs font-medium transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 pointer-coarse:h-10 pointer-coarse:px-3.5 pointer-coarse:text-sm",
         on ? "border-primary bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:text-foreground",
       )}
     >

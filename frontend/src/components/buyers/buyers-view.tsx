@@ -258,7 +258,7 @@ export function BuyersView() {
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
               aria-label="סטטוס"
-              className="w-40"
+              className="w-full sm:w-40"
             >
               {STATUS_OPTIONS.map(({ value, label }) => (
                 <option key={value} value={value}>
@@ -267,7 +267,7 @@ export function BuyersView() {
               ))}
             </NativeSelect>
             {admin && (
-              <NativeSelect value={agentFilter} onChange={(e) => setAgentFilter(e.target.value)} className="w-44" aria-label="סינון לפי סוכן">
+              <NativeSelect value={agentFilter} onChange={(e) => setAgentFilter(e.target.value)} className="w-full sm:w-44" aria-label="סינון לפי סוכן">
                 <option value="all">כל הסוכנים ({buyers.length})</option>
                 <option value="unassigned">לא משויכים ({buyers.filter((b) => !isAssigned(b)).length})</option>
                 {team.map((t) => (
@@ -277,7 +277,7 @@ export function BuyersView() {
                 ))}
               </NativeSelect>
             )}
-            <NativeSelect value={more.area} onChange={(e) => setMoreFilter("area", e.target.value)} aria-label="אזור" className="w-32">
+            <NativeSelect value={more.area} onChange={(e) => setMoreFilter("area", e.target.value)} aria-label="אזור" className="w-full sm:w-32">
               <option value="">כל האזורים</option>
               {PISGAT_AREAS.map((a) => (
                 <option key={a.value} value={a.value}>
@@ -285,7 +285,7 @@ export function BuyersView() {
                 </option>
               ))}
             </NativeSelect>
-            <NativeSelect value={more.type} onChange={(e) => setMoreFilter("type", e.target.value)} aria-label="סוג נכס" className="w-28">
+            <NativeSelect value={more.type} onChange={(e) => setMoreFilter("type", e.target.value)} aria-label="סוג נכס" className="w-full sm:w-28">
               <option value="">כל הסוגים</option>
               {PROPERTY_TYPES.map((t) => (
                 <option key={t.value} value={t.value}>
@@ -293,8 +293,8 @@ export function BuyersView() {
                 </option>
               ))}
             </NativeSelect>
-            <div className="flex items-center gap-1">
-              <CurrencyInput value={more.budgetMin} onChange={(v) => setMoreFilter("budgetMin", v)} placeholder="תקציב מ-" aria-label="תקציב מינימלי" className="w-28" />
+            <div className="flex w-full items-center gap-1 sm:w-auto">
+              <CurrencyInput value={more.budgetMin} onChange={(v) => setMoreFilter("budgetMin", v)} placeholder="תקציב מ-" aria-label="תקציב מינימלי" className="w-full sm:w-28" />
               <span className="text-muted-foreground">–</span>
               <CurrencyInput value={more.budgetMax} onChange={(v) => setMoreFilter("budgetMax", v)} placeholder="עד" aria-label="תקציב מקסימלי" className="w-24" />
             </div>
@@ -302,7 +302,7 @@ export function BuyersView() {
               חדרים מ-
               <Input type="number" min={0} step={0.5} value={more.roomsMin} onChange={(e) => setMoreFilter("roomsMin", e.target.value)} className="w-16" />
             </Label>
-            <NativeSelect value={more.source} onChange={(e) => setMoreFilter("source", e.target.value)} aria-label="מקור ליד" className="w-36">
+            <NativeSelect value={more.source} onChange={(e) => setMoreFilter("source", e.target.value)} aria-label="מקור ליד" className="w-full sm:w-36">
               <option value="">כל מקורות הליד</option>
               {sourceOptions(buyers.map((b) => b.lead_source)).map((o) => (
                 <option key={o.value} value={o.value}>
@@ -324,7 +324,7 @@ export function BuyersView() {
           </>
         }
       >
-        <div className="relative min-w-0 flex-1">
+        <div className="relative min-w-0 basis-full sm:basis-0 sm:flex-1">
           <SearchIcon className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={text}
@@ -346,7 +346,62 @@ export function BuyersView() {
           hint={buyers.length ? "נסה לשנות את הסינון." : "לחץ על ״קונה חדש״ כדי להוסיף את הליד הראשון."}
         />
       ) : (
-        <div className="overflow-hidden rounded-xl border bg-card shadow-[0_1px_2px_rgb(15_26_46/0.04),0_8px_24px_-14px_rgb(15_26_46/0.12)]">
+        <>
+        {/* Phones: one card per buyer, with big call / WhatsApp / log buttons, instead of a wide table. */}
+        <ul className="flex flex-col gap-2.5 md:hidden">
+          {rows.map((b) => {
+            const n = matches.get(b.id);
+            return (
+              <li key={b.id} className="rounded-xl border bg-card p-3.5 shadow-[0_1px_2px_rgb(15_26_46/0.04),0_8px_24px_-14px_rgb(15_26_46/0.12)]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFocusLog(false);
+                    setOpenId(b.id);
+                  }}
+                  className="block w-full rounded-lg text-start outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                >
+                  <span className="flex items-baseline justify-between gap-2">
+                    <span className="min-w-0 truncate text-base font-semibold">{b.full_name}</span>
+                    <span className="shrink-0 font-display text-lg text-primary tabular-nums">{formatILSCompact(b.max_budget)}</span>
+                  </span>
+                  <span className="mt-0.5 block text-sm text-muted-foreground">
+                    {[b.min_rooms && `${b.min_rooms}+ חד׳`, b.preferred_neighborhoods.length ? areasText(b.preferred_neighborhoods) : "כל הפסגה"]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
+                  {isStale(b) && (
+                    <span className="mt-0.5 block text-sm font-semibold text-brand-red">● {daysSince(lastContact(b))} יום בלי שיחה</span>
+                  )}
+                  {!!n && (
+                    <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold text-secondary-foreground">
+                      <SparklesIcon className="size-3" />
+                      {n === 1 ? "נכס אחד מתאים" : `${n} נכסים מתאימים`}
+                    </span>
+                  )}
+                </button>
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  {b.phone ? (
+                    <>
+                      <WhatsAppButton phone={b.phone} solid label="וואטסאפ" />
+                      <Button variant="outline" render={<a href={`tel:${b.phone}`} />} nativeButton={false}>
+                        <PhoneIcon />
+                        חיוג
+                      </Button>
+                    </>
+                  ) : (
+                    <span className="col-span-2 self-center text-sm text-muted-foreground">אין טלפון</span>
+                  )}
+                  <Button variant="outline" className="border-dashed border-primary/40 bg-secondary/40 text-primary" onClick={() => onLog(b.id)}>
+                    <PlusIcon />
+                    שיחה
+                  </Button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+        <div className="hidden overflow-hidden rounded-xl border bg-card shadow-[0_1px_2px_rgb(15_26_46/0.04),0_8px_24px_-14px_rgb(15_26_46/0.12)] md:block">
           <div className="overflow-x-auto">
             <Table
               className={cn(
@@ -387,8 +442,17 @@ export function BuyersView() {
                       setFocusLog(false);
                       setOpenId(b.id);
                     }}
+                    // Keyboard: Tab reaches the row, Enter opens the buyer (buttons inside keep their own keys).
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
+                        e.preventDefault();
+                        setFocusLog(false);
+                        setOpenId(b.id);
+                      }
+                    }}
                     className={cn(
-                      "cursor-pointer transition-colors hover:bg-secondary/50",
+                      "cursor-pointer transition-colors outline-none hover:bg-secondary/50 focus-visible:bg-secondary/60 focus-visible:shadow-[inset_-3px_0_0_var(--ring)]",
                       openId === b.id && "bg-primary/5 shadow-[inset_-3px_0_0_var(--primary)]",
                     )}
                   >
@@ -415,6 +479,7 @@ export function BuyersView() {
             </span>
           </div>
         </div>
+        </>
       )}
 
       <BuyerPanel
@@ -652,10 +717,15 @@ function LastContact({ buyer }: { buyer: BuyerRow }) {
 }
 
 /** Areas as plain text ("מרכז, מזרח"); all of them reads "כל הפסגה". */
+/** "מרכז, מזרח"; all of them reads "כל הפסגה". */
+function areasText(areas: string[]): string {
+  if (PISGAT_AREAS.every((a) => areas.includes(a.value))) return "כל הפסגה";
+  return areas.map((a) => AREA_SHORT.get(a) ?? a).join(", ");
+}
+
 function AreaTags({ areas }: { areas: string[] }) {
   if (!areas.length) return <span className="text-muted-foreground">—</span>;
-  if (PISGAT_AREAS.every((a) => areas.includes(a.value))) return <>כל הפסגה</>;
-  return <>{areas.map((a) => AREA_SHORT.get(a) ?? a).join(", ")}</>;
+  return <>{areasText(areas)}</>;
 }
 
 function YesNo({ value }: { value: boolean }) {

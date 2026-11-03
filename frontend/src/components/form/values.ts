@@ -59,14 +59,20 @@ export function missingRequired(sections: FormSection[], values: FormValues): Fi
 
 /** What's wrong with the form, in Hebrew, or undefined when it can be saved. */
 export function formProblem(sections: FormSection[], values: FormValues): string | undefined {
+  return formIssue(sections, values)?.message;
+}
+
+/** The first problem and the field it's in (to point the user at it). */
+export function formIssue(sections: FormSection[], values: FormValues): { field: string; message: string } | undefined {
   const missing = missingRequired(sections, values);
-  if (missing) return `יש למלא את השדה "${missing.label}"`;
+  if (missing) return { field: missing.name, message: `יש למלא את השדה "${missing.label}"` };
   for (const f of allFields(sections)) {
     if (!NUMERIC.has(f.type) || values[f.name] === "" || values[f.name] == null) continue;
     const n = Number(values[f.name]);
-    if (Number.isNaN(n)) return `בשדה "${f.label}" צריך להיות מספר`;
+    if (Number.isNaN(n)) return { field: f.name, message: `בשדה "${f.label}" צריך להיות מספר` };
     const min = f.min ?? 0;
-    if (n < min) return min === 0 ? `השדה "${f.label}" לא יכול להיות שלילי` : `בשדה "${f.label}" המספר הנמוך ביותר הוא ${min}`;
+    if (n < min)
+      return { field: f.name, message: min === 0 ? `השדה "${f.label}" לא יכול להיות שלילי` : `בשדה "${f.label}" המספר הנמוך ביותר הוא ${min}` };
   }
   return undefined;
 }
