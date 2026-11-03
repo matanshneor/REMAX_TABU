@@ -16,7 +16,7 @@ export function SearchResults() {
     <div className="mx-auto max-w-3xl">
       <PageHeader title={`תוצאות חיפוש: "${q}"`} count={data.length} />
       {q.trim().length < 2 ? (
-        <EmptyState icon={<SearchIcon />} title="הקלד לפחות 2 תווים בשורת החיפוש" />
+        <EmptyState icon={<SearchIcon />} title="מקלידים לפחות 2 תווים בשורת החיפוש" />
       ) : isLoading ? (
         <Skeleton className="h-48 rounded-xl" />
       ) : groups.length === 0 ? (

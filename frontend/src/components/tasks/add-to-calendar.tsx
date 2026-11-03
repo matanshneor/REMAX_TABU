@@ -34,7 +34,7 @@ export function AddToCalendar({ task }: { task: TaskForCalendar }) {
     <DropdownMenu>
       <DropdownMenuTrigger render={<Button variant="outline" size="sm" />}>
         <CalendarPlusIcon />
-        הוסף ליומן
+        הוספה ליומן
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         {/* A real address (not a generated file), so the iPhone opens its "add event" screen directly. */}

@@ -36,7 +36,7 @@ type NavItem = {
 
 /** Yad2's orange tag, in place of an icon (sized by its text, like the tag on the pool's cards). */
 function Yad2Mark() {
-  return <span className="shrink-0 rounded-md bg-[#ff7100] px-1.5 py-px text-xs leading-snug font-extrabold text-foreground">יד2</span>;
+  return <span className="shrink-0 rounded-md bg-yad2 px-1.5 py-px text-xs leading-snug font-extrabold text-foreground">יד2</span>;
 }
 
 const MAIN: NavItem[] = [

@@ -343,7 +343,7 @@ export function BuyersView() {
         <EmptyState
           icon={<UsersIcon />}
           title={buyers.length ? "אין קונים שמתאימים לסינון" : "עדיין אין קונים במערכת"}
-          hint={buyers.length ? "נסה לשנות את הסינון." : "לחץ על ״קונה חדש״ כדי להוסיף את הליד הראשון."}
+          hint={buyers.length ? "אפשר לשנות את הסינון." : "לוחצים על ״קונה חדש״ כדי להוסיף את הליד הראשון."}
         />
       ) : (
         <>
@@ -352,7 +352,7 @@ export function BuyersView() {
           {rows.map((b) => {
             const n = matches.get(b.id);
             return (
-              <li key={b.id} className="rounded-xl border bg-card p-3.5 shadow-[0_1px_2px_rgb(15_26_46/0.04),0_8px_24px_-14px_rgb(15_26_46/0.12)]">
+              <li key={b.id} className="rounded-xl border bg-card p-3.5 shadow-card">
                 <button
                   type="button"
                   onClick={() => {
@@ -401,7 +401,7 @@ export function BuyersView() {
             );
           })}
         </ul>
-        <div className="hidden overflow-hidden rounded-xl border bg-card shadow-[0_1px_2px_rgb(15_26_46/0.04),0_8px_24px_-14px_rgb(15_26_46/0.12)] md:block">
+        <div className="hidden overflow-hidden rounded-xl border bg-card shadow-card md:block">
           <div className="overflow-x-auto">
             <Table
               className={cn(
@@ -475,7 +475,7 @@ export function BuyersView() {
               <strong className="text-foreground tabular-nums">{buyers.length}</strong> קונים
             </span>
             <span>
-              {showAll ? "" : "שאר הפרטים בכרטיס הקונה · "}לחץ על כותרת עמודה כדי למיין
+              {showAll ? "" : "שאר הפרטים בכרטיס הקונה · "}לוחצים על כותרת עמודה כדי למיין
             </span>
           </div>
         </div>

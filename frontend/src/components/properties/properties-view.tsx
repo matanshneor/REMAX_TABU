@@ -138,7 +138,7 @@ export function PropertiesView() {
           <EmptyState
             icon={<Building2Icon />}
             title={properties.length ? "אין מוכרים שמתאימים לסינון" : "עדיין אין מוכרים במאגר"}
-            hint={properties.length ? "נסה להרחיב את הסינון." : "לחץ על ״מוכר חדש״ כדי להוסיף את הראשון."}
+            hint={properties.length ? "אפשר להרחיב את הסינון." : "לוחצים על ״מוכר חדש״ כדי להוסיף את הראשון."}
           />
         ) : (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">

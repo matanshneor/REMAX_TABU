@@ -67,7 +67,7 @@ function LogForm({ task, onClose, onDirtyChange }: { task: FinishedBuyerTask; on
     >
       <DialogHeader>
         <DialogTitle className="text-xl font-normal">מה היה עם {first}?</DialogTitle>
-        <DialogDescription>המשימה ״{task.taskTitle}״ בוצעה. מה שתכתבו יירשם ביומן השיחות של {task.buyerName}.</DialogDescription>
+        <DialogDescription>המשימה ״{task.taskTitle}״ בוצעה. מה שייכתב כאן יירשם ביומן השיחות של {task.buyerName}.</DialogDescription>
       </DialogHeader>
       <Textarea
         autoFocus
@@ -85,7 +85,7 @@ function LogForm({ task, onClose, onDirtyChange }: { task: FinishedBuyerTask; on
           לא עכשיו
         </Button>
         <Button type="submit" disabled={!text.trim() || save.isPending}>
-          שמור ביומן
+          שמירה ביומן
         </Button>
       </DialogFooter>
     </form>

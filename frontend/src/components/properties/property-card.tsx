@@ -57,7 +57,7 @@ export function PropertyCard({
     // opens the seller; the call and WhatsApp buttons sit above it.
     <div
       className={cn(
-        "group relative flex flex-col has-[>button:focus-visible]:ring-2 has-[>button:focus-visible]:ring-ring overflow-hidden rounded-xl border bg-card text-start shadow-[0_1px_2px_rgb(15_26_46/0.04),0_8px_24px_-14px_rgb(15_26_46/0.12)] transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-[0_2px_4px_rgb(15_26_46/0.05),0_18px_36px_-14px_rgb(15_26_46/0.25)] motion-reduce:transition-none motion-reduce:hover:translate-y-0",
+        "group relative flex flex-col has-[>button:focus-visible]:ring-2 has-[>button:focus-visible]:ring-ring overflow-hidden rounded-xl border bg-card text-start shadow-card transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-card-hover motion-reduce:transition-none motion-reduce:hover:translate-y-0",
         selected && "ring-2 ring-primary",
         p.status !== "active" && "opacity-75",
       )}

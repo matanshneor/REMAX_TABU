@@ -96,7 +96,7 @@ export function ListingPanel({
               );
             }}
           >
-            {busy ? "מעלה תמונות…" : save.isPending ? "שומר…" : "שמור"}
+            {busy ? "מעלה תמונות…" : save.isPending ? "שומר…" : "שמירה"}
           </Button>
         }
       >

@@ -47,7 +47,7 @@ export function TagsInput({
             }
           }}
           onBlur={commit}
-          placeholder={value.length ? "" : placeholder ?? "הקלד ולחץ Enter"}
+          placeholder={value.length ? "" : placeholder ?? "מקלידים ולוחצים Enter"}
           className="min-w-24 flex-1 bg-transparent px-1 text-sm outline-none"
         />
       )}

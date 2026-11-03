@@ -132,7 +132,7 @@ export function PropertyPanel({
         footer={
           <>
             <Button onClick={create} disabled={busy}>
-              {finishing ? "מעלה תמונות…" : busy ? "שומר…" : "שמור"}
+              {finishing ? "מעלה תמונות…" : busy ? "שומר…" : "שמירה"}
             </Button>
           </>
         }

@@ -162,7 +162,7 @@ export function PropertyImages({
         await save.mutateAsync({ id: property.id, values: { image_paths: [...property.image_paths, ...paths] } });
         toast.success(paths.length > 1 ? `${paths.length} תמונות הועלו` : "התמונה הועלתה");
       }
-      if (failed) toast.error(failed > 1 ? `${failed} תמונות לא הועלו — נסו שוב` : "תמונה אחת לא הועלתה — נסו שוב");
+      if (failed) toast.error(failed > 1 ? `${failed} תמונות לא הועלו — אפשר לנסות שוב` : "תמונה אחת לא הועלתה — אפשר לנסות שוב");
     } catch (e) {
       toast.error(errorMessage(e));
     } finally {
@@ -198,7 +198,7 @@ export function PropertyImages({
         {editable && (
           <Button size="sm" className="absolute bottom-3 start-1/2 -translate-x-1/2 rtl:translate-x-1/2" onClick={() => inputRef.current?.click()} disabled={uploading}>
             <ImagePlusIcon />
-            {uploading ? "מעלה…" : "הוסף תמונות"}
+            {uploading ? "מעלה…" : "הוספת תמונות"}
           </Button>
         )}
           {fileInput}
@@ -228,7 +228,7 @@ export function PropertyImages({
           className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border border-dashed text-xs text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-60"
         >
           <ImagePlusIcon className="size-5" />
-          {uploading ? "מעלה…" : "הוסף תמונות"}
+          {uploading ? "מעלה…" : "הוספת תמונות"}
         </button>
       )}
       {fileInput}
@@ -245,7 +245,7 @@ export function PropertyImages({
         onDragCancel={() => setDragging(null)}
         onDragEnd={onDragEnd}
         accessibility={{
-          screenReaderInstructions: { draggable: "לחצו רווח כדי להרים את התמונה, חצים כדי להזיז, ורווח שוב כדי להניח." },
+          screenReaderInstructions: { draggable: "לוחצים רווח כדי להרים את התמונה, חצים כדי להזיז, ורווח שוב כדי להניח." },
         }}
       >
         {grid}
@@ -359,7 +359,7 @@ export function PendingImages({ files, onChange }: { files: File[]; onChange: (f
         <PropertyPlaceholder label="אפשר להוסיף תמונות כבר עכשיו" />
         <Button size="sm" className="absolute bottom-3 start-1/2 -translate-x-1/2 rtl:translate-x-1/2" onClick={() => inputRef.current?.click()}>
           <ImagePlusIcon />
-          הוסף תמונות
+          הוספת תמונות
         </Button>
           {fileInput}
         </div>
@@ -391,7 +391,7 @@ export function PendingImages({ files, onChange }: { files: File[]; onChange: (f
         className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border border-dashed text-xs text-muted-foreground transition-colors hover:border-primary hover:text-primary"
       >
         <ImagePlusIcon className="size-5" />
-        הוסף תמונות
+        הוספת תמונות
       </button>
       {fileInput}
     </div>

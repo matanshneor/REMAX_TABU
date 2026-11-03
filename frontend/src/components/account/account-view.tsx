@@ -58,11 +58,11 @@ export function AccountView() {
               )
             }
           >
-            שמור פרטים
+            שמירת פרטים
           </Button>
           {form.dirty && (
             <Button variant="ghost" onClick={form.reset}>
-              בטל
+              ביטול
             </Button>
           )}
         </div>

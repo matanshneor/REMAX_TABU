@@ -40,7 +40,7 @@ export function ChartCard({
   className?: string;
 }) {
   return (
-    <section className={`rounded-xl border bg-card p-4 shadow-[0_1px_2px_rgb(15_26_46/0.04),0_8px_24px_-14px_rgb(15_26_46/0.12)] ${className}`}>
+    <section className={`rounded-xl border bg-card p-4 shadow-card ${className}`}>
       <header className="mb-3 flex flex-wrap items-start justify-between gap-2">
         <div>
           <h2 className="font-semibold">{title}</h2>

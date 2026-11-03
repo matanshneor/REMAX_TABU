@@ -15,7 +15,7 @@ export function errorMessage(error: unknown): string {
   if (e?.code === "23502") return "חסר שדה חובה";
   if (e?.code === "23503") return "הרשומה קשורה לפריט שכבר לא קיים";
   if (e?.code === "PGRST301" || e?.code === "PGRST303") return "החיבור פג — יש להתחבר מחדש";
-  if (/failed to fetch|network|load failed|fetch failed/i.test(e?.message ?? "")) return "אין חיבור לאינטרנט — נסו שוב";
+  if (/failed to fetch|network|load failed|fetch failed/i.test(e?.message ?? "")) return "אין חיבור לאינטרנט — אפשר לנסות שוב";
   // Our own triggers raise Hebrew messages; anything else from the server stays generic.
-  return e?.message && /[֐-׿]/.test(e.message) ? e.message : "אירעה שגיאה, נסו שוב";
+  return e?.message && /[֐-׿]/.test(e.message) ? e.message : "אירעה שגיאה, אפשר לנסות שוב";
 }

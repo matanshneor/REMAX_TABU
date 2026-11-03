@@ -37,7 +37,7 @@ export function KpiCard({
       onClick={onClick}
       aria-pressed={onClick ? !!selected : undefined}
       className={cn(
-        "group relative overflow-hidden rounded-xl border bg-card p-4 text-start shadow-[0_1px_2px_rgb(15_26_46/0.04),0_8px_24px_-12px_rgb(15_26_46/0.12)] outline-none transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_2px_4px_rgb(15_26_46/0.05),0_16px_32px_-14px_rgb(15_26_46/0.2)] focus-visible:ring-3 focus-visible:ring-ring/40 motion-reduce:transition-none motion-reduce:hover:translate-y-0",
+        "group relative overflow-hidden rounded-xl border bg-card p-4 text-start shadow-card outline-none transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-card-hover focus-visible:ring-3 focus-visible:ring-ring/40 motion-reduce:transition-none motion-reduce:hover:translate-y-0",
         onClick && "cursor-pointer",
         selected && "border-primary ring-2 ring-primary/30",
       )}

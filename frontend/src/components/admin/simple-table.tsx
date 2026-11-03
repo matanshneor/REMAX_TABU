@@ -22,7 +22,7 @@ export function SimpleTable<T extends { id: string }>({
   onRowClick: (row: T) => void;
 }) {
   return (
-    <div className="overflow-hidden rounded-xl border bg-card shadow-[0_1px_2px_rgb(15_26_46/0.04),0_8px_24px_-14px_rgb(15_26_46/0.12)]">
+    <div className="overflow-hidden rounded-xl border bg-card shadow-card">
       <Table className="[&_td]:py-3 [&_th]:h-11 [&_th]:text-xs [&_th]:font-semibold [&_th]:text-muted-foreground">
         <TableHeader>
           <TableRow className="bg-muted/50 hover:bg-muted/50">

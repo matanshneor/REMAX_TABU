@@ -103,7 +103,7 @@ function CreateForm({
           ביטול
         </Button>
         <Button type="submit" disabled={save.isPending}>
-          {save.isPending ? "שומר…" : "שמור"}
+          {save.isPending ? "שומר…" : "שמירה"}
         </Button>
       </DialogFooter>
     </form>

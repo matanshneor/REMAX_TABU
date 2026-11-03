@@ -70,7 +70,7 @@ function CalendarSync() {
 
       {isLoading ? null : isError ? (
         // Don't offer "create link" here: it would replace a link a phone is already subscribed to.
-        <p className="text-sm text-destructive">לא הצלחנו לטעון את הקישור שלך. סגרו את החלון ונסו שוב.</p>
+        <p className="text-sm text-destructive">לא הצלחנו לטעון את הקישור שלך. אפשר לסגור את החלון ולנסות שוב.</p>
       ) : !token ? (
         <Button className="h-10" onClick={() => makeLink(false)} disabled={busy}>
           {busy ? "יוצר…" : "צור קישור אישי"}
