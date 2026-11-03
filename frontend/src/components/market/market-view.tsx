@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { ChevronDownIcon, InboxIcon, PlusIcon, SearchIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -20,9 +20,7 @@ import { useNewParam, usePanelParam } from "@/lib/use-panel-param";
 import { cn } from "@/lib/utils";
 import { ListingPanel } from "./listing-panel";
 import { HandledList, MarketGrid } from "./market-list";
-
-/** Still to call ("contacted" is from before the two outcomes; it stays open). */
-const isOpen = (l: MarketListing) => l.status === "new" || l.status === "contacted";
+import { isOpenListing as isOpen, seenListingsKey, useMarketListings, useSeenListings } from "./use-market";
 
 /** A listing's details as a new seller's starting values. */
 function sellerFromListing(l: MarketListing): Record<string, unknown> {
@@ -45,9 +43,10 @@ function sellerFromListing(l: MarketListing): Record<string, unknown> {
 }
 
 /**
- * "מאגר יד2": new private listings, as cards, for anyone to call. In a listing's card, whoever
- * called marks the outcome: "העבר למוכרים שלי" (it becomes their seller) or "לא רלוונטי" (with
- * a reason). Handled listings fold away under the cards.
+ * "מאגר יד2": private listings, as cards, for anyone to call, newest in the pool first. Those the
+ * user hasn't opened yet ("חדשות") come first; those they opened follow in their own section.
+ * In a listing's card, whoever called marks the outcome: "העבר למוכרים שלי" (it becomes their
+ * seller) or "לא רלוונטי" (with a reason). Handled listings fold away under the cards.
  */
 export function MarketView() {
   const { profile } = useAuth();
@@ -62,35 +61,22 @@ export function MarketView() {
   const saveListing = useSaveRecord<MarketListing>("market_listings", { silent: true });
   const saveProperty = useSaveRecord("properties", { silent: true });
 
-  const { data: listings = [], isLoading, error } = useQuery({
-    queryKey: ["market_listings", "list"],
-    queryFn: async () => {
-      const { data, error } = await createClient().from("market_listings").select("*").order("listed_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-  });
+  const { data: listings = [], isLoading, error } = useMarketListings();
 
   const matches = useMemo(() => {
     const t = text.trim().toLowerCase();
     return listings.filter((l) => !t || [l.title, l.street, l.neighborhood, l.city, l.advertiser, l.phone].some((s) => s?.toLowerCase().includes(t)));
   }, [listings, text]);
-  const fresh = matches.filter(isOpen);
+  const open = useMemo(() => matches.filter(isOpen), [matches]);
   const added = matches.filter((l) => l.status === "added");
   const dismissed = matches.filter((l) => l.status === "not_interested");
 
-  // Listings this user has opened; the rest show "חדשה" on their card.
+  // Listings this user has opened; the rest are "חדשות" (until the views load, all show as one list).
   const qc = useQueryClient();
-  const seenKey = ["market_listing_views", profile?.id];
-  const { data: seen = null } = useQuery({
-    queryKey: seenKey,
-    enabled: !!profile,
-    queryFn: async () => {
-      const { data, error } = await createClient().from("market_listing_views").select("listing_id");
-      if (error) throw error;
-      return new Set(data.map((v) => v.listing_id));
-    },
-  });
+  const seenKey = seenListingsKey(profile?.id);
+  const { data: seen = null } = useSeenListings();
+  const fresh = seen ? open.filter((l) => !seen.has(l.id)) : open;
+  const opened = seen ? open.filter((l) => seen.has(l.id)) : [];
   // Opening a listing (from a card or a link) marks it seen, once.
   useEffect(() => {
     if (!openId || !seen || seen.has(openId) || !listings.some((l) => l.id === openId)) return;
@@ -103,7 +89,7 @@ export function MarketView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openId, seen, listings]);
 
-  const photoPaths = useMemo(() => fresh.flatMap((l) => (l.image_path ? [l.image_path] : [])), [fresh]);
+  const photoPaths = useMemo(() => open.flatMap((l) => l.image_paths.slice(0, 1)), [open]);
   const { data: photos = {} } = useSignedUrls(MEDIA_BUCKET, photoPaths);
 
   // Sellers are private to their agent: the link shows for whoever moved it (and the admin).
@@ -129,7 +115,8 @@ export function MarketView() {
     <>
       <PageHeader
         title="מאגר יד 2"
-        count={listings.filter(isOpen).length}
+        // Same number as the menu: open listings this user hasn't opened yet.
+        count={seen ? listings.filter((l) => isOpen(l) && !seen.has(l.id)).length : undefined}
         actions={
           <Button
             onClick={() => {
@@ -156,14 +143,31 @@ export function MarketView() {
             <Skeleton key={i} className="h-72 rounded-xl" />
           ))}
         </div>
-      ) : fresh.length === 0 ? (
+      ) : open.length === 0 ? (
         <EmptyState
           icon={<InboxIcon />}
-          title={listings.length ? "אין מודעות חדשות" : "המאגר עדיין ריק"}
+          title={listings.length ? "אין מודעות פתוחות" : "המאגר עדיין ריק"}
           hint="מודעות חדשות מיד2 ייכנסו לכאן לבד. אפשר גם להוסיף מודעה ידנית."
         />
       ) : (
-        <MarketGrid rows={fresh} photos={photos} seen={seen} onOpen={setOpenId} />
+        <div className="flex flex-col gap-8">
+          {fresh.length > 0 ? (
+            <section>
+              {opened.length > 0 && <GridTitle title="חדשות" hint="עוד לא פתחת" count={fresh.length} />}
+              <MarketGrid rows={fresh} photos={photos} seen={seen} onOpen={setOpenId} />
+            </section>
+          ) : (
+            <p className="rounded-xl border border-dashed px-4 py-3 text-sm text-muted-foreground">
+              אין מודעות חדשות: פתחת את כל המודעות במאגר.
+            </p>
+          )}
+          {opened.length > 0 && (
+            <section>
+              <GridTitle title="מודעות שפתחת" hint="עדיין לא הועברו למוכרים ולא סומנו לא רלוונטיות" count={opened.length} />
+              <MarketGrid rows={opened} photos={photos} seen={seen} onOpen={setOpenId} />
+            </section>
+          )}
+        </div>
       )}
 
       {!isLoading && !error && (
@@ -207,11 +211,11 @@ export function MarketView() {
         onCreated={async (propertyId) => {
           const listing = toSeller!;
           setToSeller(null);
-          // A hand-uploaded photo carries over to the seller (same bucket), first, next to any added in the card.
-          if (listing.image_path) {
+          // The listing's photos carry over to the seller (same bucket), first, next to any added in the card.
+          if (listing.image_paths.length) {
             const { data } = await createClient().from("properties").select("image_paths").eq("id", propertyId).single();
             await saveProperty
-              .mutateAsync({ id: propertyId, values: { image_paths: [listing.image_path, ...(data?.image_paths ?? [])] } })
+              .mutateAsync({ id: propertyId, values: { image_paths: [...listing.image_paths, ...(data?.image_paths ?? [])] } })
               .catch(() => {});
           }
           // Mark the listing moved and linked; who moved it is kept (assigned_to). Then show the seller.
@@ -222,5 +226,16 @@ export function MarketView() {
         }}
       />
     </>
+  );
+}
+
+/** A section title over a grid of listings: "חדשות 12 · עוד לא פתחת". */
+function GridTitle({ title, hint, count }: { title: string; hint: string; count: number }) {
+  return (
+    <h2 className="mb-3 flex flex-wrap items-baseline gap-x-2 text-base font-semibold">
+      {title}
+      <span className="text-sm font-normal text-muted-foreground tabular-nums">{count}</span>
+      <span className="text-xs font-normal text-muted-foreground">· {hint}</span>
+    </h2>
   );
 }

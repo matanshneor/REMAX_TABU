@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/components/auth-provider";
+import { isOpenListing, useMarketListings, useSeenListings } from "@/components/market/use-market";
 import { createClient } from "@/lib/supabase/client";
 
 /** What the sidebar shows: new Yad2 listings (as a line under the item) and sign-ups to approve. */
@@ -9,17 +10,11 @@ export function useNavCounts() {
   const { profile } = useAuth();
   const supabase = createClient();
 
-  const listings = useQuery({
-    queryKey: ["market_listings", "count", "new"],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("market_listings")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "new");
-      if (error) throw error;
-      return count ?? 0;
-    },
-  });
+  // Yad2 pool listings still open that this user hasn't opened yet (same queries as the pool page,
+  // so opening a listing there updates this at once).
+  const { data: listings } = useMarketListings();
+  const { data: seen } = useSeenListings();
+  const unseen = listings && seen ? listings.filter((l) => isOpenListing(l) && !seen.has(l.id)).length : undefined;
 
   // Sign-ups waiting for the admin; only admins can see other people's pending profiles.
   const pending = useQuery({
@@ -36,7 +31,7 @@ export function useNavCounts() {
   });
 
   return {
-    "/market": listings.data,
+    "/market": unseen,
     "/agents": pending.data,
   } as Record<string, number | undefined>;
 }
