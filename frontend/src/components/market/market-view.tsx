@@ -1,9 +1,9 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDownIcon, InboxIcon, PlusIcon, SearchIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { EmptyState, ErrorState, PageHeader } from "@/components/crm/page-header";
 import { MEDIA_BUCKET } from "@/components/properties/property-images";
@@ -79,6 +79,30 @@ export function MarketView() {
   const added = matches.filter((l) => l.status === "added");
   const dismissed = matches.filter((l) => l.status === "not_interested");
 
+  // Listings this user has opened; the rest show "חדשה" on their card.
+  const qc = useQueryClient();
+  const seenKey = ["market_listing_views", profile?.id];
+  const { data: seen = null } = useQuery({
+    queryKey: seenKey,
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await createClient().from("market_listing_views").select("listing_id");
+      if (error) throw error;
+      return new Set(data.map((v) => v.listing_id));
+    },
+  });
+  // Opening a listing (from a card or a link) marks it seen, once.
+  useEffect(() => {
+    if (!openId || !seen || seen.has(openId) || !listings.some((l) => l.id === openId)) return;
+    qc.setQueryData(seenKey, new Set([...seen, openId]));
+    createClient()
+      .from("market_listing_views")
+      .upsert({ listing_id: openId }, { onConflict: "user_id,listing_id", ignoreDuplicates: true })
+      .then(({ error }) => error && qc.invalidateQueries({ queryKey: seenKey }));
+    // seenKey is derived from profile?.id, already a dependency through `seen`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openId, seen, listings]);
+
   const photoPaths = useMemo(() => fresh.flatMap((l) => (l.image_path ? [l.image_path] : [])), [fresh]);
   const { data: photos = {} } = useSignedUrls(MEDIA_BUCKET, photoPaths);
 
@@ -139,7 +163,7 @@ export function MarketView() {
           hint="מודעות חדשות מיד2 ייכנסו לכאן לבד. אפשר גם להוסיף מודעה ידנית."
         />
       ) : (
-        <MarketGrid rows={fresh} photos={photos} onOpen={setOpenId} />
+        <MarketGrid rows={fresh} photos={photos} seen={seen} onOpen={setOpenId} />
       )}
 
       {!isLoading && !error && (

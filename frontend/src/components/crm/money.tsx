@@ -41,7 +41,8 @@ export function Money({
         {number}
       </span>
       {unit && <span className="font-sans text-[0.55em] font-semibold">{unit}</span>}
-      <span className="font-sans text-[0.55em] font-semibold opacity-70">₪</span>
+      {/* The display font draws ₪ like the letters "שח"; the plain font draws the real sign. */}
+      <span className="font-sans text-[0.8em] font-semibold opacity-80">₪</span>
     </span>
   );
 }

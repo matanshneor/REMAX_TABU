@@ -442,6 +442,39 @@ export type Database = {
           },
         ]
       }
+      market_listing_views: {
+        Row: {
+          listing_id: string
+          user_id: string
+          viewed_at: string
+        }
+        Insert: {
+          listing_id: string
+          user_id?: string
+          viewed_at?: string
+        }
+        Update: {
+          listing_id?: string
+          user_id?: string
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_listing_views_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "market_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "market_listing_views_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       market_listings: {
         Row: {
           advertiser: string | null
