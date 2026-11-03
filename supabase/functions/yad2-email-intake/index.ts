@@ -2,6 +2,9 @@
 // `inbound_emails` (once per Gmail message). The script sends its key in `x-intake-key`; the key's
 // SHA-256 is in `intake_keys`. Each Yad2 alert not handled yet is then read into the pool
 // (`market_listings`): only the office's area, and nothing that's already in the pool or among the sellers.
+//
+// The same script also emails the admins about new sign-ups: `{action: "signups"}` returns the
+// requests not emailed yet (one per admin), and `{action: "signups-sent", ids}` marks them sent.
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { type AlertListing, parseYad2Alert } from "./parse.ts";
 
@@ -109,6 +112,33 @@ async function processAlerts() {
   }
 }
 
+const SITE = "https://remax-tabu.up.railway.app";
+
+/** Sign-up requests (bell notifications) not emailed yet, addressed to their admin. */
+async function pendingSignups() {
+  const { data: notes, error } = await supabase
+    .from("notifications")
+    .select("id, recipient_id, body, created_at")
+    .eq("kind", "signup_request")
+    .is("emailed_at", null);
+  if (error) throw error;
+  if (!notes?.length) return [];
+  const { data: admins } = await supabase
+    .from("profiles")
+    .select("id, email")
+    .in("id", [...new Set(notes.map((n) => n.recipient_id))])
+    .eq("role", "admin")
+    .eq("status", "active");
+  const emailOf = new Map((admins ?? []).filter((a) => a.email).map((a) => [a.id, a.email as string]));
+  return notes.flatMap((n) => {
+    const to = emailOf.get(n.recipient_id);
+    if (!to) return [];
+    // The body is "name · phone · email" (handle_new_user).
+    const name = (n.body ?? "").split(" · ")[0] || "סוכן חדש";
+    return [{ id: n.id, to, subject: `סוכן חדש ממתין לאישור: ${name}`, details: n.body ?? "", link: `${SITE}/agents` }];
+  });
+}
+
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 
@@ -120,11 +150,27 @@ Deno.serve(async (req) => {
   const hash = key ? await sha256(key) : "";
   if (!hash || !keys?.some((k) => k.key_sha256 === hash)) return json(401, { error: "bad key" });
 
-  let body: { messageId?: string; from?: string; subject?: string; date?: string; html?: string };
+  let body: { action?: string; ids?: string[]; messageId?: string; from?: string; subject?: string; date?: string; html?: string };
   try {
     body = await req.json();
   } catch {
     return json(400, { error: "bad json" });
+  }
+
+  if (body.action === "signups") {
+    try {
+      return json(200, { signups: await pendingSignups() });
+    } catch (e) {
+      return json(500, { error: String((e as Error).message ?? e) });
+    }
+  }
+  if (body.action === "signups-sent") {
+    const ids = (body.ids ?? []).filter((id) => typeof id === "string");
+    if (ids.length) {
+      const { error } = await supabase.from("notifications").update({ emailed_at: new Date().toISOString() }).in("id", ids);
+      if (error) return json(500, { error: error.message });
+    }
+    return json(200, { ok: true });
   }
   if (!body.messageId) return json(400, { error: "messageId required" });
 
