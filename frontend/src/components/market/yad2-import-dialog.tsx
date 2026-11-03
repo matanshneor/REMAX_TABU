@@ -16,8 +16,16 @@ import type { MarketListing } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { addressKey, type ImportedListing, parseYad2Plus, pastePieces, rowId } from "./yad2-import";
 
-type Kind = "new" | "price" | "exists";
-type Row = ImportedListing & { id: string; kind: Kind; existing?: MarketListing; sameBuilding?: boolean };
+type Kind = "new" | "update" | "exists";
+type Row = ImportedListing & {
+  id: string;
+  kind: Kind;
+  existing?: MarketListing;
+  sameBuilding?: boolean;
+  /** For "update": what changed since the listing entered the pool. */
+  newPrice?: boolean;
+  newPhone?: boolean;
+};
 
 const digits = (s: string | null | undefined) => (s ?? "").replace(/\D/g, "");
 
@@ -33,7 +41,7 @@ function findExisting(r: ImportedListing, atAddress: MarketListing[]): MarketLis
 
 const KIND: Record<Kind, { label: string; className: string }> = {
   new: { label: "חדש", className: "bg-emerald-50 text-emerald-900" },
-  price: { label: "מחיר השתנה", className: "bg-amber-50 text-amber-900" },
+  update: { label: "עדכון", className: "bg-amber-50 text-amber-900" },
   exists: { label: "כבר במערכת", className: "bg-muted text-muted-foreground" },
 };
 
@@ -77,9 +85,12 @@ function ImportForm({ listings, onDone }: { listings: MarketListing[]; onDone: (
       const atAddress = byKey.get(p.key) ?? [];
       const existing = findExisting(p, atAddress);
       if (existing) {
-        // A listing already moved to the sellers isn't touched; an open one takes the new price.
-        const changed = p.price != null && existing.price !== p.price && existing.status !== "added";
-        return { ...p, id, kind: changed ? "price" : "exists", existing };
+        // A listing already moved to the sellers isn't touched; an open one takes the new price, and
+        // Yad2 Plus's phone (the owner's real number) over the one saved from the ad (often Yad2's virtual one).
+        const open = existing.status !== "added";
+        const newPrice = open && p.price != null && existing.price !== p.price;
+        const newPhone = open && !!p.phone && digits(existing.phone) !== digits(p.phone);
+        return { ...p, id, kind: newPrice || newPhone ? "update" : "exists", existing, newPrice, newPhone };
       }
       // Another flat at an address already in the pool is new, but say so.
       return { ...p, id, kind: sellerKeys.has(p.key) ? "exists" : "new", sameBuilding: atAddress.length > 0 };
@@ -140,18 +151,26 @@ function ImportForm({ listings, onDone }: { listings: MarketListing[]; onDone: (
         );
         if (error) throw error;
       }
-      for (const r of picked.filter((r) => r.kind === "price")) {
+      for (const r of picked.filter((r) => r.kind === "update")) {
         const l = r.existing!;
-        const line = `המחיר השתנה מ-${formatILS(l.price)} ל-${formatILS(r.price)} (${today})`;
+        const lines = [
+          r.newPrice && `המחיר השתנה מ-${formatILS(l.price)} ל-${formatILS(r.price)} (${today})`,
+          r.newPhone && l.phone && `הטלפון עודכן מיד 2 פלוס. המספר הקודם: ${l.phone}`,
+        ].filter(Boolean);
         const { error } = await supabase
           .from("market_listings")
-          .update({ price: r.price, notes: l.notes ? `${l.notes}\n${line}` : line })
+          .update({
+            ...(r.newPrice && { price: r.price }),
+            ...(r.newPhone && { phone: r.phone }),
+            ...(r.newPhone && !l.advertiser && r.contact && { advertiser: r.contact }),
+            notes: [l.notes, ...lines].filter(Boolean).join("\n") || null,
+          })
           .eq("id", l.id);
         if (error) throw error;
       }
       qc.invalidateQueries({ queryKey: ["market_listings"] });
       toast.success(
-        [adding && (adding === 1 ? "נכס חדש אחד נוסף למאגר" : `${adding} נכסים חדשים נוספו למאגר`), updating && `${updating} מחירים עודכנו`]
+        [adding && (adding === 1 ? "נכס חדש אחד נוסף למאגר" : `${adding} נכסים חדשים נוספו למאגר`), updating && (updating === 1 ? "נכס אחד עודכן" : `${updating} נכסים עודכנו`)]
           .filter(Boolean)
           .join(" · "),
       );
@@ -198,7 +217,7 @@ function ImportForm({ listings, onDone }: { listings: MarketListing[]; onDone: (
           <div className="flex flex-wrap gap-1.5 text-sm">
             <span className="rounded-full border px-3 py-0.5">נמצאו {rows.length + rentals} נכסים</span>
             <span className="rounded-full bg-emerald-50 px-3 py-0.5 font-semibold text-emerald-900">{count("new")} חדשים</span>
-            {count("price") > 0 && <span className="rounded-full bg-amber-50 px-3 py-0.5 text-amber-900">{count("price")} עם מחיר חדש</span>}
+            {count("update") > 0 && <span className="rounded-full bg-amber-50 px-3 py-0.5 text-amber-900">{count("update")} לעדכון</span>}
             {count("exists") > 0 && <span className="rounded-full border px-3 py-0.5 text-muted-foreground">{count("exists")} כבר במערכת</span>}
             {rentals > 0 && <span className="rounded-full border px-3 py-0.5 text-muted-foreground">{rentals} להשכרה · מדלגים</span>}
           </div>
@@ -255,7 +274,7 @@ function ImportForm({ listings, onDone }: { listings: MarketListing[]; onDone: (
                     </td>
                     <td className={cn("px-2 py-2 whitespace-nowrap tabular-nums", r.kind !== "exists" && "font-semibold text-primary")}>
                       <Money value={r.price} />
-                      {r.kind === "price" && (
+                      {r.newPrice && (
                         <span className="block text-xs font-normal text-muted-foreground">
                           היה <Money value={r.existing!.price} />
                         </span>
@@ -264,14 +283,21 @@ function ImportForm({ listings, onDone }: { listings: MarketListing[]; onDone: (
                     <td className="px-2 py-2">
                       {r.contact ?? "—"}
                       {r.phone && (
-                        <span dir="ltr" className="block text-end text-xs text-muted-foreground tabular-nums">
+                        <span dir="ltr" className={cn("block text-end text-xs tabular-nums", r.newPhone ? "font-semibold text-foreground" : "text-muted-foreground")}>
                           {r.phone}
+                        </span>
+                      )}
+                      {r.newPhone && r.existing?.phone && (
+                        <span className="block text-xs text-muted-foreground">
+                          היה <span dir="ltr">{r.existing.phone}</span>
                         </span>
                       )}
                     </td>
                     <td className="px-2 py-2 text-end">
                       <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap", KIND[r.kind].className)}>
-                        {KIND[r.kind].label}
+                        {r.kind === "update"
+                          ? [r.newPrice && "מחיר השתנה", r.newPhone && "טלפון חדש"].filter(Boolean).join(" · ")
+                          : KIND[r.kind].label}
                       </span>
                     </td>
                   </tr>
@@ -291,7 +317,7 @@ function ImportForm({ listings, onDone }: { listings: MarketListing[]; onDone: (
             ? "הוספה למאגר"
             : !picked.length
               ? "אין נכסים חדשים"
-              : [adding && `הוספת ${adding === 1 ? "נכס אחד" : `${adding} נכסים`}`, updating && `עדכון ${updating === 1 ? "מחיר אחד" : `${updating} מחירים`}`]
+              : [adding && `הוספת ${adding === 1 ? "נכס אחד" : `${adding} נכסים`}`, updating && `עדכון ${updating === 1 ? "נכס אחד" : `${updating} נכסים`}`]
                   .filter(Boolean)
                   .join(" ו")}
         </Button>
