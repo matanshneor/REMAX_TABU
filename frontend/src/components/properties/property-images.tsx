@@ -17,7 +17,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { errorMessage, uploadFile, useSaveRecord, useSignedUrls } from "@/lib/data";
-import type { Property } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { PropertyPlaceholder } from "./property-placeholder";
 
@@ -45,12 +44,41 @@ async function shrinkImage(file: File): Promise<File> {
 }
 
 /** The photos among picked files; says so when something else was picked. */
-function onlyImages(files: FileList | null): File[] {
+function onlyImages(files: FileList | File[] | null): File[] {
   if (!files?.length) return [];
   const images = [...files].filter((f) => f.type.startsWith("image/"));
   if (images.length < files.length) toast.error("אפשר להעלות רק תמונות");
   return images;
 }
+
+/**
+ * Photos pasted with Cmd/Ctrl+V anywhere on the page (e.g. "העתק תמונה" on Yad2, then paste).
+ * Only a paste that carries images is taken; pasting text into a field works as usual.
+ */
+function usePasteImages(onImages: (files: File[]) => void, enabled = true) {
+  const latest = useRef(onImages);
+  useEffect(() => {
+    latest.current = onImages;
+  });
+  useEffect(() => {
+    if (!enabled) return;
+    const onPaste = (e: ClipboardEvent) => {
+      const files = [...(e.clipboardData?.items ?? [])]
+        .filter((it) => it.kind === "file" && it.type.startsWith("image/"))
+        .map((it) => it.getAsFile())
+        .filter((f): f is File => !!f)
+        // Pasted images come unnamed ("image.png"); give each its own name.
+        .map((f, i) => new File([f], `pasted-${Date.now()}-${i}.${f.type.split("/")[1] || "png"}`, { type: f.type }));
+      if (!files.length) return;
+      e.preventDefault();
+      latest.current(files);
+    };
+    document.addEventListener("paste", onPaste);
+    return () => document.removeEventListener("paste", onPaste);
+  }, [enabled]);
+}
+
+const PASTE_HINT = "אפשר גם להעתיק תמונה (למשל מיד2: קליק ימני ← העתק תמונה) ולהדביק כאן עם Cmd+V";
 
 /**
  * Shrinks and uploads photos into a folder of the property photos bucket (a property's id, or
@@ -68,10 +96,24 @@ export async function uploadPropertyImages(folder: string, files: File[]) {
   return { paths, failed: results.length - paths.length };
 }
 
-export function PropertyImages({ property, editable }: { property: Property; editable: boolean }) {
+/**
+ * A record's photos (a seller, or a listing in "מאגר יד2"): add (pick or paste), remove, drag to
+ * reorder. The first is the main photo. Saved as `image_paths` on `table`; files go to `folder`.
+ */
+export function PropertyImages({
+  property,
+  editable,
+  table = "properties",
+  folder = property.id,
+}: {
+  property: { id: string; image_paths: string[] };
+  editable: boolean;
+  table?: "properties" | "market_listings";
+  folder?: string;
+}) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
-  const save = useSaveRecord("properties", { silent: true });
+  const save = useSaveRecord(table, { silent: true });
   const { data: urls = {} } = useSignedUrls(MEDIA_BUCKET, property.image_paths);
   // The order on screen: changes at once when a photo is dropped, then follows the saved card.
   const [order, setOrder] = useState(property.image_paths);
@@ -110,12 +152,12 @@ export function PropertyImages({ property, editable }: { property: Property; edi
     );
   }
 
-  async function onFiles(files: FileList | null) {
+  async function onFiles(files: FileList | File[] | null) {
     const images = onlyImages(files);
-    if (!images.length) return;
+    if (!images.length || uploading) return;
     setUploading(true);
     try {
-      const { paths, failed } = await uploadPropertyImages(property.id, images);
+      const { paths, failed } = await uploadPropertyImages(folder, images);
       if (paths.length) {
         await save.mutateAsync({ id: property.id, values: { image_paths: [...property.image_paths, ...paths] } });
         toast.success(paths.length > 1 ? `${paths.length} תמונות הועלו` : "התמונה הועלתה");
@@ -142,13 +184,16 @@ export function PropertyImages({ property, editable }: { property: Property; edi
     );
   }
 
+  usePasteImages(onFiles, editable);
+
   const fileInput = (
     <input ref={inputRef} type="file" accept="image/*" multiple hidden onChange={(e) => onFiles(e.target.files)} />
   );
 
   if (!property.image_paths.length) {
     return (
-      <div className="relative mb-6 h-36 overflow-hidden rounded-xl">
+      <div className="mb-6">
+        <div className="relative h-36 overflow-hidden rounded-xl">
         <PropertyPlaceholder label={editable ? "עדיין אין תמונות לנכס" : "אין תמונות לנכס"} />
         {editable && (
           <Button size="sm" className="absolute bottom-3 start-1/2 -translate-x-1/2 rtl:translate-x-1/2" onClick={() => inputRef.current?.click()} disabled={uploading}>
@@ -156,7 +201,9 @@ export function PropertyImages({ property, editable }: { property: Property; edi
             {uploading ? "מעלה…" : "הוסף תמונות"}
           </Button>
         )}
-        {fileInput}
+          {fileInput}
+        </div>
+        {editable && <p className="mt-1.5 text-xs text-muted-foreground">{PASTE_HINT}</p>}
       </div>
     );
   }
@@ -209,11 +256,11 @@ export function PropertyImages({ property, editable }: { property: Property; edi
           )}
         </DragOverlay>
       </DndContext>
-      {order.length > 1 && (
-        <p className="mt-1.5 text-xs text-muted-foreground">
-          גוררים תמונה כדי לשנות את הסדר (בטלפון: לוחצים עליה ממושך). התמונה הראשונה היא התמונה הראשית של הנכס.
-        </p>
-      )}
+      <p className="mt-1.5 text-xs text-muted-foreground">
+        {order.length > 1 &&
+          "גוררים תמונה כדי לשנות את הסדר (בטלפון: לוחצים עליה ממושך). התמונה הראשונה היא התמונה הראשית של הנכס. "}
+        {PASTE_HINT}
+      </p>
     </div>
   );
 }
@@ -287,6 +334,7 @@ function PhotoTile({
 /** A new seller isn't saved yet: photos picked here wait and are uploaded with the first save. */
 export function PendingImages({ files, onChange }: { files: File[]; onChange: (files: File[]) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  usePasteImages((pasted) => onChange([...files, ...pasted]));
   const previews = useMemo(() => files.map((f) => URL.createObjectURL(f)), [files]);
   useEffect(() => () => previews.forEach((u) => URL.revokeObjectURL(u)), [previews]);
 
@@ -306,13 +354,16 @@ export function PendingImages({ files, onChange }: { files: File[]; onChange: (f
 
   if (!files.length) {
     return (
-      <div className="relative mb-6 h-36 overflow-hidden rounded-xl">
+      <div className="mb-6">
+        <div className="relative h-36 overflow-hidden rounded-xl">
         <PropertyPlaceholder label="אפשר להוסיף תמונות כבר עכשיו" />
         <Button size="sm" className="absolute bottom-3 start-1/2 -translate-x-1/2 rtl:translate-x-1/2" onClick={() => inputRef.current?.click()}>
           <ImagePlusIcon />
           הוסף תמונות
         </Button>
-        {fileInput}
+          {fileInput}
+        </div>
+        <p className="mt-1.5 text-xs text-muted-foreground">{PASTE_HINT}</p>
       </div>
     );
   }

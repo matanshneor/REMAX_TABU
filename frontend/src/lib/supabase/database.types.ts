@@ -488,6 +488,7 @@ export type Database = {
           floor: number | null
           id: string
           image_path: string | null
+          image_paths: string[]
           image_url: string | null
           listed_at: string
           neighborhood: string | null
@@ -517,6 +518,7 @@ export type Database = {
           floor?: number | null
           id?: string
           image_path?: string | null
+          image_paths?: string[]
           image_url?: string | null
           listed_at?: string
           neighborhood?: string | null
@@ -546,6 +548,7 @@ export type Database = {
           floor?: number | null
           id?: string
           image_path?: string | null
+          image_paths?: string[]
           image_url?: string | null
           listed_at?: string
           neighborhood?: string | null

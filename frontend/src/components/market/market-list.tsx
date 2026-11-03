@@ -13,9 +13,10 @@ export function listingPlace(l: MarketListing): string {
   return [l.street, l.neighborhood, l.city].filter(Boolean).join(", ");
 }
 
-/** The listing's photo: one uploaded by hand (signed URL), else the one from Yad2's e-mail. */
+/** The listing's main photo: the first one added (signed URL), else the one from Yad2's e-mail. */
 export function listingPhoto(l: MarketListing, signed: Record<string, string>): string | undefined {
-  return (l.image_path && signed[l.image_path]) || l.image_url || undefined;
+  const first = l.image_paths[0];
+  return (first && signed[first]) || l.image_url || undefined;
 }
 
 /** On a listing this user hasn't opened yet. */

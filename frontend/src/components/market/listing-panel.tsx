@@ -1,8 +1,8 @@
 "use client";
 
-import { Building2Icon, ImagePlusIcon, PlusIcon, RotateCcwIcon } from "lucide-react";
+import { Building2Icon, PlusIcon, RotateCcwIcon } from "lucide-react";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth-provider";
 import { Money } from "@/components/crm/money";
@@ -11,17 +11,16 @@ import { StatusBadge } from "@/components/crm/status-badge";
 import { EntityForm } from "@/components/form/entity-form";
 import { useFormValues } from "@/components/form/use-form-values";
 import { toPayload } from "@/components/form/values";
-import { MEDIA_BUCKET, PendingImages, uploadPropertyImages } from "@/components/properties/property-images";
-import { PropertyPlaceholder } from "@/components/properties/property-placeholder";
+import { PendingImages, PropertyImages, uploadPropertyImages } from "@/components/properties/property-images";
 import { Button } from "@/components/ui/button";
-import { errorMessage, useAgentName, useDeleteRecord, useRecord, useSaveRecord, useSignedUrls } from "@/lib/data";
+import { errorMessage, useAgentName, useDeleteRecord, useRecord, useSaveRecord } from "@/lib/data";
 import { formatDate, formatRelative } from "@/lib/format";
 import { LISTING_STATUS } from "@/lib/labels";
 import { isAdmin } from "@/lib/permissions";
 import type { MarketListing } from "@/lib/types";
 import { DismissDialog } from "./dismiss-dialog";
 import { LISTING_SECTIONS, NEW_LISTING } from "./listing-fields";
-import { listingPhoto, listingPlace, listingTitle } from "./market-list";
+import { listingPlace, listingTitle } from "./market-list";
 
 /** A hand-uploaded listing photo lives in the property photos bucket, under listings/<id>. */
 const photoFolder = (id: string) => `listings/${id}`;
@@ -53,17 +52,9 @@ export function ListingPanel({
   const save = useSaveRecord<MarketListing>("market_listings");
   const saveQuiet = useSaveRecord<MarketListing>("market_listings", { silent: true });
   const remove = useDeleteRecord("market_listings");
-  const { data: signed = {} } = useSignedUrls(MEDIA_BUCKET, listing?.image_path ? [listing.image_path] : []);
   const [photos, setPhotos] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
   const [dismissing, setDismissing] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  async function uploadPhoto(listingId: string, file: File) {
-    const { paths } = await uploadPropertyImages(photoFolder(listingId), [file]);
-    if (!paths[0]) throw new Error("התמונה לא הועלתה");
-    await saveQuiet.mutateAsync({ id: listingId, values: { image_path: paths[0] } });
-  }
 
   if (creating) {
     return (
@@ -72,7 +63,7 @@ export function ListingPanel({
         open
         onClose={onClose}
         title="מודעה חדשה למאגר"
-        subtitle="מדביקים את הקישור למודעה, מוסיפים תמונה וממלאים מה שידוע"
+        subtitle="מדביקים את הקישור למודעה, מוסיפים תמונות וממלאים מה שידוע"
         footer={
           <Button
             disabled={save.isPending || busy}
@@ -82,12 +73,14 @@ export function ListingPanel({
                 { values: { ...toPayload(LISTING_SECTIONS, form.values), source: "יד2" } },
                 {
                   onSuccess: async (row) => {
-                    if (photos[0]) {
+                    if (photos.length) {
                       setBusy(true);
                       try {
-                        await uploadPhoto(row.id, photos[0]);
+                        const { paths, failed } = await uploadPropertyImages(photoFolder(row.id), photos);
+                        if (paths.length) await saveQuiet.mutateAsync({ id: row.id, values: { image_paths: paths } });
+                        if (failed) toast.error(`המודעה נשמרה, אבל ${failed > 1 ? `${failed} תמונות לא הועלו` : "תמונה אחת לא הועלתה"}`);
                       } catch (e) {
-                        toast.error(`המודעה נשמרה, אבל התמונה לא: ${errorMessage(e)}`);
+                        toast.error(`המודעה נשמרה, אבל התמונות לא: ${errorMessage(e)}`);
                       } finally {
                         setBusy(false);
                         setPhotos([]);
@@ -99,19 +92,17 @@ export function ListingPanel({
               );
             }}
           >
-            {busy ? "מעלה תמונה…" : save.isPending ? "שומר…" : "שמור"}
+            {busy ? "מעלה תמונות…" : save.isPending ? "שומר…" : "שמור"}
           </Button>
         }
       >
-        {/* One photo per listing: picking again replaces it. */}
-        <PendingImages files={photos} onChange={(files) => setPhotos(files.slice(-1))} />
+        <PendingImages files={photos} onChange={setPhotos} />
         <EntityForm sections={LISTING_SECTIONS} values={form.values} onChange={form.set} idPrefix="new-listing" />
       </Panel>
     );
   }
 
   const open = listing?.status === "new" || listing?.status === "contacted";
-  const photo = listing && listingPhoto(listing, signed);
   const facts = listing
     ? ([
         ["חדרים", listing.rooms],
@@ -140,7 +131,12 @@ export function ListingPanel({
           </>
         )
       }
-      subtitle={listing && [listingPlace(listing), `${listing.source} · נכנס ${formatRelative(listing.listed_at)}`].filter(Boolean).join(" · ")}
+      subtitle={
+        listing &&
+        [listingPlace(listing), `פורסם ב${listing.source} ${formatDate(listing.listed_at)} · נכנס למאגר ${formatRelative(listing.created_at)}`]
+          .filter(Boolean)
+          .join(" · ")
+      }
       badges={listing && !open && <StatusBadge map={LISTING_STATUS} value={listing.status} />}
       footer={
         listing &&
@@ -206,46 +202,13 @@ export function ListingPanel({
             </div>
           )}
 
-          <div className="relative mb-4 overflow-hidden rounded-xl">
-            {photo ? (
-              // Outside or short-lived signed URLs; next/image optimization isn't useful here.
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={photo} alt="" className="aspect-[16/10] w-full object-cover" />
-            ) : (
-              <div className="h-36">
-                <PropertyPlaceholder label="אין תמונה" />
-              </div>
-            )}
-            <Button
-              size="sm"
-              variant="secondary"
-              className="absolute bottom-3 start-3 shadow"
-              disabled={busy}
-              onClick={() => fileRef.current?.click()}
-            >
-              <ImagePlusIcon />
-              {busy ? "מעלה…" : photo ? "החלף תמונה" : "הוסף תמונה"}
-            </Button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={async (e) => {
-                const file = e.target.files?.[0];
-                e.target.value = "";
-                if (!file) return;
-                setBusy(true);
-                try {
-                  await uploadPhoto(listing.id, file);
-                } catch (err) {
-                  toast.error(errorMessage(err));
-                } finally {
-                  setBusy(false);
-                }
-              }}
-            />
-          </div>
+          {/* A photo from Yad2's e-mail (not stored here) shows until photos are added. */}
+          {!listing.image_paths.length && listing.image_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={listing.image_url} alt="" className="mb-2 aspect-[16/10] w-full rounded-xl object-cover" />
+          )}
+          {/* All of them move to the seller on "העבר למוכרים שלי". */}
+          <PropertyImages property={listing} editable table="market_listings" folder={photoFolder(listing.id)} />
 
           <div className="mb-4 grid grid-cols-3 gap-2 text-sm">
             {facts.map(([label, value]) => (
