@@ -36,6 +36,8 @@ export type FieldDef = {
   suggestions?: Option[];
   /** Select only: adds this choice (e.g. "אחר") which opens a text box; the typed text is saved as the value. */
   other?: string;
+  /** A short note under the field, e.g. what to keep in mind about its value. */
+  hint?: string;
   /**
    * Select with `other` only: choices that also ask "who/what", e.g. { "הפניה": "ממי ההפניה?" }.
    * Picking one opens a text box; the value is saved as "הפניה: דוד כהן" (or just "הפניה").
