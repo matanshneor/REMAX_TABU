@@ -146,7 +146,7 @@ export function BuyerPanel({
                 );
               }}
               disabled={save.isPending}
-              className="w-44"
+              className="w-full sm:w-44"
               aria-label="סוכן מטפל"
             >
               <option value="">לא משויך</option>

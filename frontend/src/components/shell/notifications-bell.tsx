@@ -70,7 +70,9 @@ export function NotificationsBell() {
 
   return (
     <Popover>
-      <PopoverTrigger render={<Button variant="ghost" size="icon" className="relative" aria-label="התראות" />}>
+      <PopoverTrigger
+        render={<Button variant="ghost" size="icon" className="relative" aria-label={unread ? `התראות, ${unread} חדשות` : "התראות"} />}
+      >
         <BellIcon className="size-5" />
         {unread > 0 && (
           <span className="absolute -top-0.5 -end-0.5 flex min-w-4.5 items-center justify-center rounded-full bg-brand-red px-1 text-[10px] leading-4.5 font-bold text-white tabular-nums">
@@ -107,7 +109,7 @@ export function NotificationsBell() {
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-medium">{n.title}</span>
                   {n.body && <span className="mt-0.5 block text-xs text-muted-foreground">{humanizeDatesInText(n.body)}</span>}
-                  <span className="mt-1 block text-[11px] text-muted-foreground/80">{formatRelative(n.created_at)}</span>
+                  <span className="mt-1 block text-[11px] text-muted-foreground">{formatRelative(n.created_at)}</span>
                 </span>
               </button>
             ))

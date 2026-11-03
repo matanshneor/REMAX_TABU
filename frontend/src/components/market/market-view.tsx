@@ -216,15 +216,15 @@ export function MarketView() {
         }
         more={
           <>
-            <Input value={more.city} onChange={(e) => setMoreFilter("city", e.target.value)} placeholder="כל הערים" aria-label="עיר" className="w-28" />
+            <Input value={more.city} onChange={(e) => setMoreFilter("city", e.target.value)} placeholder="כל הערים" aria-label="עיר" className="w-full sm:w-28" />
             <Input
               value={more.neighborhood}
               onChange={(e) => setMoreFilter("neighborhood", e.target.value)}
               placeholder="כל השכונות"
               aria-label="שכונה"
-              className="w-28"
+              className="w-full sm:w-28"
             />
-            <NativeSelect value={more.type} onChange={(e) => setMoreFilter("type", e.target.value)} aria-label="סוג נכס" className="w-28">
+            <NativeSelect value={more.type} onChange={(e) => setMoreFilter("type", e.target.value)} aria-label="סוג נכס" className="w-full sm:w-28">
               <option value="">כל הסוגים</option>
               {PROPERTY_TYPES.map((t) => (
                 <option key={t.value} value={t.value}>
@@ -232,7 +232,7 @@ export function MarketView() {
                 </option>
               ))}
             </NativeSelect>
-            <div className="flex items-center gap-1">
+            <div className="flex w-full items-center gap-1 sm:w-auto">
               <CurrencyInput value={more.priceMin} onChange={(v) => setMoreFilter("priceMin", v)} placeholder="מחיר מ-" aria-label="מחיר מינימלי" className="w-24" />
               <span className="text-muted-foreground">–</span>
               <CurrencyInput value={more.priceMax} onChange={(v) => setMoreFilter("priceMax", v)} placeholder="עד" aria-label="מחיר מקסימלי" className="w-24" />
@@ -248,7 +248,7 @@ export function MarketView() {
           </>
         }
       >
-        <div className="relative min-w-0 flex-1">
+        <div className="relative min-w-0 basis-full sm:basis-0 sm:flex-1">
           <SearchIcon className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={text}
@@ -257,7 +257,7 @@ export function MarketView() {
             className="bg-card ps-9"
           />
         </div>
-        <NativeSelect value={sort} onChange={(e) => setSort(e.target.value as PoolSort)} aria-label="מיון" className="w-48 bg-card">
+        <NativeSelect value={sort} onChange={(e) => setSort(e.target.value as PoolSort)} aria-label="מיון" className="min-w-0 flex-1 bg-card sm:w-48 sm:flex-none">
           <option value="entered">מיון: נכנסו למאגר לאחרונה</option>
           <option value="price_asc">מיון: מחיר מהנמוך לגבוה</option>
           <option value="price_desc">מיון: מחיר מהגבוה לנמוך</option>
@@ -325,7 +325,7 @@ export function MarketView() {
                     value={dismissFilter.reason}
                     onChange={(e) => setDismissFilter((f) => ({ ...f, reason: e.target.value }))}
                     aria-label="סיבה"
-                    className="w-48"
+                    className="w-full sm:w-48"
                   >
                     <option value="">כל הסיבות</option>
                     {DISMISS_REASONS.map((r) => (
@@ -339,7 +339,7 @@ export function MarketView() {
                     value={dismissFilter.by}
                     onChange={(e) => setDismissFilter((f) => ({ ...f, by: e.target.value }))}
                     aria-label="מי סימן"
-                    className="w-40"
+                    className="w-full sm:w-40"
                   >
                     <option value="">כל הסוכנים</option>
                     {dismissers.map((id) => (
@@ -352,7 +352,7 @@ export function MarketView() {
                     value={dismissFilter.days}
                     onChange={(e) => setDismissFilter((f) => ({ ...f, days: e.target.value }))}
                     aria-label="מתי"
-                    className="w-36"
+                    className="w-full sm:w-36"
                   >
                     <option value="">כל הזמן</option>
                     <option value="7">בשבוע האחרון</option>

@@ -108,7 +108,7 @@ export function PropertiesView() {
             : undefined
         }
       >
-        <div className="relative min-w-0 flex-1">
+        <div className="relative min-w-0 basis-full sm:basis-0 sm:flex-1">
           <SearchIcon className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={text}
@@ -117,7 +117,7 @@ export function PropertiesView() {
             className="bg-card ps-9"
           />
         </div>
-        <NativeSelect value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="מיון" className="w-48 bg-card">
+        <NativeSelect value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="מיון" className="min-w-0 flex-1 bg-card sm:w-48 sm:flex-none">
           <option value="updated">מיון: עודכנו לאחרונה</option>
           <option value="price_asc">מיון: מחיר מהנמוך לגבוה</option>
           <option value="price_desc">מיון: מחיר מהגבוה לנמוך</option>

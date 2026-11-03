@@ -33,7 +33,7 @@ function NewTag() {
 }
 
 function Yad2Tag() {
-  return <span className="rounded-md bg-[#ff7100] px-1.5 py-0.5 text-[11px] font-bold text-white">יד2</span>;
+  return <span className="rounded-md bg-[#ff7100] px-1.5 py-0.5 text-[11px] font-bold text-foreground">יד2</span>;
 }
 
 /**
