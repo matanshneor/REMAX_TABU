@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { ChevronDownIcon, InboxIcon, PlusIcon, SearchIcon } from "lucide-react";
+import { ChevronDownIcon, ClipboardPasteIcon, InboxIcon, PlusIcon, SearchIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
@@ -26,6 +26,7 @@ import { useNewParam, usePanelParam } from "@/lib/use-panel-param";
 import { cn } from "@/lib/utils";
 import { ListingPanel } from "./listing-panel";
 import { HandledList, MarketGrid } from "./market-list";
+import { Yad2ImportDialog } from "./yad2-import-dialog";
 import { isOpenListing as isOpen, seenListingsKey, useMarketListings, useSeenListings } from "./use-market";
 
 /** Filters behind "עוד סינונים", like the sellers page. */
@@ -84,6 +85,7 @@ export function MarketView() {
   const [shown, setShown] = useState({ added: false, dismissed: false });
   // The listing being turned into a seller (opens the "new seller" card, filled in).
   const [toSeller, setToSeller] = useState<MarketListing | null>(null);
+  const [importing, setImporting] = useState(false);
   const saveListing = useSaveRecord<MarketListing>("market_listings", { silent: true });
   const saveProperty = useSaveRecord("properties", { silent: true });
 
@@ -190,15 +192,24 @@ export function MarketView() {
         // Same number as the menu: open listings this user hasn't opened yet.
         count={seen ? listings.filter((l) => isOpen(l) && !seen.has(l.id)).length : undefined}
         actions={
-          <Button
-            onClick={() => {
-              setOpenId(null);
-              setCreating(true);
-            }}
-          >
-            <PlusIcon />
-            הוספת מודעה
-          </Button>
+          <>
+            {/* The office's Yad2 Plus account is the manager's: only they import from it. */}
+            {isAdmin(profile) && (
+              <Button variant="outline" onClick={() => setImporting(true)}>
+                <ClipboardPasteIcon />
+                ייבוא מיד 2 פלוס
+              </Button>
+            )}
+            <Button
+              onClick={() => {
+                setOpenId(null);
+                setCreating(true);
+              }}
+            >
+              <PlusIcon />
+              הוספת מודעה
+            </Button>
+          </>
         }
       />
 
@@ -376,6 +387,7 @@ export function MarketView() {
         </div>
       )}
 
+      {isAdmin(profile) && <Yad2ImportDialog open={importing} onOpenChange={setImporting} listings={listings} />}
       <ListingPanel
         id={openId}
         creating={creating}
