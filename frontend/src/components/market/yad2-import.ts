@@ -63,6 +63,9 @@ export function addressKey(street: string | null | undefined): string {
 
 const toNumber = (s: string | undefined) => (s && NUMBER.test(s.replace(/,/g, "")) ? Number(s.replace(/,/g, "")) : null);
 
+/** Yad2 shows "-" in an empty cell. */
+const value = (s: string | undefined) => (s == null || s === "-" || s === "—" ? undefined : s);
+
 export function parseYad2Plus(pieces: string[]): ImportedListing[] {
   const rows: string[][] = [];
   for (const p of pieces) {
@@ -74,36 +77,55 @@ export function parseYad2Plus(pieces: string[]): ImportedListing[] {
   for (const r of rows) {
     const [deal, city = "", street = "", rawType = "", ...rest] = r;
     if (!street) continue;
-    const priceAt = rest.findIndex((p) => p.includes("₪"));
-    const before = priceAt >= 0 ? rest.slice(0, priceAt) : [];
-    const after = priceAt >= 0 ? rest.slice(priceAt + 1) : rest;
-    const phone = after.find((p) => PHONE.test(p.replace(/\s/g, ""))) ?? null;
-    const dateAt = after.findIndex((p) => DATE.test(p));
-    const d = dateAt >= 0 ? after[dateAt].match(DATE) : null;
-    // After the date: m², floors in the building, then the contact's name.
-    const tail = dateAt >= 0 ? after.slice(dateAt + 1) : [];
-    const nums = tail.filter((p) => NUMBER.test(p));
-    const contact = tail.find((p) => !NUMBER.test(p) && !PHONE.test(p.replace(/\s/g, ""))) ?? null;
+    let cells: (string | undefined)[];
+    if (rest.length >= 8) {
+      // Every cell came through (an empty one as "-"): read by position.
+      cells = rest.slice(0, 7).map(value);
+      cells.push(value(rest.slice(7).join(" ")));
+    } else {
+      // Some cells are missing: find the price, phone and date by their form.
+      const priceAt = rest.findIndex((p) => p.includes("₪"));
+      const dateAt = rest.findIndex((p) => DATE.test(p));
+      const before = rest.slice(0, priceAt >= 0 ? priceAt : dateAt >= 0 ? dateAt : rest.length);
+      const tail = dateAt >= 0 ? rest.slice(dateAt + 1) : [];
+      const nums = tail.filter((p) => NUMBER.test(p));
+      cells = [
+        value(before[0]),
+        value(before[1]),
+        priceAt >= 0 ? rest[priceAt] : undefined,
+        rest.find((p) => PHONE.test(p.replace(/\s/g, ""))),
+        dateAt >= 0 ? rest[dateAt] : undefined,
+        nums[0],
+        nums[1],
+        tail.find((p) => !NUMBER.test(p) && value(p) && !PHONE.test(p.replace(/\s/g, ""))),
+      ];
+    }
+    const [rooms, floor, price, phone, date, sqm, floors, contact] = cells;
+    const d = date?.match(DATE);
+    const tel = phone?.replace(/\s/g, "");
     const item: ImportedListing = {
       key: addressKey(street),
       deal: DEALS[deal],
       city,
       street,
       type: TYPES[rawType] ?? rawType,
-      rooms: toNumber(before[0]),
-      floor: toNumber(before[1]),
-      price: priceAt >= 0 ? toNumber(rest[priceAt].replace(/[^\d]/g, "")) : null,
-      phone: phone && phone.replace(/\s/g, ""),
+      rooms: toNumber(rooms),
+      floor: toNumber(floor),
+      price: price?.includes("₪") ? toNumber(price.replace(/[^\d]/g, "")) : null,
+      phone: tel && PHONE.test(tel) ? tel : null,
       listedAt: d ? `${d[3]}-${d[2].padStart(2, "0")}-${d[1].padStart(2, "0")}` : null,
-      sizeSqm: toNumber(nums[0]),
-      totalFloors: toNumber(nums[1]),
-      contact: contact === "הצגת מספר" ? null : contact,
+      sizeSqm: toNumber(sqm),
+      totalFloors: toNumber(floors),
+      contact: contact && contact !== "הצגת מספר" ? contact : null,
     };
-    // Two pages pasted together may repeat a row.
-    const id = `${item.key}|${item.price}`;
+    // Two pages pasted together may repeat a row; two flats in one building are two rows.
+    const id = rowId(item);
     if (seen.has(id)) continue;
     seen.add(id);
     out.push(item);
   }
   return out;
 }
+
+/** One row of the paste: the address alone isn't enough (two flats for sale in one building). */
+export const rowId = (r: ImportedListing) => `${r.key}|${r.price}|${r.phone}|${r.rooms}`;
