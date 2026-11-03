@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2Icon, ExternalLinkIcon, PhoneIcon, PlusIcon, RotateCcwIcon } from "lucide-react";
+import { Building2Icon, ExternalLinkIcon, PencilIcon, PhoneIcon, PlusIcon, RotateCcwIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -14,13 +14,14 @@ import { useFormValues } from "@/components/form/use-form-values";
 import { toPayload } from "@/components/form/values";
 import { PendingImages, PropertyImages, uploadPropertyImages } from "@/components/properties/property-images";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { errorMessage, useAgentName, useDeleteRecord, useRecord, useSaveRecord } from "@/lib/data";
 import { formatDate, formatRelative } from "@/lib/format";
 import { LISTING_STATUS } from "@/lib/labels";
 import { isAdmin } from "@/lib/permissions";
 import type { MarketListing } from "@/lib/types";
 import { DismissDialog } from "./dismiss-dialog";
-import { LISTING_SECTIONS, NEW_LISTING } from "./listing-fields";
+import { LISTING_SECTIONS, NEW_LISTING, NEW_LISTING_SECTIONS } from "./listing-fields";
 import { listingPlace, listingTitle } from "./market-list";
 
 /** A hand-uploaded listing photo lives in the property photos bucket, under listings/<id>. */
@@ -56,6 +57,8 @@ export function ListingPanel({
   const [photos, setPhotos] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
   const [dismissing, setDismissing] = useState(false);
+  // The phone is edited in the contact box (it isn't in the form below).
+  const [editingPhone, setEditingPhone] = useState(false);
 
   if (creating) {
     return (
@@ -98,7 +101,7 @@ export function ListingPanel({
         }
       >
         <PendingImages files={photos} onChange={setPhotos} />
-        <EntityForm sections={LISTING_SECTIONS} values={form.values} onChange={form.set} idPrefix="new-listing" />
+        <EntityForm sections={NEW_LISTING_SECTIONS} values={form.values} onChange={form.set} idPrefix="new-listing" />
       </Panel>
     );
   }
@@ -232,16 +235,36 @@ export function ListingPanel({
           </div>
 
           {/* Who to call, with the ways to reach them. */}
-          {(listing.advertiser || listing.phone) && (
+          {(
             <div className="mb-6 flex items-center gap-3 rounded-xl border px-4 py-3">
               <div className="min-w-0 flex-1">
                 <p className="truncate font-semibold">{listing.advertiser || "המפרסם"}</p>
-                {listing.phone && (
-                  <p dir="ltr" className="text-end tabular-nums">
-                    {listing.phone}
-                  </p>
+                {editingPhone ? (
+                  <Input
+                    type="tel"
+                    dir="ltr"
+                    autoFocus
+                    aria-label="טלפון"
+                    value={(form.values.phone as string) ?? ""}
+                    onChange={(e) => form.set("phone", e.target.value)}
+                    onBlur={() => setEditingPhone(false)}
+                    onKeyDown={(e) => e.key === "Enter" && setEditingPhone(false)}
+                    className="mt-1 h-8 max-w-48 text-end"
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setEditingPhone(true)}
+                    title="עריכת הטלפון"
+                    className="group/phone flex items-center gap-1.5 tabular-nums"
+                  >
+                    <span dir="ltr">{(form.values.phone as string) || "הוסף טלפון"}</span>
+                    <PencilIcon className="size-3.5 text-muted-foreground opacity-60 group-hover/phone:opacity-100" />
+                  </button>
                 )}
-                {listing.phone && <p className="text-xs text-muted-foreground">ייתכן שזה מספר וירטואלי של יד2</p>}
+                <p className="text-xs text-muted-foreground">
+                  ייתכן שזה מספר וירטואלי של יד2, שעובד רק כל עוד המודעה פעילה. כשיש מספר אמיתי, לוחצים על המספר ומעדכנים.
+                </p>
               </div>
               {listing.phone && (
                 <>

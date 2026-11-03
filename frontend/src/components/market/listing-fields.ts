@@ -22,15 +22,16 @@ export const LISTING_SECTIONS: FormSection[] = [
       { name: "floor", label: "קומה", type: "number", min: -1, span: 2 },
       { name: "price", label: "מחיר", type: "currency", span: 2 },
       { name: "advertiser", label: "שם המפרסם", type: "text", span: 2 },
-      {
-        name: "phone",
-        label: "טלפון",
-        type: "tel",
-        span: 2,
-        hint: "ייתכן שזה מספר וירטואלי של יד2, שעובד רק כל עוד המודעה פעילה. בשיחה כדאי לבקש את המספר האמיתי ולעדכן כאן.",
-      },
+      // Shown and edited in the card's contact box, not in the form.
+      { name: "phone", label: "טלפון", type: "tel", span: 2, hidden: true },
     ],
   },
 ];
 
 export const NEW_LISTING = { status: "new", source: "יד2" };
+
+/** Adding a listing by hand: no contact box yet, so the phone is in the form. */
+export const NEW_LISTING_SECTIONS: FormSection[] = LISTING_SECTIONS.map((sec) => ({
+  ...sec,
+  fields: sec.fields.map((f) => (f.name === "phone" ? { ...f, hidden: false } : f)),
+}));
