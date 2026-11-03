@@ -33,7 +33,7 @@ function NewTag() {
 }
 
 function Yad2Tag() {
-  return <span className="rounded-md bg-[#ff7100] px-1.5 py-0.5 text-[11px] font-bold text-foreground">יד2</span>;
+  return <span className="rounded-md bg-yad2 px-1.5 py-0.5 text-[11px] font-bold text-foreground">יד2</span>;
 }
 
 /**
@@ -61,7 +61,7 @@ export function MarketGrid({
         return (
           // A card with its own buttons can't itself be a <button>: a full-size button sits under
           // the content and opens the listing; the call button sits above it.
-          <div key={l.id} className="group relative flex flex-col overflow-hidden rounded-xl border bg-card text-start shadow-[0_1px_2px_rgb(15_26_46/0.04),0_8px_24px_-14px_rgb(15_26_46/0.12)] transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-[0_2px_4px_rgb(15_26_46/0.05),0_18px_36px_-14px_rgb(15_26_46/0.25)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 has-[>button:focus-visible]:ring-2 has-[>button:focus-visible]:ring-ring">
+          <div key={l.id} className="group relative flex flex-col overflow-hidden rounded-xl border bg-card text-start shadow-card transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-card-hover motion-reduce:transition-none motion-reduce:hover:translate-y-0 has-[>button:focus-visible]:ring-2 has-[>button:focus-visible]:ring-ring">
             <button type="button" onClick={() => onOpen(l.id)} aria-label={`פתיחת המודעה: ${listingTitle(l)}`} className="absolute inset-0 z-0 outline-none" />
             <div className="pointer-events-none relative flex flex-1 flex-col">
             {/* No photo yet: a low strip with the office's soft placeholder (no caption), so the details lead. */}

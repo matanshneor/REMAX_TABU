@@ -163,7 +163,7 @@ export function TasksView() {
         <EmptyState
           icon={<ListChecksIcon />}
           title="אין משימות"
-          hint="לחץ על ״משימה חדשה״ למעלה כדי להוסיף את הראשונה."
+          hint="לוחצים על ״משימה חדשה״ למעלה כדי להוסיף את הראשונה."
         />
       ) : (
         <div className="flex flex-col gap-5">

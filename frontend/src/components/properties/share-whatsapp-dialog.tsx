@@ -17,7 +17,7 @@ export function ShareWhatsAppButton({ property }: { property: Property }) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <Button variant="outline" size="sm" className="text-[#128C7E] hover:text-[#075E54]" onClick={() => setOpen(true)}>
+      <Button variant="outline" size="sm" className="text-whatsapp-ink hover:text-whatsapp-hover" onClick={() => setOpen(true)}>
         <WhatsAppIcon />
         שליחת הנכס בוואטסאפ
       </Button>
@@ -89,7 +89,7 @@ function ShareForm({ property, onDone }: { property: Property; onDone: () => voi
           ביטול
         </Button>
         <Button
-          className="bg-[#25D366] text-white hover:bg-[#1fb958]"
+          className="bg-whatsapp text-white hover:bg-whatsapp-hover"
           onClick={() => {
             openWhatsApp(buyer?.phone, text);
             onDone();

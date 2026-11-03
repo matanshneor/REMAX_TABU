@@ -41,6 +41,14 @@
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
   --color-brand-red: var(--brand-red);
+  /* Brand colors of outside services, readable with their text (WCAG AA). */
+  --color-yad2: var(--yad2);
+  --color-whatsapp: var(--whatsapp);
+  --color-whatsapp-hover: var(--whatsapp-hover);
+  --color-whatsapp-ink: var(--whatsapp-ink);
+  /* One card elevation for every card and list surface; a stronger one on hover. */
+  --shadow-card: 0 1px 2px rgb(15 26 46 / 0.04), 0 8px 24px -14px rgb(15 26 46 / 0.12);
+  --shadow-card-hover: 0 2px 4px rgb(15 26 46 / 0.05), 0 18px 36px -14px rgb(15 26 46 / 0.25);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -84,6 +92,12 @@
   --sidebar-border: #1c3668;
   --sidebar-ring: #5b86d1;
   --brand-red: #d3303a;
+  /* Yad2's orange takes dark text (6.3:1). WhatsApp: a deeper green for white icons and text (5.0:1),
+     and a teal for green text on white (5.0:1). */
+  --yad2: #ff7100;
+  --whatsapp: #15803d;
+  --whatsapp-hover: #166534;
+  --whatsapp-ink: #0f7d6f;
 }
 
 .dark {

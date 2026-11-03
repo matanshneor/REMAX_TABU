@@ -35,8 +35,8 @@ export function WhatsAppButton({
       nativeButton={false}
       className={cn(
         solid
-          ? "border-transparent bg-[#25D366] text-white shadow-sm hover:bg-[#1fb958] hover:text-white"
-          : "text-[#128C7E] hover:text-[#075E54]",
+          ? "border-transparent bg-whatsapp text-white shadow-sm hover:bg-whatsapp-hover hover:text-white"
+          : "text-whatsapp-ink hover:text-whatsapp-hover",
       )}
       aria-label={label}
       title={label}

@@ -332,7 +332,7 @@ function SelectWithOther({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
-          placeholder={field.placeholder ?? "כתבו כאן"}
+          placeholder={field.placeholder ?? "כותבים כאן"}
           aria-label={`${field.label}: ${field.other}`}
           autoFocus={typing && !value}
         />

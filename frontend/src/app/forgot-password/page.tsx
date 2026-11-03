@@ -24,7 +24,7 @@ export default function ForgotPasswordPage() {
     });
     setPending(false);
     // Rate limiting is the only error worth showing; otherwise we never reveal whether the email exists.
-    if (error?.status === 429) return setError("נשלחו יותר מדי בקשות. נסה שוב בעוד כמה דקות.");
+    if (error?.status === 429) return setError("נשלחו יותר מדי בקשות. אפשר לנסות שוב בעוד כמה דקות.");
     setSent(true);
   }
 

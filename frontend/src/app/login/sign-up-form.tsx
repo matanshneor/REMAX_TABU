@@ -43,7 +43,7 @@ export function SignUpForm() {
     setPending(false);
     if (error) return setError(authErrorMessage(error));
     // An existing email comes back as a user with no identities (so emails can't be probed).
-    if (data.user && !data.user.identities?.length) return setError("האימייל הזה כבר רשום במערכת. נסה להתחבר.");
+    if (data.user && !data.user.identities?.length) return setError("האימייל הזה כבר רשום במערכת. אפשר להתחבר.");
     if (!data.session) return setCheckEmail(true);
     router.replace("/buyers");
     router.refresh();

@@ -82,7 +82,7 @@ export function ViewingsList({ buyerId, propertyId }: { buyerId?: string; proper
           <Input value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder="משוב מהצפייה" />
           <div className="col-span-2 flex gap-2">
             <Button type="submit" size="sm" disabled={!other || save.isPending}>
-              שמור צפייה
+              שמירת צפייה
             </Button>
             <Button type="button" size="sm" variant="ghost" onClick={() => setAdding(false)}>
               ביטול

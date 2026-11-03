@@ -252,7 +252,7 @@ export function FinanceView() {
             <ChartCard
               className="xl:col-span-2"
               title="עסקאות שנסגרו"
-              subtitle={`${periodDeals.length} עסקאות · ${label} · לחץ על עסקה כדי לערוך אותה`}
+              subtitle={`${periodDeals.length} עסקאות · ${label} · לוחצים על עסקה כדי לערוך אותה`}
             >
               {periodDeals.length === 0 ? (
                 <div className="flex flex-col items-center gap-2 py-8 text-center text-sm text-muted-foreground">

@@ -29,7 +29,7 @@ export function FilterBar({
   return (
     <div
       className={cn(
-        "mb-4 rounded-xl border bg-card p-2.5 shadow-[0_1px_2px_rgb(15_26_46/0.04),0_8px_24px_-14px_rgb(15_26_46/0.12)]",
+        "mb-4 rounded-xl border bg-card p-2.5 shadow-card",
         className,
       )}
     >

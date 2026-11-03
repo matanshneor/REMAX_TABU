@@ -203,7 +203,7 @@ function DealForm({ deal, prefill, onDone }: { deal: Deal | null; prefill?: Deal
           ביטול
         </Button>
         <Button type="submit" disabled={pending}>
-          {pending ? "שומר…" : deal ? "שמור שינויים" : "רשום עסקה"}
+          {pending ? "שומר…" : deal ? "שמירת שינויים" : "רישום עסקה"}
         </Button>
       </DialogFooter>
     </form>

@@ -197,7 +197,7 @@ export function MarketView() {
             }}
           >
             <PlusIcon />
-            הוסף מודעה
+            הוספת מודעה
           </Button>
         }
       />

@@ -106,7 +106,7 @@ export function TeamView() {
           admin && (
             <Button onClick={() => setCreating(true)}>
               <PlusIcon />
-              הוסף סוכן
+              הוספת סוכן
             </Button>
           )
         }
@@ -125,7 +125,7 @@ export function TeamView() {
         <EmptyState
           icon={<UsersRoundIcon />}
           title={members.length ? "אין סוכנים שמתאימים לחיפוש" : "הרשימה עדיין ריקה"}
-          hint={admin && !members.length ? "לחץ על ״הוסף סוכן״ כדי להתחיל." : undefined}
+          hint={admin && !members.length ? "לוחצים על ״הוספת סוכן״ כדי להתחיל." : undefined}
         />
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

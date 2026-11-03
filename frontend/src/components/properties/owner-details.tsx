@@ -79,7 +79,7 @@ export function OwnerDetails({
                 שמירת פרטי המוכר
               </Button>
               <Button size="sm" variant="ghost" onClick={form.reset}>
-                בטל
+                ביטול
               </Button>
             </div>
           )}

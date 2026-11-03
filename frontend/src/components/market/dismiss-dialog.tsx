@@ -61,13 +61,13 @@ function DismissForm({ onCancel, onConfirm, busy }: { onCancel: () => void; onCo
           </button>
         ))}
       </div>
-      {picked === OTHER && <Input autoFocus value={other} onChange={(e) => setOther(e.target.value)} placeholder="כתבו את הסיבה" aria-label="סיבה אחרת" />}
+      {picked === OTHER && <Input autoFocus value={other} onChange={(e) => setOther(e.target.value)} placeholder="כותבים את הסיבה" aria-label="סיבה אחרת" />}
       <DialogFooter>
         <Button type="button" variant="ghost" onClick={onCancel}>
           ביטול
         </Button>
         <Button type="submit" disabled={!reason || busy}>
-          סמן לא רלוונטי
+          סימון לא רלוונטי
         </Button>
       </DialogFooter>
     </form>

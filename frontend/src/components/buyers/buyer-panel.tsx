@@ -85,7 +85,7 @@ export function BuyerPanel({
               }}
               disabled={save.isPending}
             >
-              {save.isPending ? "שומר…" : "שמור"}
+              {save.isPending ? "שומר…" : "שמירה"}
             </Button>
           </>
         }

@@ -88,7 +88,7 @@ export function NotificationsBell() {
               className="text-xs text-primary hover:underline"
               onClick={() => markRead(data.filter((n) => !n.is_read).map((n) => n.id))}
             >
-              סמן הכל כנקרא
+              סימון הכל כנקרא
             </button>
           )}
         </div>

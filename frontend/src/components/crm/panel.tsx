@@ -166,10 +166,10 @@ export function SaveFooter({
   return (
     <>
       <Button onClick={onSave} disabled={!dirty || saving || disabled}>
-        {saving ? "שומר…" : "שמור שינויים"}
+        {saving ? "שומר…" : "שמירת שינויים"}
       </Button>
       <Button variant="ghost" onClick={onReset} disabled={!dirty || saving}>
-        בטל
+        ביטול
       </Button>
       {dirty && <span className="text-xs text-muted-foreground">יש שינויים שלא נשמרו</span>}
       {onDelete && <ConfirmDelete onConfirm={onDelete} label={deleteLabel} />}
@@ -177,7 +177,7 @@ export function SaveFooter({
   );
 }
 
-export function ConfirmDelete({ onConfirm, label = "מחק" }: { onConfirm: () => void; label?: string }) {
+export function ConfirmDelete({ onConfirm, label = "מחיקה" }: { onConfirm: () => void; label?: string }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -202,7 +202,7 @@ export function ConfirmDelete({ onConfirm, label = "מחק" }: { onConfirm: () =
                 onConfirm();
               }}
             >
-              מחק
+              מחיקה
             </Button>
           </DialogFooter>
         </DialogContent>

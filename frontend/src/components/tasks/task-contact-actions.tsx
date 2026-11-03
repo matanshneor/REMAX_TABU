@@ -38,7 +38,7 @@ export function TaskContactActions({ buyer, property }: Linked) {
         </a>
       )}
       {wa && (
-        <a href={wa} target="_blank" rel="noopener" className={`${iconLink} hover:text-[#128C7E]`} title={`וואטסאפ ל${who}`} aria-label={`וואטסאפ ל${who}`}>
+        <a href={wa} target="_blank" rel="noopener" className={`${iconLink} hover:text-whatsapp-ink`} title={`וואטסאפ ל${who}`} aria-label={`וואטסאפ ל${who}`}>
           <WhatsAppIcon />
         </a>
       )}

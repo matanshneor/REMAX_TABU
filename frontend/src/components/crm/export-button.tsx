@@ -28,7 +28,7 @@ export function ExportButton({ entity }: { entity: string }) {
       // Safari and Firefox start the download a moment later: keep the file until then.
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch {
-      toast.error("הייצוא נכשל. נסו שוב בעוד דקה.");
+      toast.error("הייצוא נכשל. אפשר לנסות שוב בעוד דקה.");
     } finally {
       setBusy(false);
     }
