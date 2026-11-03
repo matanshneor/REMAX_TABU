@@ -1,11 +1,12 @@
 "use client";
 
-import { Building2Icon, PlusIcon, RotateCcwIcon } from "lucide-react";
+import { Building2Icon, ExternalLinkIcon, PhoneIcon, PlusIcon, RotateCcwIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth-provider";
 import { Money } from "@/components/crm/money";
+import { WhatsAppButton } from "@/components/crm/whatsapp-button";
 import { ConfirmDelete, Panel, SaveFooter } from "@/components/crm/panel";
 import { StatusBadge } from "@/components/crm/status-badge";
 import { EntityForm } from "@/components/form/entity-form";
@@ -108,6 +109,7 @@ export function ListingPanel({
         ["חדרים", listing.rooms],
         ["גודל", listing.size_sqm && `${listing.size_sqm} מ״ר`],
         ["קומה", listing.floor != null && (listing.floor === 0 ? "קרקע" : listing.floor)],
+        ["סוג", listing.property_type],
       ] as const)
     : [];
 
@@ -132,10 +134,20 @@ export function ListingPanel({
         )
       }
       subtitle={
-        listing &&
-        [listingPlace(listing), `פורסם ב${listing.source} ${formatDate(listing.listed_at)} · נכנס למאגר ${formatRelative(listing.created_at)}`]
-          .filter(Boolean)
-          .join(" · ")
+        listing && (
+          <>
+            {listingPlace(listing)}
+            {/* The two dates on their own line, as small tags. */}
+            <span className="mt-2 flex flex-wrap gap-1.5">
+              <span className="rounded-full bg-orange-50 px-2.5 py-0.5 text-xs text-orange-700">
+                פורסם ב{listing.source} · {formatDate(listing.listed_at)}
+              </span>
+              <span className="rounded-full bg-secondary px-2.5 py-0.5 text-xs text-secondary-foreground">
+                נכנס למאגר · {formatRelative(listing.created_at)}
+              </span>
+            </span>
+          </>
+        )
       }
       badges={listing && !open && <StatusBadge map={LISTING_STATUS} value={listing.status} />}
       footer={
@@ -210,7 +222,7 @@ export function ListingPanel({
           {/* All of them move to the seller on "העבר למוכרים שלי". */}
           <PropertyImages property={listing} editable table="market_listings" folder={photoFolder(listing.id)} />
 
-          <div className="mb-4 grid grid-cols-3 gap-2 text-sm">
+          <div className="mb-4 grid grid-cols-4 gap-2 text-sm">
             {facts.map(([label, value]) => (
               <div key={label} className="rounded-lg bg-secondary/50 p-2">
                 <p className="text-xs text-muted-foreground">{label}</p>
@@ -218,6 +230,41 @@ export function ListingPanel({
               </div>
             ))}
           </div>
+
+          {/* Who to call, with the ways to reach them. */}
+          {(listing.advertiser || listing.phone) && (
+            <div className="mb-6 flex items-center gap-3 rounded-xl border px-4 py-3">
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-semibold">{listing.advertiser || "המפרסם"}</p>
+                {listing.phone && (
+                  <p dir="ltr" className="text-end tabular-nums">
+                    {listing.phone}
+                  </p>
+                )}
+                {listing.phone && <p className="text-xs text-muted-foreground">ייתכן שזה מספר וירטואלי של יד2</p>}
+              </div>
+              {listing.phone && (
+                <>
+                  <WhatsAppButton phone={listing.phone} size="icon-sm" solid label={`וואטסאפ ל${listing.advertiser || "מפרסם"}`} />
+                  <Button variant="outline" size="icon-sm" render={<a href={`tel:${listing.phone.replace(/[^\d+]/g, "")}`} />} nativeButton={false} aria-label="חיוג" title="חיוג">
+                    <PhoneIcon />
+                  </Button>
+                </>
+              )}
+              {listing.url && (
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  render={<a href={listing.url} target="_blank" rel="noopener" />}
+                  nativeButton={false}
+                  aria-label="פתיחת המודעה ביד2"
+                  title="פתיחת המודעה ביד2"
+                >
+                  <ExternalLinkIcon />
+                </Button>
+              )}
+            </div>
+          )}
 
           <EntityForm sections={LISTING_SECTIONS} values={form.values} onChange={form.set} idPrefix="listing" />
 

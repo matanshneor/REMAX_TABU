@@ -78,7 +78,7 @@ function usePasteImages(onImages: (files: File[]) => void, enabled = true) {
   }, [enabled]);
 }
 
-const PASTE_HINT = "אפשר גם להעתיק תמונה (למשל מיד2: קליק ימני ← העתק תמונה) ולהדביק כאן עם Cmd+V";
+const PASTE_HINT = "אפשר גם להעתיק תמונה ולהדביק כאן";
 
 /**
  * Shrinks and uploads photos into a folder of the property photos bucket (a property's id, or
