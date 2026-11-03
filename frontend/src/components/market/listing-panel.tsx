@@ -1,10 +1,11 @@
 "use client";
 
-import { Building2Icon, ExternalLinkIcon, ImagePlusIcon, PlusIcon, RotateCcwIcon } from "lucide-react";
+import { Building2Icon, ImagePlusIcon, PlusIcon, RotateCcwIcon } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth-provider";
+import { Money } from "@/components/crm/money";
 import { ConfirmDelete, Panel, SaveFooter } from "@/components/crm/panel";
 import { StatusBadge } from "@/components/crm/status-badge";
 import { EntityForm } from "@/components/form/entity-form";
@@ -14,7 +15,7 @@ import { MEDIA_BUCKET, PendingImages, uploadPropertyImages } from "@/components/
 import { PropertyPlaceholder } from "@/components/properties/property-placeholder";
 import { Button } from "@/components/ui/button";
 import { errorMessage, useAgentName, useDeleteRecord, useRecord, useSaveRecord, useSignedUrls } from "@/lib/data";
-import { formatDate, formatILS, formatRelative } from "@/lib/format";
+import { formatDate, formatRelative } from "@/lib/format";
 import { LISTING_STATUS } from "@/lib/labels";
 import { isAdmin } from "@/lib/permissions";
 import type { MarketListing } from "@/lib/types";
@@ -126,7 +127,19 @@ export function ListingPanel({
       onClose={onClose}
       loading={isLoading || !listing}
       missing={!!id && !isLoading && !listing}
-      title={listing && [listingTitle(listing), listing.price && formatILS(listing.price)].filter(Boolean).join(" · ")}
+      title={
+        listing && (
+          <>
+            {listingTitle(listing)}
+            {listing.price != null && (
+              <>
+                {" · "}
+                <Money value={listing.price} />
+              </>
+            )}
+          </>
+        )
+      }
       subtitle={listing && [listingPlace(listing), `${listing.source} · נכנס ${formatRelative(listing.listed_at)}`].filter(Boolean).join(" · ")}
       badges={listing && !open && <StatusBadge map={LISTING_STATUS} value={listing.status} />}
       footer={
@@ -242,13 +255,6 @@ export function ListingPanel({
               </div>
             ))}
           </div>
-
-          {listing.url && (
-            <Button variant="outline" className="mb-6 w-full" render={<a href={listing.url} target="_blank" rel="noopener" />} nativeButton={false}>
-              <ExternalLinkIcon />
-              פתח את המודעה ביד2 (שם הטלפון של הבעלים)
-            </Button>
-          )}
 
           <EntityForm sections={LISTING_SECTIONS} values={form.values} onChange={form.set} idPrefix="listing" />
 

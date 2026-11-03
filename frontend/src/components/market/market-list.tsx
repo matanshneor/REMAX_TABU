@@ -1,8 +1,7 @@
 "use client";
 
 import { ImageOffIcon } from "lucide-react";
-import { Pill } from "@/components/crm/status-badge";
-import { formatILS, formatRelative } from "@/lib/format";
+import { Money } from "@/components/crm/money";
 import type { MarketListing } from "@/lib/types";
 
 /** "דירה 4 חד׳" from the ad's title, or from its type and rooms. */
@@ -19,25 +18,41 @@ export function listingPhoto(l: MarketListing, signed: Record<string, string>): 
   return (l.image_path && signed[l.image_path]) || l.image_url || undefined;
 }
 
+/** On a listing this user hasn't opened yet. */
+function NewTag() {
+  return (
+    <span className="flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-0.5 text-[11.5px] font-semibold text-primary-foreground shadow-sm">
+      <span className="size-1.5 rounded-full bg-sky-300" />
+      חדשה
+    </span>
+  );
+}
+
 function Yad2Tag() {
   return <span className="rounded-md bg-[#ff7100] px-1.5 py-0.5 text-[11px] font-bold text-white">יד2</span>;
 }
 
-/** New listings as cards, like the sellers page; a click opens the listing's card. */
+/**
+ * Open listings as cards, like the sellers page; a click opens the listing's card.
+ * "חדשה" marks the ones this user hasn't opened yet (`seen` holds the ones they have).
+ */
 export function MarketGrid({
   rows,
   photos,
+  seen,
   onOpen,
 }: {
   rows: MarketListing[];
   photos: Record<string, string>;
+  seen: Set<string> | null;
   onOpen: (id: string) => void;
 }) {
   return (
     <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
       {rows.map((l) => {
         const photo = listingPhoto(l, photos);
-        const fresh = <Pill tone="blue" className="bg-white">חדש · {formatRelative(l.listed_at)}</Pill>;
+        // Until the views load, nothing is marked (rather than everything flashing "חדשה").
+        const fresh = seen && !seen.has(l.id) && <NewTag />;
         const specs = [l.size_sqm && `${l.size_sqm} מ״ר`, l.floor != null && (l.floor === 0 ? "קומת קרקע" : `קומה ${l.floor}`)].filter(Boolean);
         return (
           <button
@@ -51,7 +66,7 @@ export function MarketGrid({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={photo} alt="" className="absolute inset-0 size-full object-cover" />
                 <div className="absolute inset-x-2 top-2 flex justify-between gap-1">
-                  {fresh}
+                  {fresh || <span />}
                   <Yad2Tag />
                 </div>
               </div>
@@ -65,7 +80,11 @@ export function MarketGrid({
               </div>
             )}
             <div className="flex flex-1 flex-col gap-1 p-3.5">
-              <p className="font-display text-xl text-primary tabular-nums">{l.price ? formatILS(l.price) : "מחיר לא צוין"}</p>
+              {l.price ? (
+                <Money value={l.price} className="font-display text-xl text-primary" />
+              ) : (
+                <p className="font-display text-xl text-muted-foreground">מחיר לא צוין</p>
+              )}
               <p className="truncate font-medium">{listingTitle(l)}</p>
               <p className="truncate text-sm text-muted-foreground">{listingPlace(l) || "אין עדיין כתובת — פתחו את המודעה"}</p>
               {specs.length > 0 && <p className="text-sm tabular-nums">{specs.join(" · ")}</p>}
