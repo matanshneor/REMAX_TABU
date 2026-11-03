@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import { EntityForm } from "@/components/form/entity-form";
 import { useFormValues } from "@/components/form/use-form-values";
@@ -17,7 +18,18 @@ import { OWNER_SECTIONS } from "./property-fields";
  * The seller (property owner). Every agent sees it; editing follows the property's rule
  * (anyone, unless the property is exclusive — then the recruiting agent and admin).
  */
-export function OwnerDetails({ propertyId, editable, first }: { propertyId: string; editable: boolean; first?: boolean }) {
+export function OwnerDetails({
+  propertyId,
+  editable,
+  first,
+  onDirtyChange,
+}: {
+  propertyId: string;
+  editable: boolean;
+  first?: boolean;
+  /** Unsaved seller edits, so closing the card asks first. */
+  onDirtyChange?: (dirty: boolean) => void;
+}) {
   const qc = useQueryClient();
   const key = ["property_owner_details", propertyId];
 
@@ -35,6 +47,7 @@ export function OwnerDetails({ propertyId, editable, first }: { propertyId: stri
   });
 
   const form = useFormValues(OWNER_SECTIONS, row, `${propertyId}:${row?.updated_at ?? "none"}`);
+  useEffect(() => onDirtyChange?.(form.dirty), [form.dirty, onDirtyChange]);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -63,7 +76,7 @@ export function OwnerDetails({ propertyId, editable, first }: { propertyId: stri
           {form.dirty && (
             <div className="mt-3 flex gap-2">
               <Button size="sm" onClick={() => form.validate() && save.mutate()} disabled={save.isPending}>
-                שמור פרטי מוכר
+                שמירת פרטי המוכר
               </Button>
               <Button size="sm" variant="ghost" onClick={form.reset}>
                 בטל

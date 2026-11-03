@@ -84,6 +84,8 @@ export function PropertyPanel({
   const remove = useDeleteRecord("properties");
   const [photos, setPhotos] = useState<File[]>([]);
   const [finishing, setFinishing] = useState(false);
+  // Unsaved edits in "פרטי המוכר" (saved by its own button) also guard closing the card.
+  const [ownerDirty, setOwnerDirty] = useState(false);
 
   const editable = property ? canEditProperty(profile, property) : false;
   const manager = property ? canManageProperty(profile, property) : false;
@@ -147,7 +149,7 @@ export function PropertyPanel({
 
   return (
     <Panel
-      dirty={form.dirty}
+      dirty={form.dirty || ownerDirty}
       open={!!id}
       onClose={onClose}
       loading={isLoading || !property}
@@ -208,7 +210,7 @@ export function PropertyPanel({
             </LockBanner>
           )}
           {/* Who to call comes first — it's what people open a property for. */}
-          <OwnerDetails propertyId={property.id} editable={editable} first />
+          <OwnerDetails key={property.id} propertyId={property.id} editable={editable} first onDirtyChange={setOwnerDirty} />
           <PropertyImages property={property} editable={editable} />
           <EntityForm
             sections={[PROPERTY_DESCRIPTION_SECTION]}

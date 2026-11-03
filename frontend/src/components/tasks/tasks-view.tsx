@@ -9,7 +9,6 @@ import { useAuth } from "@/components/auth-provider";
 import { EmptyState, ErrorState, PageHeader } from "@/components/crm/page-header";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { errorMessage } from "@/lib/data";
 import { formatFullAddress } from "@/lib/format";
@@ -20,7 +19,7 @@ import { cn } from "@/lib/utils";
 import { CalendarSyncButton } from "./calendar-sync";
 import { type FinishedBuyerTask, LogToBuyerDialog } from "./log-to-buyer-dialog";
 import { TaskContactActions } from "./task-contact-actions";
-import { NewTaskForm } from "./reminder-button";
+import { NewTaskDialog } from "./reminder-button";
 import { TaskPanel } from "./task-panel";
 
 const LIST_KEY = ["tasks", "list"];
@@ -122,6 +121,9 @@ export function TasksView() {
     onError: (e, _v, ctx) => {
       qc.setQueryData(LIST_KEY, ctx?.previous);
       toast.error(errorMessage(e));
+    },
+    onSuccess: (_d, { id, is_done }) => {
+      if (is_done) toast.success("המשימה סומנה כבוצעה", { action: { label: "ביטול", onClick: () => toggle.mutate({ id, is_done: false }) } });
     },
     onSettled: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
   });
@@ -279,11 +281,7 @@ export function TasksView() {
       )}
 
       {/* "?new=1" (e.g. from a link) opens this too. */}
-      <Dialog open={creating} onOpenChange={setCreating}>
-        <DialogContent className="sm:max-w-md">
-          {creating && <NewTaskForm heading="משימה חדשה" submitLabel="הוסף משימה" onDone={() => setCreating(false)} />}
-        </DialogContent>
-      </Dialog>
+      <NewTaskDialog open={creating} onClose={() => setCreating(false)} heading="משימה חדשה" />
       <LogToBuyerDialog task={logFor} onClose={() => setLogFor(null)} />
       <TaskPanel id={openId} onClose={() => setOpenId(null)} />
     </div>

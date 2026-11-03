@@ -1,8 +1,10 @@
 "use client";
 
 import { ListPlusIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { useAuth } from "@/components/auth-provider";
+import { useDiscardGuard } from "@/components/crm/panel";
 import { Segmented } from "@/components/crm/segmented";
 import { RelationSelect } from "@/components/form/relation-select";
 import { Button } from "@/components/ui/button";
@@ -11,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useSaveRecord } from "@/lib/data";
+import { formatDateTime } from "@/lib/format";
 import { QuickDate } from "./quick-date";
 
 /** "צור משימה" in a buyer's or seller's card: creates a private task linked to them. */
@@ -36,20 +39,61 @@ export function ReminderButton({
         <ListPlusIcon />
         {label}
       </Button>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <NewTaskDialog
+        open={open}
+        onClose={() => setOpen(false)}
+        heading={heading}
+        buyerId={buyerId}
+        propertyId={propertyId}
+        defaultTitle={defaultTitle}
+      />
+    </>
+  );
+}
+
+/**
+ * The "new task" window. Closing it (outside click, Esc) with something typed asks first,
+ * so a half-written task isn't lost.
+ */
+export function NewTaskDialog({
+  open,
+  onClose,
+  heading,
+  buyerId,
+  propertyId,
+  defaultTitle,
+}: {
+  open: boolean;
+  onClose: () => void;
+  heading: string;
+  buyerId?: string;
+  propertyId?: string;
+  defaultTitle?: string;
+}) {
+  const [dirty, setDirty] = useState(false);
+  const close = () => {
+    setDirty(false);
+    onClose();
+  };
+  const guard = useDiscardGuard(dirty, close);
+  return (
+    <>
+      <Dialog open={open} onOpenChange={(o) => !o && guard.requestClose()}>
         <DialogContent className="sm:max-w-md">
           {open && (
             <NewTaskForm
               heading={heading}
-              submitLabel="הוסף משימה"
+              submitLabel="הוספת משימה"
               buyerId={buyerId}
               propertyId={propertyId}
               defaultTitle={defaultTitle}
-              onDone={() => setOpen(false)}
+              onDirtyChange={setDirty}
+              onDone={close}
             />
           )}
         </DialogContent>
       </Dialog>
+      {guard.dialog}
     </>
   );
 }
@@ -64,6 +108,7 @@ export function NewTaskForm({
   buyerId,
   propertyId,
   defaultTitle = "",
+  onDirtyChange,
   onDone,
 }: {
   heading: string;
@@ -71,6 +116,8 @@ export function NewTaskForm({
   buyerId?: string;
   propertyId?: string;
   defaultTitle?: string;
+  /** Whether anything was typed beyond the starting title (for the discard guard). */
+  onDirtyChange?: (dirty: boolean) => void;
   onDone: () => void;
 }) {
   const { profile } = useAuth();
@@ -82,6 +129,8 @@ export function NewTaskForm({
   const [linkKind, setLinkKind] = useState<"none" | "buyer" | "property">("none");
   const [linkId, setLinkId] = useState("");
   const save = useSaveRecord("tasks", { silent: true });
+  const typed = title.trim() !== defaultTitle.trim() || details.trim() !== "";
+  useEffect(() => onDirtyChange?.(typed), [typed, onDirtyChange]);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -98,7 +147,12 @@ export function NewTaskForm({
           created_by: profile?.id,
         },
       },
-      { onSuccess: onDone },
+      {
+        onSuccess: () => {
+          toast.success(due ? `המשימה נוספה · ${formatDateTime(due)}` : "המשימה נוספה");
+          onDone();
+        },
+      },
     );
   }
 

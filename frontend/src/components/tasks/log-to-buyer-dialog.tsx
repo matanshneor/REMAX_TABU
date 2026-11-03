@@ -1,7 +1,8 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useDiscardGuard } from "@/components/crm/panel";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -17,16 +18,27 @@ export type FinishedBuyerTask = { buyerId: string; buyerName: string; taskTitle:
  * call log (יומן שיחות). Optional: "לא עכשיו" just closes it.
  */
 export function LogToBuyerDialog({ task, onClose }: { task: FinishedBuyerTask | null; onClose: () => void }) {
+  const [dirty, setDirty] = useState(false);
+  const close = () => {
+    setDirty(false);
+    onClose();
+  };
+  const guard = useDiscardGuard(dirty, close);
   return (
-    <Dialog open={!!task} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-md">{task && <LogForm task={task} onClose={onClose} />}</DialogContent>
-    </Dialog>
+    <>
+      <Dialog open={!!task} onOpenChange={(o) => !o && guard.requestClose()}>
+        <DialogContent className="sm:max-w-md">{task && <LogForm task={task} onClose={close} onDirtyChange={setDirty} />}</DialogContent>
+      </Dialog>
+      {guard.dialog}
+    </>
   );
 }
 
-function LogForm({ task, onClose }: { task: FinishedBuyerTask; onClose: () => void }) {
+function LogForm({ task, onClose, onDirtyChange }: { task: FinishedBuyerTask; onClose: () => void; onDirtyChange: (d: boolean) => void }) {
   const qc = useQueryClient();
   const [text, setText] = useState("");
+  const typed = text.trim() !== "";
+  useEffect(() => onDirtyChange(typed), [typed, onDirtyChange]);
   const first = task.buyerName.split(" ")[0];
 
   const save = useMutation({

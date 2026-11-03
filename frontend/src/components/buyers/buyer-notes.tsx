@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { MessageSquareTextIcon, Trash2Icon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth-provider";
 import { PanelSection } from "@/components/crm/panel";
@@ -14,13 +14,33 @@ import { isAdmin } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/client";
 import type { BuyerNote } from "@/lib/types";
 
-/** Call log on a buyer: short dated entries, newest first. Anyone who sees the buyer can add one. */
-export function BuyerNotes({ buyerId }: { buyerId: string }) {
+/**
+ * Call log on a buyer: short dated entries, newest first. Anyone who sees the buyer can add one.
+ * `onDraftChange` reports a typed, unsaved entry (so closing the card asks first); `focus` puts
+ * the cursor in the box (from "רישום שיחה" on the buyers list).
+ */
+export function BuyerNotes({
+  buyerId,
+  onDraftChange,
+  focus,
+}: {
+  buyerId: string;
+  onDraftChange?: (hasDraft: boolean) => void;
+  focus?: boolean;
+}) {
   const { profile } = useAuth();
   const agentName = useAgentName();
   const qc = useQueryClient();
   const key = ["buyer_notes", buyerId];
   const [text, setText] = useState("");
+  // Deleting asks once: the first click arms it, the second deletes.
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const box = useRef<HTMLTextAreaElement>(null);
+  const hasDraft = text.trim() !== "";
+  useEffect(() => onDraftChange?.(hasDraft), [hasDraft, onDraftChange]);
+  useEffect(() => {
+    if (focus) box.current?.focus();
+  }, [focus]);
 
   const { data: notes = [] } = useQuery({
     queryKey: key,
@@ -42,6 +62,7 @@ export function BuyerNotes({ buyerId }: { buyerId: string }) {
     },
     onSuccess: () => {
       setText("");
+      toast.success("השיחה נרשמה ביומן");
       qc.invalidateQueries({ queryKey: ["buyer_notes"] });
       // The buyers table shows the last call.
       qc.invalidateQueries({ queryKey: ["buyers", "list"] });
@@ -55,6 +76,8 @@ export function BuyerNotes({ buyerId }: { buyerId: string }) {
       if (error) throw error;
     },
     onSuccess: () => {
+      setConfirmId(null);
+      toast.success("הרישום נמחק מהיומן");
       qc.invalidateQueries({ queryKey: ["buyer_notes"] });
       qc.invalidateQueries({ queryKey: ["buyers", "list"] });
     },
@@ -67,9 +90,10 @@ export function BuyerNotes({ buyerId }: { buyerId: string }) {
   }
 
   return (
-    <PanelSection title={`יומן שיחות${notes.length ? ` (${notes.length})` : ""}`}>
+    <PanelSection first title={`יומן שיחות${notes.length ? ` (${notes.length})` : ""}`}>
       <div className="flex flex-col gap-2">
         <Textarea
+          ref={box}
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
@@ -85,7 +109,7 @@ export function BuyerNotes({ buyerId }: { buyerId: string }) {
         <div className="flex items-center justify-between gap-2">
           <span className="text-xs text-muted-foreground">Ctrl+Enter לשמירה מהירה</span>
           <Button size="sm" onClick={submit} disabled={!text.trim() || add.isPending}>
-            {add.isPending ? "שומר…" : "הוסף ליומן"}
+            {add.isPending ? "שומר…" : "רישום ביומן"}
           </Button>
         </div>
       </div>
@@ -110,18 +134,36 @@ export function BuyerNotes({ buyerId }: { buyerId: string }) {
                   {n.author_id === profile?.id ? "אני" : agentName(n.author_id)}
                 </p>
                 <p className="mt-0.5 whitespace-pre-wrap">{n.body}</p>
-                {canDelete && (
-                  <button
-                    type="button"
-                    onClick={() => remove.mutate(n.id)}
-                    disabled={remove.isPending}
-                    aria-label="מחק רישום"
-                    title="מחק רישום"
-                    className="absolute end-0 top-0 rounded p-1 text-muted-foreground transition-opacity hover:text-destructive focus-visible:opacity-100 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100"
-                  >
-                    <Trash2Icon className="size-3.5" />
-                  </button>
-                )}
+                {canDelete &&
+                  (confirmId === n.id ? (
+                    <span className="absolute end-0 top-0 flex items-center gap-1 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => remove.mutate(n.id)}
+                        disabled={remove.isPending}
+                        className="rounded px-1.5 py-0.5 font-medium text-destructive hover:bg-destructive/10 focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        {remove.isPending ? "מוחק…" : "מחיקת הרישום"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmId(null)}
+                        className="rounded px-1.5 py-0.5 text-muted-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        השארה
+                      </button>
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmId(n.id)}
+                      aria-label="מחיקת הרישום"
+                      title="מחיקת הרישום"
+                      className="absolute end-0 top-0 rounded p-1 text-muted-foreground transition-opacity hover:text-destructive focus-visible:opacity-100 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100"
+                    >
+                      <Trash2Icon className="size-3.5" />
+                    </button>
+                  ))}
               </li>
             );
           })}

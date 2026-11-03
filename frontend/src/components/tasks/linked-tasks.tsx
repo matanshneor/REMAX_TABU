@@ -8,14 +8,13 @@ import { useAuth } from "@/components/auth-provider";
 import { PanelSection } from "@/components/crm/panel";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useSaveRecord } from "@/lib/data";
 import { formatDateTime } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 import type { Task } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { type FinishedBuyerTask, LogToBuyerDialog } from "./log-to-buyer-dialog";
-import { NewTaskForm } from "./reminder-button";
+import { NewTaskDialog } from "./reminder-button";
 
 /** Recently finished tasks shown under the open ones, as a short history. */
 const DONE_SHOWN = 3;
@@ -103,19 +102,13 @@ export function LinkedTasks({
         </ul>
       )}
 
-      <Dialog open={adding} onOpenChange={setAdding}>
-        <DialogContent className="sm:max-w-md">
-          {adding && (
-            <NewTaskForm
-              heading={buyer ? `משימה על ${buyer.full_name}` : "משימה על הנכס"}
-              submitLabel="הוסף משימה"
-              buyerId={buyer?.id}
-              propertyId={propertyId}
-              onDone={() => setAdding(false)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      <NewTaskDialog
+        open={adding}
+        onClose={() => setAdding(false)}
+        heading={buyer ? `משימה על ${buyer.full_name}` : "משימה על הנכס"}
+        buyerId={buyer?.id}
+        propertyId={propertyId}
+      />
       <LogToBuyerDialog task={logFor} onClose={() => setLogFor(null)} />
     </PanelSection>
   );
