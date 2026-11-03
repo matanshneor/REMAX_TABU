@@ -14,10 +14,22 @@ import { formatILS } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 import type { MarketListing } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { addressKey, type ImportedListing, parseYad2Plus, pastePieces } from "./yad2-import";
+import { addressKey, type ImportedListing, parseYad2Plus, pastePieces, rowId } from "./yad2-import";
 
 type Kind = "new" | "price" | "exists";
-type Row = ImportedListing & { kind: Kind; existing?: MarketListing };
+type Row = ImportedListing & { id: string; kind: Kind; existing?: MarketListing; sameBuilding?: boolean };
+
+const digits = (s: string | null | undefined) => (s ?? "").replace(/\D/g, "");
+
+/** The pool listing this row is, if any: same address and the same phone, price, or flat (rooms and type). */
+function findExisting(r: ImportedListing, atAddress: MarketListing[]): MarketListing | undefined {
+  return atAddress.find(
+    (l) =>
+      (!!r.phone && digits(l.phone) === digits(r.phone)) ||
+      (r.price != null && l.price === r.price) ||
+      (r.rooms != null && l.rooms === r.rooms && (l.property_type ?? "") === r.type),
+  );
+}
 
 const KIND: Record<Kind, { label: string; className: string }> = {
   new: { label: "חדש", className: "bg-emerald-50 text-emerald-900" },
@@ -55,18 +67,25 @@ function ImportForm({ listings, onDone }: { listings: MarketListing[]; onDone: (
 
   const rows = useMemo<Row[]>(() => {
     if (!parsed) return [];
-    const byKey = new Map(listings.map((l) => [addressKey(l.street), l]));
+    const byKey = new Map<string, MarketListing[]>();
+    for (const l of listings) {
+      const k = addressKey(l.street);
+      byKey.set(k, [...(byKey.get(k) ?? []), l]);
+    }
     return parsed.map((p) => {
-      const existing = byKey.get(p.key);
+      const id = rowId(p);
+      const atAddress = byKey.get(p.key) ?? [];
+      const existing = findExisting(p, atAddress);
       if (existing) {
         // A listing already moved to the sellers isn't touched; an open one takes the new price.
         const changed = p.price != null && existing.price !== p.price && existing.status !== "added";
-        return { ...p, kind: changed ? "price" : "exists", existing };
+        return { ...p, id, kind: changed ? "price" : "exists", existing };
       }
-      return { ...p, kind: sellerKeys.has(p.key) ? "exists" : "new" };
+      // Another flat at an address already in the pool is new, but say so.
+      return { ...p, id, kind: sellerKeys.has(p.key) ? "exists" : "new", sameBuilding: atAddress.length > 0 };
     });
   }, [parsed, listings, sellerKeys]);
-  const picked = rows.filter((r) => r.kind !== "exists" && !skipped.has(r.key));
+  const picked = rows.filter((r) => r.kind !== "exists" && !skipped.has(r.id));
   const count = (k: Kind) => rows.filter((r) => r.kind === k).length;
   const adding = picked.filter((r) => r.kind === "new").length;
   const updating = picked.length - adding;
@@ -82,12 +101,13 @@ function ImportForm({ listings, onDone }: { listings: MarketListing[]; onDone: (
     const sale = all.filter((r) => r.deal === "sale");
     setRentals((n) => n + all.length - sale.length);
     setParsed((prev) => {
-      const have = new Set((prev ?? []).map((r) => `${r.key}|${r.price}`));
-      return [...(prev ?? []), ...sale.filter((r) => !have.has(`${r.key}|${r.price}`))];
+      const have = new Set((prev ?? []).map(rowId));
+      return [...(prev ?? []), ...sale.filter((r) => !have.has(rowId(r)))];
     });
     // Addresses already among the sellers count as "in the system" too.
-    const { data } = await createClient().from("properties").select("street");
-    setSellerKeys(new Set((data ?? []).map((p) => addressKey(p.street)).filter(Boolean)));
+    // (The sellers keep the house number apart from the street.)
+    const { data } = await createClient().from("properties").select("street, house_number");
+    setSellerKeys(new Set((data ?? []).map((p) => addressKey(`${p.street ?? ""} ${p.house_number ?? ""}`)).filter(Boolean)));
   }
 
   async function save() {
@@ -202,16 +222,16 @@ function ImportForm({ listings, onDone }: { listings: MarketListing[]; onDone: (
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <tr key={`${r.key}|${r.price}`} className={cn("border-t align-top", r.kind === "exists" && "text-muted-foreground")}>
+                  <tr key={r.id} className={cn("border-t align-top", r.kind === "exists" && "text-muted-foreground")}>
                     <td className="px-2 py-2">
                       {r.kind !== "exists" && (
                         <Checkbox
-                          checked={!skipped.has(r.key)}
+                          checked={!skipped.has(r.id)}
                           onCheckedChange={(on) =>
                             setSkipped((s) => {
                               const next = new Set(s);
-                              if (on) next.delete(r.key);
-                              else next.add(r.key);
+                              if (on) next.delete(r.id);
+                              else next.add(r.id);
                               return next;
                             })
                           }
@@ -222,6 +242,7 @@ function ImportForm({ listings, onDone }: { listings: MarketListing[]; onDone: (
                     <td className="px-2 py-2">
                       {r.street}
                       <span className="block text-xs text-muted-foreground">{[r.city, r.type].filter(Boolean).join(" · ")}</span>
+                      {r.sameBuilding && <span className="block text-xs text-amber-800">יש במאגר עוד דירה בכתובת הזו</span>}
                     </td>
                     <td className="px-2 py-2 whitespace-nowrap tabular-nums">
                       {[r.rooms && `${r.rooms} חד׳`, r.sizeSqm && `${r.sizeSqm} מ״ר`].filter(Boolean).join(" · ")}
