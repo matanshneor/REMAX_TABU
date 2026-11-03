@@ -25,7 +25,7 @@ const KIND: Record<Kind, { label: string; className: string }> = {
   exists: { label: "כבר במערכת", className: "bg-muted text-muted-foreground" },
 };
 
-/** "ייבוא מיד 2 פלוס" (admin): paste the "נכסים לגיוס" table, see what's new, add it to the pool. */
+/** "ייבוא מיד 2 פלוס" (admin): paste the "גיוס נכסים חדשים" table, see what's new, add it to the pool. */
 export function Yad2ImportDialog({
   open,
   onOpenChange,
@@ -154,8 +154,8 @@ function ImportForm({ listings, onDone }: { listings: MarketListing[]; onDone: (
         </DialogTitle>
         <DialogDescription render={<div />}>
           <ol className="mt-1 flex list-inside list-decimal flex-col gap-0.5">
-            <li>ביד 2 פלוס, בדף ״נכסים לגיוס״, מסמנים עם העכבר את כל השורות בטבלה.</li>
-            <li>מעתיקים (Cmd+C), לוחצים בתיבה למטה ומדביקים (Cmd+V).</li>
+            <li>ביד 2 פלוס, בדף ״גיוס נכסים חדשים״, מסמנים עם העכבר את כל השורות בטבלה.</li>
+            <li>מעתיקים, לוחצים בתיבה למטה ומדביקים.</li>
             <li>אפשר להדביק כמה עמודים, אחד אחרי השני.</li>
           </ol>
         </DialogDescription>

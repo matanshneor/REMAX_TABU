@@ -1,5 +1,5 @@
 /**
- * Reads the table copied from Yad2 Plus ("נכסים לגיוס") into listings. The paste is read by its
+ * Reads the table copied from Yad2 Plus ("גיוס נכסים חדשים") into listings. The paste is read by its
  * content, not by column position: each row starts at "למכירה" / "להשכרה", and the price (₪),
  * phone and date are told apart by their form, so a hidden or reordered column doesn't shift the rest.
  *
