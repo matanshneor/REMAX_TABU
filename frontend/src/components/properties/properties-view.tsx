@@ -149,6 +149,7 @@ export function PropertiesView() {
                 imageUrl={p.image_paths[0] ? urls[p.image_paths[0]] : undefined}
                 agentName={recruiterName(p.recruiter_id, p.recruiting_agent_id)}
                 sellerName={p.property_owner_details?.owner_name}
+                sellerPhone={p.property_owner_details?.owner_phone}
                 selected={openId === p.id}
                 onClick={() => setOpenId(p.id)}
               />

@@ -35,11 +35,14 @@ export function BuyerPanel({
   creating = false,
   onClose,
   onCreated,
+  focusLog = false,
 }: {
   id: string | null;
   creating?: boolean;
   onClose: () => void;
   onCreated?: (id: string) => void;
+  /** Opened from "רישום שיחה" on the list: the cursor goes to the call log. */
+  focusLog?: boolean;
 }) {
   const { profile } = useAuth();
   const recruiterName = useRecruiterName();
@@ -58,6 +61,8 @@ export function BuyerPanel({
   const [, setOpenId] = usePanelParam();
   const editable = buyer ? canEditBuyer(profile, buyer) : false;
   const [dealPrefill, setDealPrefill] = useState<DealPrefill | null>(null);
+  // A call typed in the log but not saved yet: closing the card asks first, like form edits.
+  const [noteDraft, setNoteDraft] = useState(false);
 
   if (creating) {
     return (
@@ -111,7 +116,7 @@ export function BuyerPanel({
 
   return (
     <Panel
-      dirty={form.dirty}
+      dirty={form.dirty || noteDraft}
       open={!!id}
       onClose={onClose}
       loading={isLoading || !buyer}
@@ -193,6 +198,8 @@ export function BuyerPanel({
               הקונה משויך ל<strong>{recruiterName(buyer.recruiter_id, buyer.owner_agent_id)}</strong>. רק הסוכן המטפל והמנהל יכולים לערוך את הפרטים.
             </LockBanner>
           )}
+          {/* The call log comes first: logging a call is the most common thing done here. */}
+          <BuyerNotes key={buyer.id} buyerId={buyer.id} onDraftChange={setNoteDraft} focus={focusLog} />
           <EntityForm
             sections={BUYER_SECTIONS}
             values={form.values}
@@ -205,7 +212,6 @@ export function BuyerPanel({
               <DuplicatePhoneWarning phone={String(form.values.phone ?? "")} excludeId={buyer.id} onOpen={setOpenId} />
             </div>
           )}
-          <BuyerNotes buyerId={buyer.id} />
           <LinkedTasks buyer={buyer} title="המשימות שלי על הקונה" />
           <PropertyMatches buyer={buyer} />
           <ViewingsList buyerId={buyer.id} />

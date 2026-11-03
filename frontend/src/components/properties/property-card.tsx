@@ -1,4 +1,6 @@
-import { ArrowDownIcon, ImageOffIcon } from "lucide-react";
+import { ArrowDownIcon, ImageOffIcon, PhoneIcon } from "lucide-react";
+import { WhatsAppButton } from "@/components/crm/whatsapp-button";
+import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/crm/status-badge";
 import { formatAddress, formatILS } from "@/lib/format";
 import { PROPERTY_ENGAGEMENT, PROPERTY_STATUS } from "@/lib/labels";
@@ -23,6 +25,7 @@ export function PropertyCard({
   imageUrl,
   agentName,
   sellerName,
+  sellerPhone,
   selected,
   onClick,
 }: {
@@ -30,6 +33,8 @@ export function PropertyCard({
   imageUrl?: string;
   agentName: string;
   sellerName?: string | null;
+  /** Shown as call and WhatsApp buttons at the bottom of the card. */
+  sellerPhone?: string | null;
   selected?: boolean;
   onClick: () => void;
 }) {
@@ -48,14 +53,17 @@ export function PropertyCard({
   if (p.parking_spots) features.push(p.parking_spots > 1 ? `${p.parking_spots} חניות` : "חניה");
 
   return (
-    <button
-      onClick={onClick}
+    // A card with its own buttons can't itself be a <button>: a full-size button under the content
+    // opens the seller; the call and WhatsApp buttons sit above it.
+    <div
       className={cn(
-        "group flex flex-col overflow-hidden rounded-xl border bg-card text-start shadow-[0_1px_2px_rgb(15_26_46/0.04),0_8px_24px_-14px_rgb(15_26_46/0.12)] transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-[0_2px_4px_rgb(15_26_46/0.05),0_18px_36px_-14px_rgb(15_26_46/0.25)] motion-reduce:transition-none motion-reduce:hover:translate-y-0",
+        "group relative flex flex-col has-[>button:focus-visible]:ring-2 has-[>button:focus-visible]:ring-ring overflow-hidden rounded-xl border bg-card text-start shadow-[0_1px_2px_rgb(15_26_46/0.04),0_8px_24px_-14px_rgb(15_26_46/0.12)] transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-[0_2px_4px_rgb(15_26_46/0.05),0_18px_36px_-14px_rgb(15_26_46/0.25)] motion-reduce:transition-none motion-reduce:hover:translate-y-0",
         selected && "ring-2 ring-primary",
         p.status !== "active" && "opacity-75",
       )}
     >
+      <button type="button" onClick={onClick} aria-label={`פתיחת ${formatAddress(p) || "המוכר"}`} className="absolute inset-0 z-0 outline-none" />
+      <div className="pointer-events-none relative flex flex-1 flex-col">
       {hasImages ? (
         <div className="relative aspect-[16/10] bg-muted">
           {imageUrl && (
@@ -121,9 +129,25 @@ export function PropertyCard({
           ) : (
             <span className="font-medium text-amber-700">חסר מוכר</span>
           )}
-          <span className="shrink-0">{agentName}</span>
+          <span className="ms-auto shrink-0">{agentName}</span>
+          {sellerPhone && (
+            <span className="pointer-events-auto relative z-10 flex shrink-0 gap-1">
+              <WhatsAppButton phone={sellerPhone} size="icon-sm" solid label={`וואטסאפ ל${sellerName || "מוכר"}`} />
+              <Button
+                variant="outline"
+                size="icon-sm"
+                render={<a href={`tel:${sellerPhone}`} />}
+                nativeButton={false}
+                aria-label={`חיוג ל${sellerName || "מוכר"}`}
+                title={`חיוג ל${sellerName || "מוכר"} · ${sellerPhone}`}
+              >
+                <PhoneIcon />
+              </Button>
+            </span>
+          )}
         </div>
       </div>
-    </button>
+      </div>
+    </div>
   );
 }

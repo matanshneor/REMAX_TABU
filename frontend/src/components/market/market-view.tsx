@@ -15,7 +15,8 @@ import { Label } from "@/components/ui/label";
 import { FilterBar } from "@/components/crm/filter-bar";
 import { CurrencyInput } from "@/components/form/currency-input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAgentName, useSaveRecord, useSignedUrls } from "@/lib/data";
+import { errorMessage, useAgentName, useSaveRecord, useSignedUrls } from "@/lib/data";
+import { toast } from "sonner";
 import { formatDate } from "@/lib/format";
 import { DISMISS_REASONS, PROPERTY_TYPES } from "@/lib/labels";
 import { isAdmin } from "@/lib/permissions";
@@ -405,12 +406,22 @@ export function MarketView() {
             const { data } = await createClient().from("properties").select("image_paths").eq("id", propertyId).single();
             await saveProperty
               .mutateAsync({ id: propertyId, values: { image_paths: [...listing.image_paths, ...(data?.image_paths ?? [])] } })
-              .catch(() => {});
+              .catch(() => toast.error("המוכר נשמר, אבל התמונות מהמודעה לא הועתקו. אפשר להוסיף אותן בכרטיס המוכר."));
           }
           // Mark the listing moved and linked; who moved it is kept (assigned_to). Then show the seller.
           saveListing.mutate(
             { id: listing.id, values: { status: "added", property_id: propertyId, assigned_to: profile?.id } },
-            { onSettled: () => router.push(`/properties?open=${propertyId}`) },
+            {
+              onSuccess: () => {
+                toast.success("הועבר למוכרים שלך");
+                router.push(`/properties?open=${propertyId}`);
+              },
+              // The seller exists, but the listing would stay open in the pool: say so and stay here.
+              onError: (e) =>
+                toast.error(`המוכר נשמר, אבל המודעה לא סומנה כ״הועברה״ (${errorMessage(e)}). כדאי לסמן אותה שוב, או לפנות למנהל.`, {
+                  duration: 10000,
+                }),
+            },
           );
         }}
       />

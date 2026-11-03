@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, Columns3Icon, PlusIcon, SearchIcon, SparklesIcon, UsersIcon } from "lucide-react";
+import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, Columns3Icon, PhoneIcon, PlusIcon, SearchIcon, SparklesIcon, UsersIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { ExportButton } from "@/components/crm/export-button";
@@ -29,7 +29,7 @@ import { cn } from "@/lib/utils";
 import { BuyerPanel } from "./buyer-panel";
 
 /** Columns shown by default; the rest are in the buyer's card or behind "all columns". */
-const COMPACT_COLUMNS = new Set(["name", "rooms", "area", "budget", "matches", "added", "phone"]);
+const COMPACT_COLUMNS = new Set(["name", "rooms", "area", "budget", "matches", "added", "log", "phone"]);
 
 /** An open buyer with no call logged for this long is marked as neglected. */
 const STALE_DAYS = 14;
@@ -40,6 +40,8 @@ type BuyerRow = Buyer & { buyer_notes: { created_at: string }[] };
 const lastContact = (b: BuyerRow) => b.buyer_notes[0]?.created_at ?? b.created_at;
 const isStale = (b: BuyerRow) =>
   isActiveBuyer(b) && Date.now() - new Date(lastContact(b)).getTime() > STALE_DAYS * 86_400_000;
+/** Whole days since a date (for "18 יום בלי שיחה"). */
+const daysSince = (iso: string) => Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
 const SHOW_ALL_KEY = "buyers:show-all-columns";
 
 type StatusFilter = "all" | "active" | Enum<"buyer_status">;
@@ -144,7 +146,13 @@ export function BuyersView() {
     () => new Map(buyers.map((b) => [b.id, isActiveBuyer(b) ? listings.filter((p) => matchBuyerToProperty(b, p).ok).length : 0])),
     [buyers, listings],
   );
+  // "רישום שיחה" on a row opens the buyer with the cursor in the call log.
+  const [focusLog, setFocusLog] = useState(false);
   const ctx = useMemo(() => ({ agentName, matches }), [agentName, matches]);
+  const onLog = (id: string) => {
+    setFocusLog(true);
+    setOpenId(id);
+  };
 
   // RLS already limits agents to their own buyers; the agent filter is for the admin.
   const byOwnership = useMemo(
@@ -375,7 +383,10 @@ export function BuyersView() {
                 {rows.map((b) => (
                   <TableRow
                     key={b.id}
-                    onClick={() => setOpenId(b.id)}
+                    onClick={() => {
+                      setFocusLog(false);
+                      setOpenId(b.id);
+                    }}
                     className={cn(
                       "cursor-pointer transition-colors hover:bg-secondary/50",
                       openId === b.id && "bg-primary/5 shadow-[inset_-3px_0_0_var(--primary)]",
@@ -386,7 +397,7 @@ export function BuyersView() {
                         key={c.key}
                         className={cn(i === 0 && "ps-4", i === columns.length - 1 && "pe-4", c.className?.(b))}
                       >
-                        {c.cell(b, ctx)}
+                        {c.cell(b, { ...ctx, onLog })}
                       </TableCell>
                     ))}
                   </TableRow>
@@ -409,8 +420,10 @@ export function BuyersView() {
       <BuyerPanel
         id={openId}
         creating={creating}
+        focusLog={focusLog}
         onClose={() => {
           setCreating(false);
+          setFocusLog(false);
           setOpenId(null);
         }}
         onCreated={(id) => {
@@ -436,6 +449,8 @@ type RowContext = {
   agentName: (b: BuyerRow) => string;
   /** Offered properties that fit the buyer, by buyer id. */
   matches: Map<string, number>;
+  /** Opens the buyer ready to log a call (cells only; sorting doesn't need it). */
+  onLog?: (id: string) => void;
 };
 
 /** Assigned to someone on the team (signed up or not). */
@@ -463,7 +478,13 @@ const COLUMNS: Column[] = [
     className: () => "font-medium",
     sortValue: (b) => b.full_name,
     cell: (b) => (
-      <span className="font-semibold">{b.full_name}</span>
+      <>
+        <span className="block font-semibold">{b.full_name}</span>
+        {/* Neglected: in words too, not only in red. */}
+        {isStale(b) && (
+          <span className="block text-xs font-semibold text-brand-red">● {daysSince(lastContact(b))} יום בלי שיחה</span>
+        )}
+      </>
     ),
   },
   {
@@ -517,6 +538,23 @@ const COLUMNS: Column[] = [
     cell: (b) => formatDate(b.created_at),
   },
   {
+    key: "log",
+    header: "",
+    cell: (b, { onLog }) => (
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onLog?.(b.id);
+        }}
+        className="inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-lg border border-dashed border-primary/40 bg-secondary/40 px-2.5 text-xs font-medium text-primary transition-colors hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <PlusIcon className="size-3.5" />
+        רישום שיחה
+      </button>
+    ),
+  },
+  {
     key: "phone",
     header: "טלפון",
     className: () => "text-muted-foreground",
@@ -525,6 +563,18 @@ const COLUMNS: Column[] = [
         <span dir="ltr" className="tabular-nums">
           {b.phone ?? "—"}
         </span>
+        {b.phone && (
+          <Button
+            variant="outline"
+            size="icon-sm"
+            render={<a href={`tel:${b.phone}`} onClick={(e) => e.stopPropagation()} />}
+            nativeButton={false}
+            aria-label={`חיוג ל${b.full_name}`}
+            title={`חיוג ל${b.full_name}`}
+          >
+            <PhoneIcon />
+          </Button>
+        )}
         <WhatsAppButton phone={b.phone} size="icon-sm" solid label={`וואטסאפ ל${b.full_name}`} />
       </div>
     ),

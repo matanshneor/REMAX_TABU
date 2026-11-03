@@ -1,6 +1,8 @@
 "use client";
 
+import { PhoneIcon } from "lucide-react";
 import { Money } from "@/components/crm/money";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PropertyPlaceholder } from "@/components/properties/property-placeholder";
 import type { MarketListing } from "@/lib/types";
@@ -57,11 +59,11 @@ export function MarketGrid({
         const fresh = seen && !seen.has(l.id) && <NewTag />;
         const specs = [l.size_sqm && `${l.size_sqm} מ״ר`, l.floor != null && (l.floor === 0 ? "קומת קרקע" : `קומה ${l.floor}`)].filter(Boolean);
         return (
-          <button
-            key={l.id}
-            onClick={() => onOpen(l.id)}
-            className="group flex flex-col overflow-hidden rounded-xl border bg-card text-start shadow-[0_1px_2px_rgb(15_26_46/0.04),0_8px_24px_-14px_rgb(15_26_46/0.12)] transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-[0_2px_4px_rgb(15_26_46/0.05),0_18px_36px_-14px_rgb(15_26_46/0.25)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
-          >
+          // A card with its own buttons can't itself be a <button>: a full-size button sits under
+          // the content and opens the listing; the call button sits above it.
+          <div key={l.id} className="group relative flex flex-col overflow-hidden rounded-xl border bg-card text-start shadow-[0_1px_2px_rgb(15_26_46/0.04),0_8px_24px_-14px_rgb(15_26_46/0.12)] transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-[0_2px_4px_rgb(15_26_46/0.05),0_18px_36px_-14px_rgb(15_26_46/0.25)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 has-[>button:focus-visible]:ring-2 has-[>button:focus-visible]:ring-ring">
+            <button type="button" onClick={() => onOpen(l.id)} aria-label={`פתיחת המודעה: ${listingTitle(l)}`} className="absolute inset-0 z-0 outline-none" />
+            <div className="pointer-events-none relative flex flex-1 flex-col">
             {/* No photo yet: a low strip with the office's soft placeholder (no caption), so the details lead. */}
             <div className={cn("relative bg-muted", photo ? "aspect-[16/9]" : "h-14")}>
               {photo ? (
@@ -85,8 +87,24 @@ export function MarketGrid({
               <p className="truncate font-medium">{listingTitle(l)}</p>
               <p className="truncate text-sm text-muted-foreground">{listingPlace(l) || "אין עדיין כתובת — פתחו את המודעה"}</p>
               {specs.length > 0 && <p className="text-sm tabular-nums">{specs.join(" · ")}</p>}
+              {l.phone && (
+                <div className="pointer-events-auto relative z-10 mt-auto flex items-center justify-between gap-2 border-t pt-2 text-xs text-muted-foreground">
+                  <span className="truncate">{l.advertiser || "המפרסם"}</span>
+                  <Button
+                    variant="outline"
+                    size="icon-sm"
+                    render={<a href={`tel:${l.phone}`} />}
+                    nativeButton={false}
+                    aria-label={`חיוג ל${l.advertiser || "מפרסם"}`}
+                    title={`חיוג ל${l.advertiser || "מפרסם"} · ${l.phone}`}
+                  >
+                    <PhoneIcon />
+                  </Button>
+                </div>
+              )}
             </div>
-          </button>
+            </div>
+          </div>
         );
       })}
     </div>
