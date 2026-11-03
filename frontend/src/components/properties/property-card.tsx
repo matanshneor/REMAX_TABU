@@ -128,7 +128,7 @@ export function PropertyCard({
         </p>
         <div className="flex items-center gap-2 border-t pt-2 text-sm">
           {sellerName ? (
-            <span className="min-w-0 leading-snug">
+            <span className="min-w-0 flex-1 leading-snug">
               <span className="text-xs text-muted-foreground">מוכר: </span>
               <span className="font-medium">{sellerName}</span>
             </span>
