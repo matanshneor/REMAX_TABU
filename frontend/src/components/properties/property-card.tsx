@@ -1,4 +1,4 @@
-import { ArrowDownIcon, ImageOffIcon, PhoneIcon } from "lucide-react";
+import { ArrowDownIcon, ImageOffIcon, PhoneIcon, UserRoundIcon } from "lucide-react";
 import { WhatsAppButton } from "@/components/crm/whatsapp-button";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/crm/status-badge";
@@ -121,15 +121,20 @@ export function PropertyCard({
             ))}
           </div>
         )}
-        <div className="mt-auto flex items-center justify-between gap-2 border-t pt-2 text-xs text-muted-foreground">
+        {/* The agent on a line of its own, so the seller's name below has the room to show in full. */}
+        <p className="mt-auto flex items-center gap-1 pt-1 text-xs text-muted-foreground">
+          <UserRoundIcon className="size-3.5 shrink-0" />
+          <span className="truncate">סוכן: {agentName}</span>
+        </p>
+        <div className="flex items-center gap-2 border-t pt-2 text-sm">
           {sellerName ? (
-            <span className="truncate">
-              מוכר: <span className="font-medium text-foreground">{sellerName}</span>
+            <span className="min-w-0 flex-1 leading-snug">
+              <span className="text-xs text-muted-foreground">מוכר: </span>
+              <span className="font-medium">{sellerName}</span>
             </span>
           ) : (
-            <span className="font-medium text-amber-700">חסר מוכר</span>
+            <span className="min-w-0 flex-1 text-xs font-medium text-amber-700">חסר מוכר</span>
           )}
-          <span className="ms-auto shrink-0">{agentName}</span>
           {sellerPhone && (
             <span className="pointer-events-auto relative z-10 flex shrink-0 gap-1">
               <WhatsAppButton phone={sellerPhone} size="icon-sm" solid label={`וואטסאפ ל${sellerName || "מוכר"}`} />
