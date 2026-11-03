@@ -130,4 +130,11 @@
   html {
     @apply font-sans;
   }
+  /* Tailwind 4 leaves buttons with the plain arrow; anything clickable shows the hand, like links. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  select:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
 }
