@@ -1,5 +1,5 @@
 import { isOffered } from "./labels";
-import type { Buyer, Property } from "./types";
+import type { Buyer, MarketListing, Property } from "./types";
 
 /** Buyers may go up to this much over their stated budget. */
 const BUDGET_TOLERANCE = 0.05;
@@ -104,4 +104,30 @@ export function matchBuyerToProperty(buyer: BuyerReq, property: PropertyFacts): 
   }
 
   return { ok: true, score, reasons };
+}
+
+/**
+ * Does this Yad2 pool listing fit the buyer? Same rules as `matchBuyerToProperty`, except that a
+ * pool listing has no engagement/status to check and no balcony/elevator/safe-room data, so those
+ * "must" features are not held against it (the agent checks them on the call).
+ */
+export function matchBuyerToListing(
+  buyer: BuyerReq,
+  listing: Pick<MarketListing, "neighborhood" | "price" | "rooms" | "floor" | "property_type">,
+): Match {
+  return matchBuyerToProperty(
+    { ...buyer, needs_balcony: "any", needs_elevator: "any", needs_safe_room: "any" },
+    {
+      status: "active",
+      engagement: "exclusive",
+      neighborhood: listing.neighborhood,
+      current_price: listing.price,
+      rooms: listing.rooms,
+      floor: listing.floor,
+      property_type: listing.property_type,
+      has_balcony: false,
+      has_elevator: false,
+      has_safe_room: false,
+    },
+  );
 }

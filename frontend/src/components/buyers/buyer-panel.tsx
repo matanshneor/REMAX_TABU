@@ -10,6 +10,7 @@ import { useFormValues } from "@/components/form/use-form-values";
 import { toPayload } from "@/components/form/values";
 import { LockBanner, Panel, SaveFooter } from "@/components/crm/panel";
 import { WhatsAppButton } from "@/components/crm/whatsapp-button";
+import { ListingMatches } from "@/components/matching/listing-matches";
 import { PropertyMatches } from "@/components/matching/property-matches";
 import { LinkedTasks } from "@/components/tasks/linked-tasks";
 import { ReminderButton } from "@/components/tasks/reminder-button";
@@ -214,6 +215,7 @@ export function BuyerPanel({
           )}
           <LinkedTasks buyer={buyer} title="המשימות שלי על הקונה" />
           <PropertyMatches buyer={buyer} />
+          <ListingMatches buyer={buyer} />
           <ViewingsList buyerId={buyer.id} />
           {admin && (
             <DealDialog open={!!dealPrefill} prefill={dealPrefill ?? undefined} onOpenChange={(o) => !o && setDealPrefill(null)} />
