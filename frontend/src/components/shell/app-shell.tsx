@@ -6,7 +6,7 @@ import { SignupApprovalGate } from "@/components/admin/signup-approval-gate";
 import { isAdmin } from "@/lib/permissions";
 import { CircleHelpIcon, MenuIcon } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -89,12 +89,22 @@ function MobileNav() {
   );
 }
 
+/** Morning 5-11, noon 12-16, evening 17-20, night 21-4. */
+function greetingFor(hour: number) {
+  if (hour >= 5 && hour < 12) return "בוקר טוב";
+  if (hour >= 12 && hour < 17) return "צהריים טובים";
+  if (hour >= 17 && hour < 21) return "ערב טוב";
+  return "לילה טוב";
+}
+
 function Greeting({ name }: { name: string }) {
-  const hour = new Date().getHours();
-  const hello = hour < 12 ? "בוקר טוב" : hour < 17 ? "צהריים טובים" : hour < 21 ? "ערב טוב" : "לילה טוב";
+  // Set in the browser only: the server's clock is in another time zone.
+  const [hello, setHello] = useState<string | null>(null);
+  useEffect(() => setHello(greetingFor(new Date().getHours())), []);
   return (
-    <p className="hidden text-sm font-medium text-muted-foreground md:block" suppressHydrationWarning>
-      {hello}, <span className="font-semibold text-foreground">{name.split(" ")[0]}</span>
+    <p className="hidden text-sm font-medium text-muted-foreground md:block">
+      {hello && `${hello}, `}
+      <span className="font-semibold text-foreground">{name.split(" ")[0]}</span>
     </p>
   );
 }
