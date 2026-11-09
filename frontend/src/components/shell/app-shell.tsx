@@ -6,7 +6,7 @@ import { SignupApprovalGate } from "@/components/admin/signup-approval-gate";
 import { isAdmin } from "@/lib/permissions";
 import { CircleHelpIcon, MenuIcon } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -98,9 +98,12 @@ function greetingFor(hour: number) {
 }
 
 function Greeting({ name }: { name: string }) {
-  // Set in the browser only: the server's clock is in another time zone.
-  const [hello, setHello] = useState<string | null>(null);
-  useEffect(() => setHello(greetingFor(new Date().getHours())), []);
+  // Computed in the browser only (the server's clock is in another time zone); nothing is shown until then.
+  const hello = useSyncExternalStore(
+    () => () => {},
+    () => greetingFor(new Date().getHours()),
+    () => null,
+  );
   return (
     <p className="hidden text-sm font-medium text-muted-foreground md:block">
       {hello && `${hello}, `}
