@@ -553,14 +553,6 @@ const COLUMNS: Column[] = [
     ),
   },
   {
-    // Admin only (filtered out for agents)
-    key: "agent",
-    header: "סוכן מגייס",
-    className: (b) => cn("whitespace-nowrap", !isAssigned(b) && "font-medium text-brand-red"),
-    sortValue: (b, { agentName }) => (isAssigned(b) ? agentName(b) : null),
-    cell: (b, { agentName }) => (isAssigned(b) ? agentName(b) : "לא משויך"),
-  },
-  {
     key: "rooms",
     header: "חדרים",
     className: () => "tabular-nums",
@@ -699,6 +691,14 @@ const COLUMNS: Column[] = [
     className: () => "tabular-nums",
     sortValue: (b) => b.equity,
     cell: (b) => formatILSCompact(b.equity),
+  },
+  {
+    // Admin only (filtered out for agents)
+    key: "agent",
+    header: "סוכן מגייס",
+    className: (b) => cn("whitespace-nowrap", !isAssigned(b) && "font-medium text-brand-red"),
+    sortValue: (b, { agentName }) => (isAssigned(b) ? agentName(b) : null),
+    cell: (b, { agentName }) => (isAssigned(b) ? agentName(b) : "לא משויך"),
   },
 ];
 
