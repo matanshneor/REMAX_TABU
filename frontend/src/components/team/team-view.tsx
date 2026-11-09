@@ -8,7 +8,7 @@ import { EmptyState, ErrorState, PageHeader } from "@/components/crm/page-header
 import { Panel, SaveFooter } from "@/components/crm/panel";
 import { Pill } from "@/components/crm/status-badge";
 import { WhatsAppButton } from "@/components/crm/whatsapp-button";
-import { AgentPhoto } from "./agent-photo";
+import { AgentPhoto, NewAgentPhoto } from "./agent-photo";
 import { EntityForm } from "@/components/form/entity-form";
 import type { FormSection } from "@/components/form/types";
 import { useFormValues } from "@/components/form/use-form-values";
@@ -65,6 +65,7 @@ export function TeamView() {
   const admin = isAdmin(profile);
   const [text, setText] = useState("");
   const [creating, setCreating] = useState(false);
+  const [newPhoto, setNewPhoto] = useState<string | null>(null);
   const [editing, setEditing] = useState<OfficeAgent | null>(null);
 
   const list = useTeam();
@@ -150,10 +151,15 @@ export function TeamView() {
         <>
           <CreateDialog<OfficeAgent>
             open={creating}
-            onOpenChange={setCreating}
+            onOpenChange={(open) => {
+              setCreating(open);
+              if (!open) setNewPhoto(null);
+            }}
             title="סוכן חדש ברשימה"
             table="office_agents"
             sections={AGENT_SECTIONS}
+            top={<NewAgentPhoto url={newPhoto} onChange={setNewPhoto} />}
+            extra={{ photo_url: newPhoto }}
           />
           <EditPanel row={editing} onClose={() => setEditing(null)} />
         </>
