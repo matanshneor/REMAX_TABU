@@ -28,8 +28,8 @@ import { useNewParam, usePanelParam } from "@/lib/use-panel-param";
 import { cn } from "@/lib/utils";
 import { BuyerPanel } from "./buyer-panel";
 
-/** Columns shown by default; the rest are in the buyer's card or behind "all columns". */
-const COMPACT_COLUMNS = new Set(["name", "rooms", "area", "budget", "matches", "added", "log", "phone"]);
+/** Columns shown by default (the agent column is the admin's only); the rest are in the buyer's card or behind "all columns". */
+const COMPACT_COLUMNS = new Set(["name", "agent", "rooms", "area", "budget", "matches", "added", "log", "phone"]);
 
 /** An open buyer with no call logged for this long is marked as neglected. */
 const STALE_DAYS = 14;
@@ -553,6 +553,14 @@ const COLUMNS: Column[] = [
     ),
   },
   {
+    // Admin only (filtered out for agents)
+    key: "agent",
+    header: "סוכן מגייס",
+    className: (b) => cn("whitespace-nowrap", !isAssigned(b) && "font-medium text-brand-red"),
+    sortValue: (b, { agentName }) => (isAssigned(b) ? agentName(b) : null),
+    cell: (b, { agentName }) => (isAssigned(b) ? agentName(b) : "לא משויך"),
+  },
+  {
     key: "rooms",
     header: "חדרים",
     className: () => "tabular-nums",
@@ -691,14 +699,6 @@ const COLUMNS: Column[] = [
     className: () => "tabular-nums",
     sortValue: (b) => b.equity,
     cell: (b) => formatILSCompact(b.equity),
-  },
-  {
-    // Admin only (filtered out for agents)
-    key: "agent",
-    header: "סוכן",
-    className: (b) => (isAssigned(b) ? undefined : "font-medium text-brand-red"),
-    sortValue: (b, { agentName }) => (isAssigned(b) ? agentName(b) : null),
-    cell: (b, { agentName }) => (isAssigned(b) ? agentName(b) : "לא משויך"),
   },
 ];
 
