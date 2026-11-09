@@ -95,7 +95,7 @@ function TeamSection() {
           columns={[
             { header: "שם", cell: (m) => <span className="font-medium">{m.name || "—"}</span> },
             { header: "סטטוס", cell: (m) => <ActiveStatus member={m} /> },
-            { header: "תפקיד", cell: (m) => (m.isManager ? <Pill tone="purple">מנהל המשרד</Pill> : (m.listRow?.role ?? "—")) },
+            { header: "תפקיד", cell: (m) => (m.isManager ? <Pill tone="purple">מנהל המשרד</Pill> : <Pill tone="blue">{m.listRow?.role || "סוכן"}</Pill>) },
             { header: "טלפון", cell: (m) => <span dir="ltr">{m.phone || "—"}</span> },
             { header: "אימייל", cell: (m) => <span dir="ltr">{m.email || "—"}</span> },
             { header: "קונים בטיפול", cell: (m) => <WorkCount value={work.data && m.account && (work.data.buyers[m.account.id] ?? 0)} />, className: "text-center" },
