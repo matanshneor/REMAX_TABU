@@ -71,7 +71,7 @@ export function LinkedTasks({
       }
     >
       {tasks.length === 0 ? (
-        <p className="text-sm text-muted-foreground">אין עדיין משימות. לדוגמה: להתקשר, לקבוע פגישה או צפייה.</p>
+        <p className="text-sm text-muted-foreground">אין עדיין משימות</p>
       ) : (
         <ul className="flex flex-col divide-y rounded-lg border">
           {[...open, ...done].map((t) => {

@@ -22,7 +22,7 @@ import { formatRelative } from "@/lib/format";
 import { canEditBuyer, isAdmin } from "@/lib/permissions";
 import type { Buyer } from "@/lib/types";
 import { usePanelParam } from "@/lib/use-panel-param";
-import { ADMIN_CREATE_SECTIONS, BUYER_SECTIONS, NEW_BUYER } from "./buyer-fields";
+import { ADMIN_CREATE_SECTIONS, BUYER_CARD_BOTTOM, BUYER_CARD_TOP, BUYER_SECTIONS, NEW_BUYER } from "./buyer-fields";
 import { BuyerNotes } from "./buyer-notes";
 import { DuplicatePhoneWarning } from "./duplicate-phone-warning";
 
@@ -199,15 +199,12 @@ export function BuyerPanel({
               הקונה משויך ל<strong>{recruiterName(buyer.recruiter_id, buyer.owner_agent_id)}</strong>. רק הסוכן המטפל והמנהל יכולים לערוך את הפרטים.
             </LockBanner>
           )}
-          {/* The call log comes first: logging a call is the most common thing done here. */}
-          <BuyerNotes key={buyer.id} buyerId={buyer.id} onDraftChange={setNoteDraft} focus={focusLog} />
-          <EntityForm
-            sections={BUYER_SECTIONS}
-            values={form.values}
-            onChange={form.set}
-            readOnly={!editable}
-            idPrefix="buyer"
-          />
+          {/* What the buyer wants first, then the call log, then contact details. */}
+          <EntityForm sections={BUYER_CARD_TOP} values={form.values} onChange={form.set} readOnly={!editable} idPrefix="buyer" />
+          <div className="mt-6">
+            <BuyerNotes key={buyer.id} buyerId={buyer.id} onDraftChange={setNoteDraft} focus={focusLog} />
+          </div>
+          <EntityForm sections={BUYER_CARD_BOTTOM} values={form.values} onChange={form.set} readOnly={!editable} idPrefix="buyer" />
           {"phone" in form.changes && (
             <div className="mt-4">
               <DuplicatePhoneWarning phone={String(form.values.phone ?? "")} excludeId={buyer.id} onOpen={setOpenId} />

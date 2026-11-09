@@ -102,12 +102,10 @@ export function BuyerNotes({
               submit();
             }
           }}
-          placeholder="מה היה בשיחה? למשל: דיבר עם הבנק, מחכה לאישור משכנתא עד סוף השבוע"
           rows={2}
           aria-label="רישום שיחה חדשה"
         />
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-xs text-muted-foreground">Ctrl+Enter לשמירה מהירה</span>
+        <div className="flex items-center justify-end gap-2">
           <Button size="sm" onClick={submit} disabled={!text.trim() || add.isPending}>
             {add.isPending ? "שומר…" : "רישום ביומן"}
           </Button>

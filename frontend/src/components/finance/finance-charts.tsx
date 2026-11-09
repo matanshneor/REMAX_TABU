@@ -83,6 +83,9 @@ function TooltipBox({ title, rows }: { title: string; rows: { label: string; val
 
 /** Incomes vs expenses for the last 12 months (grouped bars, one shared ₪ axis). */
 export function MonthlyChart({ data, highlightKey }: { data: MonthPoint[]; highlightKey?: string }) {
+  if (data.every((d) => !d.income && !d.expense)) {
+    return <p className="flex h-64 items-center justify-center text-sm text-muted-foreground">אין נתונים</p>;
+  }
   return (
     <div dir="ltr" className="h-64">
       <ResponsiveContainer width="100%" height="100%">

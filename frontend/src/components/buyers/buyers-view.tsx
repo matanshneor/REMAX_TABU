@@ -474,9 +474,6 @@ export function BuyersView() {
               מציג <strong className="text-foreground tabular-nums">{rows.length}</strong> מתוך{" "}
               <strong className="text-foreground tabular-nums">{buyers.length}</strong> קונים
             </span>
-            <span>
-              {showAll ? "" : "שאר הפרטים בכרטיס הקונה · "}לוחצים על כותרת עמודה כדי למיין
-            </span>
           </div>
         </div>
         </>

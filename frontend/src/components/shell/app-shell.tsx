@@ -94,7 +94,7 @@ function Greeting({ name }: { name: string }) {
   const hello = hour < 12 ? "בוקר טוב" : hour < 17 ? "צהריים טובים" : hour < 21 ? "ערב טוב" : "לילה טוב";
   return (
     <p className="hidden text-sm font-medium text-muted-foreground md:block" suppressHydrationWarning>
-      {hello}, <span className="font-semibold text-foreground">{name.split(" ")[0]}</span> 👋
+      {hello}, <span className="font-semibold text-foreground">{name.split(" ")[0]}</span>
     </p>
   );
 }

@@ -42,7 +42,7 @@ export function EntityForm({
       {sections.map((section, i) => (
         <fieldset key={section.title ?? i} className="flex flex-col gap-3">
           {section.title && (
-            <legend className="mb-1 text-xs font-semibold tracking-wide text-muted-foreground">{section.title}</legend>
+            <legend className="mb-1 text-sm font-bold text-foreground">{section.title}</legend>
           )}
           <div className="grid grid-cols-6 gap-x-3 gap-y-3">
             {section.fields

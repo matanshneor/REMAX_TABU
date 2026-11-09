@@ -78,7 +78,6 @@ function usePasteImages(onImages: (files: File[]) => void, enabled = true) {
   }, [enabled]);
 }
 
-const PASTE_HINT = "אפשר גם להעתיק תמונה ולהדביק כאן";
 
 /**
  * Shrinks and uploads photos into a folder of the property photos bucket (a property's id, or
@@ -203,7 +202,6 @@ export function PropertyImages({
         )}
           {fileInput}
         </div>
-        {editable && <p className="mt-1.5 text-xs text-muted-foreground">{PASTE_HINT}</p>}
       </div>
     );
   }
@@ -256,11 +254,6 @@ export function PropertyImages({
           )}
         </DragOverlay>
       </DndContext>
-      <p className="mt-1.5 text-xs text-muted-foreground">
-        {order.length > 1 &&
-          "גוררים תמונה כדי לשנות את הסדר (בטלפון: לוחצים עליה ממושך). התמונה הראשונה היא התמונה הראשית של הנכס. "}
-        {PASTE_HINT}
-      </p>
     </div>
   );
 }
@@ -363,7 +356,6 @@ export function PendingImages({ files, onChange }: { files: File[]; onChange: (f
         </Button>
           {fileInput}
         </div>
-        <p className="mt-1.5 text-xs text-muted-foreground">{PASTE_HINT}</p>
       </div>
     );
   }
