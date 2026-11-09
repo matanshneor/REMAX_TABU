@@ -1,12 +1,12 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { BanIcon, CheckIcon, MessageCircleIcon, MoreHorizontalIcon, UserCheckIcon, UsersIcon, XIcon } from "lucide-react";
+import { BanIcon, CheckIcon, MessageCircleIcon, MoreHorizontalIcon, PlusIcon, UserCheckIcon, UsersIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth-provider";
 import { EmptyState, ErrorState, PageHeader, SectionHeader } from "@/components/crm/page-header";
-import { StatusBadge } from "@/components/crm/status-badge";
+import { Pill } from "@/components/crm/status-badge";
 import { WhatsAppButton } from "@/components/crm/whatsapp-button";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,14 +18,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { errorMessage, useAllProfiles } from "@/lib/data";
-import { formatDate, formatRelative } from "@/lib/format";
-import { ACCOUNT_STATUS, ACTIVE_BUYER_STATUSES, USER_ROLE } from "@/lib/labels";
+import { errorMessage, useAllProfiles, useSaveRecord } from "@/lib/data";
+import { formatRelative } from "@/lib/format";
+import { ACTIVE_BUYER_STATUSES } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/client";
-import type { Enum, Profile } from "@/lib/types";
+import { inactiveReason, type Member, useTeamMembers } from "@/lib/team-members";
+import type { Enum, OfficeAgent, Profile } from "@/lib/types";
 import { openWhatsApp } from "@/lib/whatsapp";
 import { CandidatesSection } from "./candidates-view";
-import { TeamListSection } from "./team-list-section";
+import { AgentEditPanel, NewAgentDialog } from "./team-list-section";
 import { SimpleTable } from "./simple-table";
 
 /**
@@ -33,13 +34,8 @@ import { SimpleTable } from "./simple-table";
  * for approval (only when there are any), then the office's agents.
  */
 export function AgentsView() {
-  const { data: all = [], isLoading, error } = useAllProfiles();
-  const work = useAgentWork();
+  const { data: all = [] } = useAllProfiles();
   const pending = all.filter((p) => p.status === "pending");
-  // Active first; blocked accounts stay listed so they can be let back in.
-  const team = all
-    .filter((p) => p.status !== "pending")
-    .sort((a, b) => Number(a.status !== "active") - Number(b.status !== "active") || a.full_name.localeCompare(b.full_name, "he"));
 
   return (
     <>
@@ -58,42 +54,92 @@ export function AgentsView() {
         </section>
       )}
 
-      <TeamListSection />
-
-      <section>
-        <SectionHeader
-          icon={<UsersIcon />}
-          title="סוכני המשרד"
-          count={team.filter((p) => p.status === "active").length}
-          description="כל מי שיש לו גישה למערכת"
-        />
-        {error ? (
-          <ErrorState error={error} />
-        ) : isLoading ? (
-          <Skeleton className="h-64 w-full rounded-xl" />
-        ) : team.length === 0 ? (
-          <EmptyState icon={<UsersIcon />} title="אין עדיין סוכנים" />
-        ) : (
-          <SimpleTable
-            rows={team}
-            onRowClick={() => {}}
-            columns={[
-              { header: "שם", cell: (p) => p.full_name || "—" },
-              { header: "טלפון", cell: (p) => <span dir="ltr">{p.phone || "—"}</span> },
-              { header: "אימייל", cell: (p) => <span dir="ltr">{p.email}</span> },
-              { header: "תפקיד", cell: (p) => <StatusBadge map={USER_ROLE} value={p.role} /> },
-              { header: "הצטרפות", cell: (p) => formatDate(p.join_date) },
-              // Each number in its own column, so they can be read at a glance.
-              { header: "קונים בטיפול", cell: (p) => <WorkCount value={work.data && (work.data.buyers[p.id] ?? 0)} />, className: "text-center" },
-              { header: "נכסים פעילים", cell: (p) => <WorkCount value={work.data && (work.data.properties[p.id] ?? 0)} />, className: "text-center" },
-              { header: "עסקאות השנה", cell: (p) => <WorkCount value={work.data && (work.data.deals[p.id] ?? 0)} />, className: "text-center" },
-              { header: "סטטוס", cell: (p) => <StatusBadge map={ACCOUNT_STATUS} value={p.status} /> },
-              { header: "", cell: (p) => <StatusAction profile={p} />, className: "w-0 text-end" },
-            ]}
-          />
-        )}
-      </section>
+      <TeamSection />
     </>
+  );
+}
+
+/**
+ * The one team list (also shown, read-only, on "צוות המשרד" and used by the ad tool):
+ * manager first, each person marked active or not. Add, edit and remove happen here.
+ */
+function TeamSection() {
+  const { members, error, isLoading } = useTeamMembers({ withBlocked: true });
+  const work = useAgentWork();
+  const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState<OfficeAgent | null>(null);
+
+  return (
+    <section>
+      <SectionHeader
+        icon={<UsersIcon />}
+        title="סוכני המשרד"
+        count={members.filter((m) => m.active).length}
+        description="אותה רשימה שמופיעה ב״צוות המשרד״ ובכלי המודעות. לחיצה על שורה פותחת עריכה"
+        actions={
+          <Button onClick={() => setCreating(true)}>
+            <PlusIcon />
+            הוספת סוכן
+          </Button>
+        }
+      />
+      {error ? (
+        <ErrorState error={error} />
+      ) : isLoading ? (
+        <Skeleton className="h-64 w-full rounded-xl" />
+      ) : members.length === 0 ? (
+        <EmptyState icon={<UsersIcon />} title="אין עדיין סוכנים" hint="לוחצים על ״הוספת סוכן״ כדי להתחיל." />
+      ) : (
+        <SimpleTable
+          rows={members}
+          onRowClick={(m) => m.listRow && setEditing(m.listRow)}
+          columns={[
+            { header: "שם", cell: (m) => <span className="font-medium">{m.name || "—"}</span> },
+            { header: "סטטוס", cell: (m) => <ActiveStatus member={m} /> },
+            { header: "תפקיד", cell: (m) => (m.isManager ? <Pill tone="purple">מנהל המשרד</Pill> : (m.listRow?.role ?? "—")) },
+            { header: "טלפון", cell: (m) => <span dir="ltr">{m.phone || "—"}</span> },
+            { header: "אימייל", cell: (m) => <span dir="ltr">{m.email || "—"}</span> },
+            { header: "קונים בטיפול", cell: (m) => <WorkCount value={work.data && m.account && (work.data.buyers[m.account.id] ?? 0)} />, className: "text-center" },
+            { header: "נכסים פעילים", cell: (m) => <WorkCount value={work.data && m.account && (work.data.properties[m.account.id] ?? 0)} />, className: "text-center" },
+            { header: "עסקאות השנה", cell: (m) => <WorkCount value={work.data && m.account && (work.data.deals[m.account.id] ?? 0)} />, className: "text-center" },
+            { header: "", cell: (m) => <MemberAction member={m} />, className: "w-0 text-end" },
+          ]}
+        />
+      )}
+
+      <NewAgentDialog open={creating} onOpenChange={setCreating} />
+      <AgentEditPanel row={editing} onClose={() => setEditing(null)} />
+    </section>
+  );
+}
+
+function ActiveStatus({ member: m }: { member: Member }) {
+  if (m.active) return <Pill tone="green">פעיל</Pill>;
+  return (
+    <span className="flex flex-col items-start gap-0.5">
+      <Pill tone="gray">לא פעיל</Pill>
+      <span className="text-xs text-muted-foreground">{inactiveReason(m)}</span>
+    </span>
+  );
+}
+
+/** Account actions (block / approve) for people with an account; "add to list" for accounts that aren't on the list yet. */
+function MemberAction({ member: m }: { member: Member }) {
+  const add = useSaveRecord("office_agents");
+  return (
+    <span className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+      {!m.listRow && m.account && (
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={add.isPending}
+          onClick={() => add.mutate({ values: { full_name: m.name, phone: m.phone, email: m.email } })}
+        >
+          הוספה לרשימה
+        </Button>
+      )}
+      {m.account && <StatusAction profile={m.account} />}
+    </span>
   );
 }
 
@@ -130,7 +176,8 @@ function PendingCard({ profile }: { profile: Profile }) {
   );
 }
 
-function WorkCount({ value }: { value: number | undefined }) {
+function WorkCount({ value }: { value: number | null | undefined }) {
+  if (value === null) return <span className="text-muted-foreground">—</span>;
   if (value === undefined) return <span className="text-muted-foreground">…</span>;
   return <span className={value ? "font-semibold tabular-nums" : "text-muted-foreground tabular-nums"}>{value}</span>;
 }

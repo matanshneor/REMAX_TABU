@@ -1,19 +1,14 @@
 "use client";
 
-import { ClipboardListIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { CreateDialog } from "@/components/crm/create-dialog";
-import { EmptyState, ErrorState, SectionHeader } from "@/components/crm/page-header";
 import { Panel, SaveFooter } from "@/components/crm/panel";
 import { EntityForm } from "@/components/form/entity-form";
 import type { FormSection } from "@/components/form/types";
 import { useFormValues } from "@/components/form/use-form-values";
 import { AgentPhoto, NewAgentPhoto } from "@/components/team/agent-photo";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useDeleteRecord, useSaveRecord, useTeam } from "@/lib/data";
+import { useDeleteRecord, useSaveRecord } from "@/lib/data";
 import type { OfficeAgent } from "@/lib/types";
-import { SimpleTable } from "./simple-table";
 
 /** As printed on the ad (gendered, so chosen rather than guessed). */
 const ROLE_OPTIONS = ["סוכן נדל\"ן", "סוכנת נדל\"ן", "זכיין", "זכיינית"].map((r) => ({ value: r, label: r }));
@@ -35,69 +30,26 @@ const AGENT_SECTIONS: FormSection[] = [
   },
 ];
 
-/**
- * The list behind "צוות המשרד" and the ad tool. Adding, editing and removing people
- * happens only here (admin only); the team page itself is read-only for everyone.
- */
-export function TeamListSection() {
-  const list = useTeam();
-  const [creating, setCreating] = useState(false);
-  const [newPhoto, setNewPhoto] = useState<string | null>(null);
-  const [editing, setEditing] = useState<OfficeAgent | null>(null);
-  const rows = list.data ?? [];
-
+/** Dialog for adding a person to the office list (admin only). */
+export function NewAgentDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const [photo, setPhoto] = useState<string | null>(null);
   return (
-    <section className="mb-10">
-      <SectionHeader
-        icon={<ClipboardListIcon />}
-        title="רשימת צוות המשרד"
-        count={rows.length}
-        description="מה שמופיע בדף ״צוות המשרד״ ובכלי המודעות. הוספה, עריכה והסרה — רק כאן"
-        actions={
-          <Button onClick={() => setCreating(true)}>
-            <PlusIcon />
-            הוספת סוכן
-          </Button>
-        }
-      />
-      {list.error ? (
-        <ErrorState error={list.error} />
-      ) : list.isLoading ? (
-        <Skeleton className="h-40 w-full rounded-xl" />
-      ) : rows.length === 0 ? (
-        <EmptyState icon={<ClipboardListIcon />} title="הרשימה עדיין ריקה" hint="לוחצים על ״הוספת סוכן״ כדי להתחיל." />
-      ) : (
-        <SimpleTable
-          rows={rows}
-          onRowClick={(row) => setEditing(row)}
-          columns={[
-            { header: "שם", cell: (r) => r.full_name },
-            { header: "תפקיד במודעה", cell: (r) => r.role || "—" },
-            { header: "רישיון", cell: (r) => <span dir="ltr">{r.license || "—"}</span> },
-            { header: "טלפון", cell: (r) => <span dir="ltr">{r.phone || "—"}</span> },
-            { header: "תמונה", cell: (r) => (r.photo_url ? "יש" : <span className="text-muted-foreground">אין</span>) },
-          ]}
-        />
-      )}
-
-      <CreateDialog<OfficeAgent>
-        open={creating}
-        onOpenChange={(open) => {
-          setCreating(open);
-          if (!open) setNewPhoto(null);
-        }}
-        title="סוכן חדש ברשימה"
-        table="office_agents"
-        sections={AGENT_SECTIONS}
-        top={<NewAgentPhoto url={newPhoto} onChange={setNewPhoto} />}
-        extra={{ photo_url: newPhoto }}
-      />
-      <EditPanel row={editing} onClose={() => setEditing(null)} />
-    </section>
+    <CreateDialog<OfficeAgent>
+      open={open}
+      onOpenChange={(o) => {
+        onOpenChange(o);
+        if (!o) setPhoto(null);
+      }}
+      title="סוכן חדש"
+      table="office_agents"
+      sections={AGENT_SECTIONS}
+      top={<NewAgentPhoto url={photo} onChange={setPhoto} />}
+      extra={{ photo_url: photo }}
+    />
   );
 }
 
-function EditPanel({ row, onClose }: { row: OfficeAgent | null; onClose: () => void }) {
+export function AgentEditPanel({ row, onClose }: { row: OfficeAgent | null; onClose: () => void }) {
   const form = useFormValues(AGENT_SECTIONS, row, `${row?.id}:${row?.updated_at}`);
   const save = useSaveRecord("office_agents");
   const remove = useDeleteRecord("office_agents");
@@ -107,7 +59,7 @@ function EditPanel({ row, onClose }: { row: OfficeAgent | null; onClose: () => v
       open={!!row}
       onClose={onClose}
       title={row?.full_name}
-      subtitle="פרטים ברשימת צוות המשרד"
+      subtitle="פרטי הסוכן — מופיעים גם בכלי המודעות"
       footer={
         row && (
           <SaveFooter
