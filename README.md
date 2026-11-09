@@ -127,7 +127,7 @@ The ad-making tool is a single static page inside this project: `frontend/public
 
 The agents on the ads come from the CRM's team list (**צוות המשרד**), through `GET /api/ad-agents` (the database function `ad_tool_agents()`). It returns only what every ad already prints: name, role, license, phone and photo. Adding, editing and removing agents is done only by the admin, on the **ניהול סוכנים** page (section "סוכני המשרד", the same list the team page shows, manager first, each person marked active or not); the **צוות המשרד** page is read-only for everyone. A change there shows in the ad tool too; there is no separate agents file.
 
-Each team-list row has a `role` (as printed on the ad, e.g. סוכנת נדל"ן), a `license` number and a `photo_url`. Photos are cut-out portraits (transparent background, 800×800). The original nine are in `frontend/public/ad-tool/images/`.
+Each team-list row has a `gender` (chosen by the agent at sign-up, required, and fixable by the admin), a `license` number and a `photo_url`. The title printed on the ad (סוכן / סוכנת נדל"ן) follows from the gender; until an agent has one, the old stored `role` is used. Photos are cut-out portraits (transparent background, 800×800). The original nine are in `frontend/public/ad-tool/images/`.
 
 ## 6. Phone calendar
 

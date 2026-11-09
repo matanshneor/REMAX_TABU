@@ -10,7 +10,7 @@ import type { OfficeAgent, Profile, TableName } from "./types";
 export { errorMessage };
 
 /** Every profile column except commission_split, which only agent_commission_rates() returns. */
-export const PROFILE_COLUMNS = "id, full_name, phone, email, role, join_date, created_at, updated_at, status";
+export const PROFILE_COLUMNS = "id, full_name, phone, email, role, join_date, created_at, updated_at, status, gender";
 
 /** Saving a team row can hand buyers and sellers to the linked agent: refresh those lists too. */
 const ALSO_REFRESH: Partial<Record<TableName, TableName[]>> = { office_agents: ["buyers", "properties"] };

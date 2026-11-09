@@ -7,11 +7,9 @@ import { EntityForm } from "@/components/form/entity-form";
 import type { FormSection } from "@/components/form/types";
 import { useFormValues } from "@/components/form/use-form-values";
 import { AgentPhoto, NewAgentPhoto } from "@/components/team/agent-photo";
+import { GENDER_OPTIONS } from "@/lib/gender";
 import { useDeleteRecord, useSaveRecord } from "@/lib/data";
 import type { OfficeAgent } from "@/lib/types";
-
-/** As printed on the ad (gendered, so chosen rather than guessed). */
-const ROLE_OPTIONS = ["סוכן נדל\"ן", "סוכנת נדל\"ן", "זכיין", "זכיינית"].map((r) => ({ value: r, label: r }));
 
 const AGENT_SECTIONS: FormSection[] = [
   {
@@ -24,7 +22,7 @@ const AGENT_SECTIONS: FormSection[] = [
   {
     title: "פרטים למודעות",
     fields: [
-      { name: "role", label: "תפקיד במודעה", type: "select", options: ROLE_OPTIONS },
+      { name: "gender", label: "מין", type: "select", options: GENDER_OPTIONS, required: true },
       { name: "license", label: "מספר רישיון מתווך", type: "text" },
     ],
   },

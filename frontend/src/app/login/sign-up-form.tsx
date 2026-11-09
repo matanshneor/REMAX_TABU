@@ -6,7 +6,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
 import { authErrorMessage } from "@/lib/auth-errors";
+import { GENDER_OPTIONS } from "@/lib/gender";
 import { createClient } from "@/lib/supabase/client";
 
 const MIN_PASSWORD = 8;
@@ -16,6 +18,7 @@ export function SignUpForm() {
   const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
+  const [gender, setGender] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -28,6 +31,7 @@ export function SignUpForm() {
     setError(null);
     if (fullName.trim().split(/\s+/).length < 2) return setError("נא למלא שם פרטי ושם משפחה");
     if (phone.replace(/\D/g, "").length < 9) return setError("מספר הטלפון אינו תקין");
+    if (!gender) return setError("נא לבחור מין");
     if (password.length < MIN_PASSWORD) return setError(`הסיסמה צריכה להכיל לפחות ${MIN_PASSWORD} תווים`);
     if (password !== confirm) return setError("הסיסמאות אינן תואמות");
 
@@ -36,7 +40,7 @@ export function SignUpForm() {
       email: email.trim(),
       password,
       options: {
-        data: { full_name: fullName.trim(), phone: phone.trim() },
+        data: { full_name: fullName.trim(), phone: phone.trim(), gender },
         emailRedirectTo: `${window.location.origin}/buyers`,
       },
     });
@@ -72,6 +76,19 @@ export function SignUpForm() {
           <Label htmlFor="su-phone">טלפון נייד</Label>
           <Input id="su-phone" type="tel" dir="ltr" className="h-10 text-end" autoComplete="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} />
         </div>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="su-gender">מין</Label>
+        <NativeSelect className="[&_select]:h-10" id="su-gender" required value={gender} onChange={(e) => setGender(e.target.value)}>
+          <option value="" disabled>
+            בחירה
+          </option>
+          {GENDER_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </NativeSelect>
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="su-email">אימייל</Label>

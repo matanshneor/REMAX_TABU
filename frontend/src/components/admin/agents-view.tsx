@@ -22,6 +22,7 @@ import { errorMessage, useAllProfiles, useSaveRecord } from "@/lib/data";
 import { formatRelative } from "@/lib/format";
 import { ACTIVE_BUYER_STATUSES } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/client";
+import { agentTitle } from "@/lib/gender";
 import { inactiveReason, type Member, useTeamMembers } from "@/lib/team-members";
 import type { Enum, OfficeAgent, Profile } from "@/lib/types";
 import { openWhatsApp } from "@/lib/whatsapp";
@@ -95,7 +96,7 @@ function TeamSection() {
           columns={[
             { header: "שם", cell: (m) => <span className="font-medium">{m.name || "—"}</span> },
             { header: "סטטוס", cell: (m) => <ActiveStatus member={m} /> },
-            { header: "תפקיד", cell: (m) => (m.isManager ? <Pill tone="purple">מנהל המשרד</Pill> : <Pill tone="blue">{m.listRow?.role || "סוכן"}</Pill>) },
+            { header: "תפקיד", cell: (m) => (m.isManager ? <Pill tone="purple">מנהל המשרד</Pill> : <Pill tone="blue">{agentTitle(m.listRow?.gender ?? m.account?.gender, m.listRow?.role)}</Pill>) },
             { header: "טלפון", cell: (m) => <span dir="ltr">{m.phone || "—"}</span> },
             { header: "אימייל", cell: (m) => <span dir="ltr">{m.email || "—"}</span> },
             { header: "קונים בטיפול", cell: (m) => <WorkCount value={work.data && m.account && (work.data.buyers[m.account.id] ?? 0)} />, className: "text-center" },
@@ -132,7 +133,7 @@ function MemberAction({ member: m }: { member: Member }) {
           size="sm"
           variant="outline"
           disabled={add.isPending}
-          onClick={() => add.mutate({ values: { full_name: m.name, phone: m.phone, email: m.email } })}
+          onClick={() => add.mutate({ values: { full_name: m.name, phone: m.phone, email: m.email, gender: m.account?.gender } })}
         >
           הוספה לרשימה
         </Button>
