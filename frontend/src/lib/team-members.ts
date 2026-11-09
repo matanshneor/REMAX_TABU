@@ -16,7 +16,7 @@ export type Member = {
 };
 
 /**
- * The one team list: the office list merged with the accounts, manager first, then by name.
+ * The one team list: the office list merged with the accounts, manager first, then active people, then by name.
  * `withBlocked` also keeps blocked accounts that aren't on the list (the admin screen needs
  * them to let people back in); the read-only team page leaves them out.
  */
@@ -56,7 +56,7 @@ export function useTeamMembers({ withBlocked = false } = {}) {
         active: p.status === "active",
       });
     }
-    return out.sort((a, b) => Number(b.isManager) - Number(a.isManager) || a.name.localeCompare(b.name, "he"));
+    return out.sort((a, b) => Number(b.isManager) - Number(a.isManager) || Number(b.active) - Number(a.active) || a.name.localeCompare(b.name, "he"));
   }, [list.data, accounts.data, withBlocked]);
 
   return {
