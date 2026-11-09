@@ -153,6 +153,7 @@ export function SaveFooter({
   onReset,
   onDelete,
   deleteLabel = "מחק",
+  deleteDescription,
   disabled,
 }: {
   dirty: boolean;
@@ -161,6 +162,8 @@ export function SaveFooter({
   onReset: () => void;
   onDelete?: () => void;
   deleteLabel?: string;
+  /** Replaces the default line in the delete confirmation, e.g. to list what else is deleted. */
+  deleteDescription?: string;
   disabled?: boolean;
 }) {
   return (
@@ -172,12 +175,12 @@ export function SaveFooter({
         ביטול
       </Button>
       {dirty && <span className="text-xs text-muted-foreground">יש שינויים שלא נשמרו</span>}
-      {onDelete && <ConfirmDelete onConfirm={onDelete} label={deleteLabel} />}
+      {onDelete && <ConfirmDelete onConfirm={onDelete} label={deleteLabel} description={deleteDescription} />}
     </>
   );
 }
 
-export function ConfirmDelete({ onConfirm, label = "מחיקה" }: { onConfirm: () => void; label?: string }) {
+export function ConfirmDelete({ onConfirm, label = "מחיקה", description }: { onConfirm: () => void; label?: string; description?: string }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -189,7 +192,7 @@ export function ConfirmDelete({ onConfirm, label = "מחיקה" }: { onConfirm: 
         <DialogContent>
           <DialogHeader>
             <DialogTitle>למחוק לצמיתות?</DialogTitle>
-            <DialogDescription>אי אפשר לשחזר את הרשומה אחרי המחיקה.</DialogDescription>
+            <DialogDescription>{description ?? "אי אפשר לשחזר את הרשומה אחרי המחיקה."}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>

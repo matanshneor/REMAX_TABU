@@ -55,7 +55,7 @@ function PhotoBox({
   // Start fetching the background-removal model while the admin picks the file.
   useEffect(() => warmUpCutOut(), []);
   return (
-    <div className="mb-5 flex items-center gap-4 rounded-xl border bg-card p-3">
+    <div className="mt-4 flex items-center gap-4 rounded-xl border bg-card p-3">
       <span className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-secondary">
         {url ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -65,10 +65,7 @@ function PhotoBox({
         )}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium">תמונה למודעות</p>
-        <p className="mb-2 text-xs text-muted-foreground">
-          כל תמונה רגילה של הסוכן (JPG, PNG או WebP), עדיף עם הפנים והכתפיים ברורים. הרקע מוסר אוטומטית, וזה לוקח כמה שניות. התמונה מודפסת בכל מודעה של הסוכן.
-        </p>
+        <p className="mb-2 text-sm font-medium">תמונה למודעות</p>
         <div className="flex flex-wrap gap-2">
           <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => input.current?.click()}>
             <UploadIcon />

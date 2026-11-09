@@ -44,7 +44,7 @@ export function NewAgentDialog({ open, onOpenChange }: { open: boolean; onOpenCh
       title="סוכן חדש"
       table="office_agents"
       sections={AGENT_SECTIONS}
-      top={<NewAgentPhoto url={photo} onChange={setPhoto} />}
+      bottom={<NewAgentPhoto url={photo} onChange={setPhoto} />}
       extra={{ photo_url: photo }}
     />
   );
@@ -71,7 +71,6 @@ export function AgentEditPanel({ row, onClose }: { row: OfficeAgent | null; onCl
       open={!!row}
       onClose={onClose}
       title={row?.full_name}
-      subtitle="פרטי הסוכן — מופיעים גם בכלי המודעות"
       footer={
         row && (
           <SaveFooter
@@ -81,17 +80,15 @@ export function AgentEditPanel({ row, onClose }: { row: OfficeAgent | null; onCl
             onReset={form.reset}
             onDelete={() => removeAgent(row.id)}
             deleteLabel="מחיקת סוכן"
+            deleteDescription="החשבון של הסוכן נמחק והוא לא יוכל להיכנס. הקונים והמוכרים שלו עוברים אליך, המשימות האישיות שלו נמחקות, והעסקאות הסגורות נשארות ומסומנות ״סוכן עבר״. אי אפשר לבטל."
           />
         )
       }
     >
       {row && (
         <>
-          <AgentPhoto row={row} />
           <EntityForm sections={AGENT_SECTIONS} values={form.values} onChange={form.set} idPrefix="team" />
-          <p className="mt-4 text-sm text-muted-foreground">
-            מחיקת הסוכן מוחקת גם את החשבון שלו במערכת, והוא לא יוכל להיכנס. הקונים והמוכרים שלו עוברים אליך, המשימות האישיות שלו נמחקות, והעסקאות הסגורות נשארות ומסומנות ״סוכן עבר״. אי אפשר לבטל.
-          </p>
+          <AgentPhoto row={row} />
         </>
       )}
     </Panel>
