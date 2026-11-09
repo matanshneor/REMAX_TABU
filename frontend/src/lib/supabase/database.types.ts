@@ -630,8 +630,11 @@ export type Database = {
           email: string | null
           full_name: string
           id: string
+          license: string | null
           phone: string | null
+          photo_url: string | null
           profile_id: string | null
+          role: string | null
           updated_at: string
         }
         Insert: {
@@ -639,8 +642,11 @@ export type Database = {
           email?: string | null
           full_name: string
           id?: string
+          license?: string | null
           phone?: string | null
+          photo_url?: string | null
           profile_id?: string | null
+          role?: string | null
           updated_at?: string
         }
         Update: {
@@ -648,8 +654,11 @@ export type Database = {
           email?: string | null
           full_name?: string
           id?: string
+          license?: string | null
           phone?: string | null
+          photo_url?: string | null
           profile_id?: string | null
+          role?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -971,6 +980,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ad_tool_agents: {
+        Args: never
+        Returns: {
+          license: string
+          name: string
+          phone: string
+          photo_url: string
+          role: string
+        }[]
+      }
       agent_commission_rates: {
         Args: never
         Returns: {

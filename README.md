@@ -4,7 +4,7 @@ An internal system for managing sellers (properties), buyers, tasks, deals, fina
 
 | Folder | What's in it |
 |---|---|
-| `frontend/` | The website: Next.js 16, Tailwind, shadcn/ui |
+| `frontend/` | The website: Next.js 16, Tailwind, shadcn/ui. Also holds the ad tool (`frontend/public/ad-tool/`) |
 | `backend/` | Server: FastAPI (data export for the admin, daily notifications job) |
 | `supabase/` | Database: tables, permissions (RLS), file storage, permission tests, and the `yad2-email-intake` edge function |
 | `docs/` | Brand guidelines and the Gmail script (`yad2-gmail-script.gs`) |
@@ -121,7 +121,15 @@ Setup:
    ```
 3. In `remaxtabu@gmail.com`, open [script.google.com](https://script.google.com), create a project, paste `docs/yad2-gmail-script.gs`, put the secret key in `CRM_KEY`, choose the `install` function and click Run (once only).
 
-## 5. Phone calendar
+## 5. Ad tool
+
+The ad-making tool is a single static page inside this project: `frontend/public/ad-tool/index.html`, served at `/ad-tool` on the same site. It is open without signing in (the CRM itself still requires it). The **יצירת מודעה** button on a seller opens it with the property already filled in.
+
+The agents on the ads come from the CRM's team list (**צוות המשרד**), through `GET /api/ad-agents` (the database function `ad_tool_agents()`). It returns only what every ad already prints: name, role, license, phone and photo. So adding or removing an agent in the team list changes the ad tool too; there is no separate agents file.
+
+Each team-list row has a `role` (as printed on the ad, e.g. סוכנת נדל"ן), a `license` number and a `photo_url`. Photos are cut-out portraits (transparent background, 800×800). The original nine are in `frontend/public/ad-tool/images/`.
+
+## 6. Phone calendar
 
 Each user can subscribe their phone calendar to their own open tasks, from the **משימות** (Tasks) page. The link holds a personal secret token. Creating a new link turns off the old one. The feed is served by `frontend/src/app/api/calendar/[token]`.
 
