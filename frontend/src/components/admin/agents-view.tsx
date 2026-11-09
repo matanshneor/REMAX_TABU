@@ -75,7 +75,6 @@ function TeamSection() {
         icon={<UsersIcon />}
         title="סוכני המשרד"
         count={members.filter((m) => m.active).length}
-        description="אותה רשימה שמופיעה ב״צוות המשרד״ ובכלי המודעות. לחיצה על שורה פותחת עריכה"
         actions={
           <Button onClick={() => setCreating(true)}>
             <PlusIcon />
