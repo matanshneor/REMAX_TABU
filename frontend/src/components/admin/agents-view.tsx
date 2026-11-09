@@ -25,6 +25,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { Enum, Profile } from "@/lib/types";
 import { openWhatsApp } from "@/lib/whatsapp";
 import { CandidatesSection } from "./candidates-view";
+import { TeamListSection } from "./team-list-section";
 import { SimpleTable } from "./simple-table";
 
 /**
@@ -56,6 +57,8 @@ export function AgentsView() {
           </ul>
         </section>
       )}
+
+      <TeamListSection />
 
       <section>
         <SectionHeader
