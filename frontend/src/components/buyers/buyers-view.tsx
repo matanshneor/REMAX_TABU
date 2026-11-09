@@ -603,23 +603,6 @@ const COLUMNS: Column[] = [
     cell: (b) => formatDate(b.created_at),
   },
   {
-    key: "log",
-    header: "",
-    cell: (b, { onLog }) => (
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          onLog?.(b.id);
-        }}
-        className="inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-lg border border-dashed border-primary/40 bg-secondary/40 px-2.5 text-xs font-medium text-primary transition-colors hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        <PlusIcon className="size-3.5" />
-        רישום שיחה
-      </button>
-    ),
-  },
-  {
     key: "phone",
     header: "טלפון",
     className: () => "text-muted-foreground",
@@ -642,6 +625,23 @@ const COLUMNS: Column[] = [
         )}
         <WhatsAppButton phone={b.phone} size="icon-sm" solid label={`וואטסאפ ל${b.full_name}`} />
       </div>
+    ),
+  },
+  {
+    key: "log",
+    header: "",
+    cell: (b, { onLog }) => (
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onLog?.(b.id);
+        }}
+        className="inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-lg border border-dashed border-primary/40 bg-secondary/40 px-2.5 text-xs font-medium text-primary transition-colors hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <PlusIcon className="size-3.5" />
+        רישום שיחה
+      </button>
     ),
   },
   {
