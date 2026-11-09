@@ -23,7 +23,7 @@ export function WhatsAppButton({
   phone: string | null | undefined;
   text?: string;
   label?: string;
-  size?: "sm" | "icon-sm";
+  size?: "sm" | "icon-sm" | "icon-lg";
   /** Filled WhatsApp-green square (used in dense tables). */
   solid?: boolean;
 }) {
@@ -43,7 +43,7 @@ export function WhatsAppButton({
       render={<a href={whatsappUrl(phone, text)!} target="_blank" rel="noopener" onClick={(e) => e.stopPropagation()} />}
     >
       <WhatsAppIcon />
-      {size !== "icon-sm" && label}
+      {!size.startsWith("icon") && label}
     </Button>
   );
 }

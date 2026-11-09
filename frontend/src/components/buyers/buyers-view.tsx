@@ -380,21 +380,26 @@ export function BuyersView() {
                     </span>
                   )}
                 </button>
-                <div className="mt-3 grid grid-cols-3 gap-2">
+                <div className="mt-3 flex items-center gap-2">
                   {b.phone ? (
                     <>
-                      <WhatsAppButton phone={b.phone} solid label="וואטסאפ" />
-                      <Button variant="outline" render={<a href={`tel:${b.phone}`} />} nativeButton={false}>
+                      <WhatsAppButton phone={b.phone} size="icon-lg" solid label={`וואטסאפ ל${b.full_name}`} />
+                      <Button
+                        variant="outline"
+                        size="icon-lg"
+                        render={<a href={`tel:${b.phone}`} />}
+                        nativeButton={false}
+                        aria-label={`חיוג ל${b.full_name}`}
+                        title="חיוג"
+                      >
                         <PhoneIcon />
-                        חיוג
                       </Button>
                     </>
                   ) : (
-                    <span className="col-span-2 self-center text-sm text-muted-foreground">אין טלפון</span>
+                    <span className="text-sm text-muted-foreground">אין טלפון</span>
                   )}
-                  <Button variant="outline" className="border-dashed border-primary/40 bg-secondary/40 text-primary" onClick={() => onLog(b.id)}>
-                    <PlusIcon />
-                    שיחה
+                  <Button variant="outline" size="icon-lg" onClick={() => onLog(b.id)} aria-label={`רישום שיחה עם ${b.full_name}`} title="רישום שיחה">
+                    <NotebookPenIcon />
                   </Button>
                 </div>
               </li>
