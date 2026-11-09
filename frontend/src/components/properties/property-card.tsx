@@ -6,6 +6,7 @@ import { formatAddress, formatILS } from "@/lib/format";
 import { PROPERTY_ENGAGEMENT, PROPERTY_STATUS } from "@/lib/labels";
 import type { Property } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { PropertyPlaceholder } from "./property-placeholder";
 import { Money } from "@/components/crm/money";
 import { ExclusivityPill } from "./exclusivity-pill";
 
@@ -66,6 +67,8 @@ export function PropertyCard({
       <div className="pointer-events-none relative flex flex-1 flex-col">
       {hasImages ? (
         <div className="relative aspect-[16/10] bg-muted">
+          {/* Shows until the photo has loaded. */}
+          <PropertyPlaceholder label="" className="absolute inset-0" />
           {imageUrl && (
             // Absolute: a portrait photo can't stretch the frame taller than 16:10.
             // eslint-disable-next-line @next/next/no-img-element
@@ -107,7 +110,8 @@ export function PropertyCard({
         <div>
           <p className="truncate font-medium">{formatAddress(p)}</p>
           <p className="truncate text-sm text-muted-foreground">
-            {[p.neighborhood, p.city].filter(Boolean).join(", ")}
+            {/* Almost everything is in Jerusalem, so the city is shown only when it's somewhere else. */}
+            {[p.neighborhood, p.city !== "ירושלים" && p.city].filter(Boolean).join(", ")}
             {p.property_type && ` · ${p.property_type}`}
           </p>
         </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, Columns3Icon, PhoneIcon, PlusIcon, SearchIcon, SparklesIcon, UsersIcon } from "lucide-react";
+import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, Columns3Icon, NotebookPenIcon, PhoneIcon, PlusIcon, SearchIcon, SparklesIcon, UsersIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { ExportButton } from "@/components/crm/export-button";
@@ -622,17 +622,18 @@ const COLUMNS: Column[] = [
     key: "log",
     header: "",
     cell: (b, { onLog }) => (
-      <button
-        type="button"
+      <Button
+        variant="outline"
+        size="icon-sm"
         onClick={(e) => {
           e.stopPropagation();
           onLog?.(b.id);
         }}
-        className="inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-lg border border-dashed border-primary/40 bg-secondary/40 px-2.5 text-xs font-medium text-primary transition-colors hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring"
+        aria-label={`רישום שיחה עם ${b.full_name}`}
+        title="רישום שיחה"
       >
-        <PlusIcon className="size-3.5" />
-        רישום שיחה
-      </button>
+        <NotebookPenIcon />
+      </Button>
     ),
   },
   {

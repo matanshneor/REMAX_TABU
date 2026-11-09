@@ -3,8 +3,6 @@
 import { PhoneIcon } from "lucide-react";
 import { Money } from "@/components/crm/money";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { PropertyPlaceholder } from "@/components/properties/property-placeholder";
 import type { MarketListing } from "@/lib/types";
 
 /** "דירה 4 חד׳" from the ad's title, or from its type and rooms. */
@@ -64,27 +62,30 @@ export function MarketGrid({
           <div key={l.id} className="group relative flex flex-col overflow-hidden rounded-xl border bg-card text-start shadow-card transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-card-hover motion-reduce:transition-none motion-reduce:hover:translate-y-0 has-[>button:focus-visible]:ring-2 has-[>button:focus-visible]:ring-ring">
             <button type="button" onClick={() => onOpen(l.id)} aria-label={`פתיחת המודעה: ${listingTitle(l)}`} className="absolute inset-0 z-0 outline-none" />
             <div className="pointer-events-none relative flex flex-1 flex-col">
-            {/* No photo yet: a low strip with the office's soft placeholder (no caption), so the details lead. */}
-            <div className={cn("relative bg-muted", photo ? "aspect-[16/9]" : "h-14")}>
-              {photo ? (
-                // Outside or short-lived signed URLs; next/image optimization isn't useful here.
-                // eslint-disable-next-line @next/next/no-img-element
+            {photo ? (
+              <div className="relative aspect-[16/9] bg-muted">
+                {/* Outside or short-lived signed URLs; next/image optimization isn't useful here. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={photo} alt="" className="absolute inset-0 size-full object-cover" />
-              ) : (
-                <PropertyPlaceholder label="" className="absolute inset-0 [&_img]:size-6" />
-              )}
-              <div className="absolute inset-x-2 top-2 flex justify-between gap-1">
+                <div className="absolute inset-x-2 top-2 flex justify-between gap-1">
+                  {fresh || <span />}
+                  <Yad2Tag />
+                </div>
+              </div>
+            ) : (
+              // No photo (most Yad2 listings): just the tags, no empty picture area.
+              <div className="flex justify-between gap-1 px-3.5 pt-3">
                 {fresh || <span />}
                 <Yad2Tag />
               </div>
-            </div>
+            )}
             <div className="flex flex-1 flex-col gap-1 p-3.5">
               {l.price ? (
                 <Money value={l.price} className="font-display text-xl text-primary" />
               ) : (
                 <p className="font-display text-xl text-muted-foreground">מחיר לא צוין</p>
               )}
-              <p className="truncate font-medium">{listingTitle(l)}</p>
+              <p className="line-clamp-2 font-medium">{listingTitle(l)}</p>
               <p className="truncate text-sm text-muted-foreground">{listingPlace(l) || "אין עדיין כתובת — פתחו את המודעה"}</p>
               {specs.length > 0 && <p className="text-sm tabular-nums">{specs.join(" · ")}</p>}
               {l.phone && (

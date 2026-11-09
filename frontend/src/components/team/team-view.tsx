@@ -7,7 +7,7 @@ import { Pill } from "@/components/crm/status-badge";
 import { WhatsAppButton } from "@/components/crm/whatsapp-button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { type Member, useTeamMembers } from "@/lib/team-members";
+import { inactiveReason, type Member, useTeamMembers } from "@/lib/team-members";
 
 /** The office team, read-only for everyone. Adding and removing people is done in ״ניהול סוכנים״ (admin only). */
 export function TeamView() {
@@ -72,7 +72,7 @@ function MemberCard({ member: m }: { member: Member }) {
           <p className="truncate font-semibold">{m.name}</p>
           <div className="mt-1 flex flex-wrap gap-1">
             {m.isManager && <Pill tone="purple">מנהל המשרד</Pill>}
-            <Pill tone={m.active ? "green" : "gray"}>{m.active ? "פעיל" : "לא פעיל"}</Pill>
+            <Pill tone={m.active ? "green" : "gray"}>{m.active ? "פעיל" : m.account ? inactiveReason(m) : "לא רשום למערכת"}</Pill>
           </div>
         </div>
       </div>
