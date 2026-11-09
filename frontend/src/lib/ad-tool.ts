@@ -1,8 +1,8 @@
 import type { Property } from "./types";
 import { propertyFeatures } from "./whatsapp";
 
-/** The office's ad-making tool (a separate site). */
-export const AD_TOOL_URL = "https://matanshneor.github.io/Remax-Template/";
+/** The office's ad-making tool: a static page of this site (public/ad-tool), open without signing in. */
+export const AD_TOOL_URL = "/ad-tool";
 
 /**
  * Link that opens the ad tool already filled in for a property. The details go after the "#",
