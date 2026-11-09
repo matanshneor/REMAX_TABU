@@ -596,18 +596,12 @@ const COLUMNS: Column[] = [
     },
   },
   {
-    key: "added",
-    header: "נוסף בתאריך",
-    className: () => "whitespace-nowrap text-muted-foreground tabular-nums",
-    sortValue: (b) => new Date(b.created_at).getTime(),
-    cell: (b) => formatDate(b.created_at),
-  },
-  {
     key: "phone",
     header: "טלפון",
+    headClassName: "text-center",
     className: () => "text-muted-foreground",
     cell: (b) => (
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center justify-center gap-1.5">
         <span dir="ltr" className="tabular-nums">
           {b.phone ?? "—"}
         </span>
@@ -643,6 +637,13 @@ const COLUMNS: Column[] = [
         רישום שיחה
       </button>
     ),
+  },
+  {
+    key: "added",
+    header: "נוסף בתאריך",
+    className: () => "whitespace-nowrap text-muted-foreground tabular-nums",
+    sortValue: (b) => new Date(b.created_at).getTime(),
+    cell: (b) => formatDate(b.created_at),
   },
   {
     key: "status",
