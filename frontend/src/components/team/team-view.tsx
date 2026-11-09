@@ -8,6 +8,7 @@ import { EmptyState, ErrorState, PageHeader } from "@/components/crm/page-header
 import { Panel, SaveFooter } from "@/components/crm/panel";
 import { Pill } from "@/components/crm/status-badge";
 import { WhatsAppButton } from "@/components/crm/whatsapp-button";
+import { AgentPhoto } from "./agent-photo";
 import { EntityForm } from "@/components/form/entity-form";
 import type { FormSection } from "@/components/form/types";
 import { useFormValues } from "@/components/form/use-form-values";
@@ -20,12 +21,22 @@ import { isAdmin } from "@/lib/permissions";
 import type { OfficeAgent, Profile } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
+/** As printed on the ad (gendered, so chosen rather than guessed). */
+const ROLE_OPTIONS = ["סוכן נדל\"ן", "סוכנת נדל\"ן", "זכיין", "זכיינית"].map((r) => ({ value: r, label: r }));
+
 const AGENT_SECTIONS: FormSection[] = [
   {
     fields: [
       { name: "full_name", label: "שם מלא", type: "text", required: true, span: 6 },
       { name: "phone", label: "טלפון", type: "tel", placeholder: "050-0000000" },
       { name: "email", label: "אימייל", type: "email" },
+    ],
+  },
+  {
+    title: "פרטים למודעות",
+    fields: [
+      { name: "role", label: "תפקיד במודעה", type: "select", options: ROLE_OPTIONS },
+      { name: "license", label: "מספר רישיון מתווך", type: "text" },
     ],
   },
 ];
@@ -234,10 +245,11 @@ function EditPanel({ row, onClose }: { row: OfficeAgent | null; onClose: () => v
     >
       {row && (
         <>
+          <AgentPhoto row={row} />
           <EntityForm sections={AGENT_SECTIONS} values={form.values} onChange={form.set} idPrefix="team" />
           <p className="mt-4 text-sm text-muted-foreground">
             כשהסוכן יירשם לאתר עם אותו טלפון או מייל, המערכת תחבר אותו לשורה הזאת אוטומטית.
-            הסרה מהרשימה לא מוחקת את החשבון שלו במערכת.
+            הסרה מהרשימה לא מוחקת את החשבון שלו במערכת, אבל מסירה אותו מכלי המודעות.
           </p>
         </>
       )}
