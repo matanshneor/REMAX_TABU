@@ -43,9 +43,9 @@ const NOTES: FormSection = { fields: [{ name: "notes", label: "הערות", type
 /** All buyer fields, in the order used when adding a buyer. */
 export const BUYER_SECTIONS: FormSection[] = [CONTACT, WANTS, FINANCE, NOTES];
 
-/** In an existing buyer's card, what the buyer wants comes first; contact details after the call log. */
-export const BUYER_CARD_TOP: FormSection[] = [WANTS, FINANCE];
-export const BUYER_CARD_BOTTOM: FormSection[] = [CONTACT, NOTES];
+/** In an existing buyer's card: what the buyer wants, financing and notes; then contact details, then the call log. */
+export const BUYER_CARD_TOP: FormSection[] = [WANTS, FINANCE, NOTES];
+export const BUYER_CARD_CONTACT: FormSection[] = [CONTACT];
 
 /** Defaults for a new buyer. */
 export const NEW_BUYER = {

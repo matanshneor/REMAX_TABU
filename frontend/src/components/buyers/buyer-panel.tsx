@@ -22,7 +22,7 @@ import { formatRelative } from "@/lib/format";
 import { canEditBuyer, isAdmin } from "@/lib/permissions";
 import type { Buyer } from "@/lib/types";
 import { usePanelParam } from "@/lib/use-panel-param";
-import { ADMIN_CREATE_SECTIONS, BUYER_CARD_BOTTOM, BUYER_CARD_TOP, BUYER_SECTIONS, NEW_BUYER } from "./buyer-fields";
+import { ADMIN_CREATE_SECTIONS, BUYER_CARD_CONTACT, BUYER_CARD_TOP, BUYER_SECTIONS, NEW_BUYER } from "./buyer-fields";
 import { BuyerNotes } from "./buyer-notes";
 import { DuplicatePhoneWarning } from "./duplicate-phone-warning";
 
@@ -199,12 +199,14 @@ export function BuyerPanel({
               הקונה משויך ל<strong>{recruiterName(buyer.recruiter_id, buyer.owner_agent_id)}</strong>. רק הסוכן המטפל והמנהל יכולים לערוך את הפרטים.
             </LockBanner>
           )}
-          {/* What the buyer wants first, then the call log, then contact details. */}
+          {/* What the buyer wants, financing and notes; then contact details; then the call log. */}
           <EntityForm sections={BUYER_CARD_TOP} values={form.values} onChange={form.set} readOnly={!editable} idPrefix="buyer" />
+          <div className="mt-6">
+            <EntityForm sections={BUYER_CARD_CONTACT} values={form.values} onChange={form.set} readOnly={!editable} idPrefix="buyer" />
+          </div>
           <div className="mt-6">
             <BuyerNotes key={buyer.id} buyerId={buyer.id} onDraftChange={setNoteDraft} focus={focusLog} />
           </div>
-          <EntityForm sections={BUYER_CARD_BOTTOM} values={form.values} onChange={form.set} readOnly={!editable} idPrefix="buyer" />
           {"phone" in form.changes && (
             <div className="mt-4">
               <DuplicatePhoneWarning phone={String(form.values.phone ?? "")} excludeId={buyer.id} onOpen={setOpenId} />
