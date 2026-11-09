@@ -278,7 +278,8 @@ export type Database = {
       deals: {
         Row: {
           agent_amount: number | null
-          agent_id: string
+          agent_id: string | null
+          agent_name: string | null
           agent_percent: number
           buyer_id: string | null
           closed_on: string
@@ -294,7 +295,8 @@ export type Database = {
         }
         Insert: {
           agent_amount?: number | null
-          agent_id: string
+          agent_id?: string | null
+          agent_name?: string | null
           agent_percent: number
           buyer_id?: string | null
           closed_on?: string
@@ -310,7 +312,8 @@ export type Database = {
         }
         Update: {
           agent_amount?: number | null
-          agent_id?: string
+          agent_id?: string | null
+          agent_name?: string | null
           agent_percent?: number
           buyer_id?: string | null
           closed_on?: string
@@ -986,6 +989,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      remove_office_agent: {
+        Args: { p_row: string }
+        Returns: undefined
+      }
       ad_tool_agents: {
         Args: never
         Returns: {

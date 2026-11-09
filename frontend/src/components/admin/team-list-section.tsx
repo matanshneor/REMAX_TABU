@@ -8,7 +8,10 @@ import type { FormSection } from "@/components/form/types";
 import { useFormValues } from "@/components/form/use-form-values";
 import { AgentPhoto, NewAgentPhoto } from "@/components/team/agent-photo";
 import { GENDER_OPTIONS } from "@/lib/gender";
-import { useDeleteRecord, useSaveRecord } from "@/lib/data";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { errorMessage, useSaveRecord } from "@/lib/data";
+import { createClient } from "@/lib/supabase/client";
 import type { OfficeAgent } from "@/lib/types";
 
 const AGENT_SECTIONS: FormSection[] = [
@@ -50,7 +53,18 @@ export function NewAgentDialog({ open, onOpenChange }: { open: boolean; onOpenCh
 export function AgentEditPanel({ row, onClose }: { row: OfficeAgent | null; onClose: () => void }) {
   const form = useFormValues(AGENT_SECTIONS, row, `${row?.id}:${row?.updated_at}`);
   const save = useSaveRecord("office_agents");
-  const remove = useDeleteRecord("office_agents");
+  const qc = useQueryClient();
+  const [removing, setRemoving] = useState(false);
+  /** Deletes the agent's account too; buyers and sellers go to the manager (done in the database). */
+  async function removeAgent(id: string) {
+    setRemoving(true);
+    const { error } = await createClient().rpc("remove_office_agent", { p_row: id });
+    setRemoving(false);
+    if (error) return toast.error(errorMessage(error));
+    await qc.invalidateQueries();
+    toast.success("הסוכן נמחק");
+    onClose();
+  }
   return (
     <Panel
       dirty={form.dirty}
@@ -62,11 +76,11 @@ export function AgentEditPanel({ row, onClose }: { row: OfficeAgent | null; onCl
         row && (
           <SaveFooter
             dirty={form.dirty}
-            saving={save.isPending}
+            saving={save.isPending || removing}
             onSave={() => form.validate() && save.mutate({ id: row.id, values: form.changes }, { onSuccess: onClose })}
             onReset={form.reset}
-            onDelete={() => remove.mutate(row.id, { onSuccess: onClose })}
-            deleteLabel="הסר מהרשימה"
+            onDelete={() => removeAgent(row.id)}
+            deleteLabel="מחיקת סוכן"
           />
         )
       }
@@ -76,8 +90,7 @@ export function AgentEditPanel({ row, onClose }: { row: OfficeAgent | null; onCl
           <AgentPhoto row={row} />
           <EntityForm sections={AGENT_SECTIONS} values={form.values} onChange={form.set} idPrefix="team" />
           <p className="mt-4 text-sm text-muted-foreground">
-            כשהסוכן יירשם לאתר עם אותו טלפון או מייל, המערכת תחבר אותו לשורה הזאת אוטומטית.
-            הסרה מהרשימה לא מוחקת את החשבון שלו במערכת, אבל מסירה אותו מכלי המודעות.
+            מחיקת הסוכן מוחקת גם את החשבון שלו במערכת, והוא לא יוכל להיכנס. הקונים והמוכרים שלו עוברים אליך, המשימות האישיות שלו נמחקות, והעסקאות הסגורות נשארות ומסומנות ״סוכן עבר״. אי אפשר לבטל.
           </p>
         </>
       )}

@@ -27,7 +27,7 @@ export function DealsTable({
       onRowClick={(d) => onOpen?.(d)}
       columns={[
         { header: "תאריך", cell: (d) => formatDate(d.closed_on), className: "tabular-nums" },
-        ...(showAgent ? [{ header: "סוכן", cell: (d: DealRow) => agentName(d.agent_id) }] : []),
+        ...(showAgent ? [{ header: "סוכן", cell: (d: DealRow) => (d.agent_id ? agentName(d.agent_id) : <span className="text-muted-foreground">{d.agent_name ? `${d.agent_name} (סוכן עבר)` : "סוכן עבר"}</span>) }] : []),
         {
           header: "נכס",
           cell: (d) =>

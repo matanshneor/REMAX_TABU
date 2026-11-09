@@ -125,7 +125,7 @@ export function FinanceView() {
   const highlightKey = kind === "month" ? `${period.start.getFullYear()}-${period.start.getMonth()}` : undefined;
 
   const expensesByCategory = breakdown(current.filter((t) => t.type === "expense"), (t) => t.category);
-  const incomeByAgent = breakdown(current.filter((t) => t.type === "income"), (t) => (t.agent_id ? agentName(t.agent_id) : "ללא סוכן"));
+  const incomeByAgent = breakdown(current.filter((t) => t.type === "income"), (t) => (t.agent_id ? agentName(t.agent_id) : t.deal_id ? "סוכן עבר" : "ללא סוכן"));
 
   const categories = useMemo(() => [...new Set(all.map((t) => t.category))].sort(), [all]);
   const rows = current.filter((t) => {
@@ -346,7 +346,7 @@ export function FinanceView() {
                       </span>
                     ),
                   },
-                  { header: "סוכן", cell: (t) => (t.agent_id ? agentName(t.agent_id) : "—") },
+                  { header: "סוכן", cell: (t) => (t.agent_id ? agentName(t.agent_id) : t.deal_id ? "סוכן עבר" : "—") },
                   {
                     header: "קובץ",
                     cell: (t) =>
