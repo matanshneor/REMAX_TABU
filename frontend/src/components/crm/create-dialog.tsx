@@ -20,6 +20,7 @@ export function CreateDialog<T extends { id: string }>({
   sections,
   initial,
   extra,
+  top,
   onCreated,
 }: {
   open: boolean;
@@ -30,6 +31,8 @@ export function CreateDialog<T extends { id: string }>({
   initial?: Record<string, unknown>;
   /** Extra columns sent with the insert that aren't in the form. */
   extra?: Record<string, unknown>;
+  /** Shown above the form, e.g. a photo picker whose result goes in through `extra`. */
+  top?: React.ReactNode;
   onCreated?: (row: T) => void;
 }) {
   const [dirty, setDirty] = useState(false);
@@ -50,6 +53,7 @@ export function CreateDialog<T extends { id: string }>({
               sections={sections}
               initial={initial}
               extra={extra}
+              top={top}
               onCancel={guard.requestClose}
               onDirtyChange={setDirty}
               onCreated={(row) => {
@@ -71,6 +75,7 @@ function CreateForm({
   sections,
   initial,
   extra,
+  top,
   onCancel,
   onDirtyChange,
   onCreated,
@@ -79,6 +84,7 @@ function CreateForm({
   sections: FormSection[];
   initial?: Record<string, unknown>;
   extra?: Record<string, unknown>;
+  top?: React.ReactNode;
   onCancel: () => void;
   onDirtyChange: (dirty: boolean) => void;
   onCreated: (row: { id: string }) => void;
@@ -96,6 +102,7 @@ function CreateForm({
   return (
     <form onSubmit={submit} className="contents">
       <div className="-mx-4 overflow-y-auto px-4 py-1">
+        {top}
         <EntityForm sections={sections} values={form.values} onChange={form.set} idPrefix="new" />
       </div>
       <DialogFooter>
