@@ -26,11 +26,7 @@ export function TeamView() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <PageHeader
-        title="צוות המשרד"
-        count={members.length}
-        description="כל סוכני המשרד ופרטי הקשר שלהם"
-      />
+      <PageHeader title="צוות המשרד" count={members.length} />
 
       <div className="relative mb-4 max-w-sm">
         <SearchIcon className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
