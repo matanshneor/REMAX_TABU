@@ -1,27 +1,38 @@
 "use client";
 
 import { ImageIcon, Trash2Icon, UploadIcon } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { cutOutPortrait, warmUpCutOut } from "@/lib/cut-out-portrait";
 import { errorMessage, uploadFile, useSaveRecord, useTeam } from "@/lib/data";
 import { createClient } from "@/lib/supabase/client";
 import type { OfficeAgent } from "@/lib/types";
 
 const BUCKET = "agent-photos";
-const MAX_BYTES = 3 * 1024 * 1024;
+const MAX_BYTES = 15 * 1024 * 1024;
 
-/** Checks the file, uploads it to the public bucket and returns its public URL (null after showing why not). */
+/**
+ * Takes any ordinary photo, removes its background (in the browser), uploads the cut-out portrait to
+ * the public bucket and returns its public URL (null after showing why not).
+ */
 async function uploadPhoto(folder: string, file: File): Promise<string | null> {
-  if (!["image/png", "image/webp"].includes(file.type)) {
-    toast.error("יש לבחור תמונה בפורמט PNG או WebP עם רקע שקוף");
+  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+    toast.error("יש לבחור תמונה בפורמט JPG, PNG או WebP");
     return null;
   }
   if (file.size > MAX_BYTES) {
-    toast.error("התמונה גדולה מדי (עד 3MB)");
+    toast.error("התמונה גדולה מדי (עד 15MB)");
     return null;
   }
-  const path = await uploadFile(BUCKET, folder, file);
+  let cutOut: Blob;
+  try {
+    cutOut = await cutOutPortrait(file);
+  } catch (error) {
+    toast.error(error instanceof Error && error.message.includes("אדם") ? error.message : "הסרת הרקע נכשלה. אפשר לנסות תמונה אחרת");
+    return null;
+  }
+  const path = await uploadFile(BUCKET, folder, new File([cutOut], "portrait.png", { type: "image/png" }));
   return createClient().storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
 }
 
@@ -41,6 +52,8 @@ function PhotoBox({
   onRemove: () => void;
 }) {
   const input = useRef<HTMLInputElement>(null);
+  // Start fetching the background-removal model while the admin picks the file.
+  useEffect(() => warmUpCutOut(), []);
   return (
     <div className="mb-5 flex items-center gap-4 rounded-xl border bg-card p-3">
       <span className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-secondary">
@@ -54,12 +67,12 @@ function PhotoBox({
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium">תמונה למודעות</p>
         <p className="mb-2 text-xs text-muted-foreground">
-          תמונה ריבועית עם רקע שקוף (PNG או WebP). היא מודפסת בכל מודעה של הסוכן.
+          כל תמונה רגילה של הסוכן (JPG, PNG או WebP), עדיף עם הפנים והכתפיים ברורים. הרקע מוסר אוטומטית, וזה לוקח כמה שניות. התמונה מודפסת בכל מודעה של הסוכן.
         </p>
         <div className="flex flex-wrap gap-2">
           <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => input.current?.click()}>
             <UploadIcon />
-            {busy ? "מעלה…" : url ? "החלפת תמונה" : "העלאת תמונה"}
+            {busy ? "מסיר רקע…" : url ? "החלפת תמונה" : "העלאת תמונה"}
           </Button>
           {url && (
             <Button type="button" variant="ghost" size="sm" disabled={busy} onClick={onRemove}>
@@ -71,7 +84,7 @@ function PhotoBox({
         <input
           ref={input}
           type="file"
-          accept="image/png,image/webp"
+          accept="image/jpeg,image/png,image/webp"
           hidden
           onChange={(e) => {
             const file = e.target.files?.[0];
