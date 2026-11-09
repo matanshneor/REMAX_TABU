@@ -1,45 +1,15 @@
 "use client";
 
-import { MailIcon, PhoneIcon, PlusIcon, SearchIcon, UsersRoundIcon } from "lucide-react";
+import { MailIcon, PhoneIcon, SearchIcon, UsersRoundIcon } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useAuth } from "@/components/auth-provider";
-import { CreateDialog } from "@/components/crm/create-dialog";
 import { EmptyState, ErrorState, PageHeader } from "@/components/crm/page-header";
-import { Panel, SaveFooter } from "@/components/crm/panel";
 import { Pill } from "@/components/crm/status-badge";
 import { WhatsAppButton } from "@/components/crm/whatsapp-button";
-import { AgentPhoto, NewAgentPhoto } from "./agent-photo";
-import { EntityForm } from "@/components/form/entity-form";
-import type { FormSection } from "@/components/form/types";
-import { useFormValues } from "@/components/form/use-form-values";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAllProfiles, useDeleteRecord, useSaveRecord, useTeam } from "@/lib/data";
+import { useAllProfiles, useTeam } from "@/lib/data";
 import type { Tone } from "@/lib/labels";
-import { isAdmin } from "@/lib/permissions";
 import type { OfficeAgent, Profile } from "@/lib/types";
-import { cn } from "@/lib/utils";
-
-/** As printed on the ad (gendered, so chosen rather than guessed). */
-const ROLE_OPTIONS = ["סוכן נדל\"ן", "סוכנת נדל\"ן", "זכיין", "זכיינית"].map((r) => ({ value: r, label: r }));
-
-const AGENT_SECTIONS: FormSection[] = [
-  {
-    fields: [
-      { name: "full_name", label: "שם מלא", type: "text", required: true, span: 6 },
-      { name: "phone", label: "טלפון", type: "tel", placeholder: "050-0000000" },
-      { name: "email", label: "אימייל", type: "email" },
-    ],
-  },
-  {
-    title: "פרטים למודעות",
-    fields: [
-      { name: "role", label: "תפקיד במודעה", type: "select", options: ROLE_OPTIONS },
-      { name: "license", label: "מספר רישיון מתווך", type: "text" },
-    ],
-  },
-];
 
 /** One person on the team: a row from the office list, an account, or both once linked. */
 type Member = {
@@ -59,14 +29,9 @@ const ACCOUNT_LABEL: Record<"none" | Profile["status"], { label: string; tone: T
   none: { label: "עוד לא נרשם", tone: "neutral" },
 };
 
-/** The office team: the admin's list of agents, merged with everyone who has an account. */
+/** The office team, read-only for everyone. Adding and removing people is done in ״ניהול סוכנים״ (admin only). */
 export function TeamView() {
-  const { profile } = useAuth();
-  const admin = isAdmin(profile);
   const [text, setText] = useState("");
-  const [creating, setCreating] = useState(false);
-  const [newPhoto, setNewPhoto] = useState<string | null>(null);
-  const [editing, setEditing] = useState<OfficeAgent | null>(null);
 
   const list = useTeam();
   const accounts = useAllProfiles();
@@ -114,14 +79,6 @@ export function TeamView() {
         title="צוות המשרד"
         count={members.length}
         description="כל סוכני המשרד ופרטי הקשר שלהם"
-        actions={
-          admin && (
-            <Button onClick={() => setCreating(true)}>
-              <PlusIcon />
-              הוספת סוכן
-            </Button>
-          )
-        }
       />
 
       <div className="relative mb-4 max-w-sm">
@@ -137,47 +94,23 @@ export function TeamView() {
         <EmptyState
           icon={<UsersRoundIcon />}
           title={members.length ? "אין סוכנים שמתאימים לחיפוש" : "הרשימה עדיין ריקה"}
-          hint={admin && !members.length ? "לוחצים על ״הוספת סוכן״ כדי להתחיל." : undefined}
         />
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {shown.map((m) => (
-            <MemberCard key={m.key} member={m} onEdit={admin && m.listRow ? () => setEditing(m.listRow) : undefined} />
+            <MemberCard key={m.key} member={m} />
           ))}
         </ul>
       )}
 
-      {admin && (
-        <>
-          <CreateDialog<OfficeAgent>
-            open={creating}
-            onOpenChange={(open) => {
-              setCreating(open);
-              if (!open) setNewPhoto(null);
-            }}
-            title="סוכן חדש ברשימה"
-            table="office_agents"
-            sections={AGENT_SECTIONS}
-            top={<NewAgentPhoto url={newPhoto} onChange={setNewPhoto} />}
-            extra={{ photo_url: newPhoto }}
-          />
-          <EditPanel row={editing} onClose={() => setEditing(null)} />
-        </>
-      )}
     </div>
   );
 }
 
-function MemberCard({ member: m, onEdit }: { member: Member; onEdit?: () => void }) {
+function MemberCard({ member: m }: { member: Member }) {
   const status = ACCOUNT_LABEL[m.account?.status ?? "none"];
   return (
-    <li
-      onClick={onEdit}
-      className={cn(
-        "flex flex-col gap-3 rounded-xl border bg-card p-4",
-        onEdit && "cursor-pointer transition-colors hover:border-primary/40",
-      )}
-    >
+    <li className="flex flex-col gap-3 rounded-xl border bg-card p-4">
       <div className="flex items-start gap-3">
         <span
           aria-hidden
@@ -196,7 +129,7 @@ function MemberCard({ member: m, onEdit }: { member: Member; onEdit?: () => void
 
       <div className="flex flex-col gap-1 text-sm text-muted-foreground">
         {m.phone ? (
-          <div className="flex items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-between gap-2">
             <a href={`tel:${m.phone}`} dir="ltr" className="flex items-center gap-1.5 tabular-nums hover:text-foreground">
               <PhoneIcon className="size-3.5" />
               {m.phone}
@@ -211,7 +144,6 @@ function MemberCard({ member: m, onEdit }: { member: Member; onEdit?: () => void
         {m.email && (
           <a
             href={`mailto:${m.email}`}
-            onClick={(e) => e.stopPropagation()}
             className="flex min-w-0 items-center gap-1.5 hover:text-foreground"
           >
             <MailIcon className="size-3.5 shrink-0" />
@@ -222,44 +154,6 @@ function MemberCard({ member: m, onEdit }: { member: Member; onEdit?: () => void
         )}
       </div>
     </li>
-  );
-}
-
-function EditPanel({ row, onClose }: { row: OfficeAgent | null; onClose: () => void }) {
-  const form = useFormValues(AGENT_SECTIONS, row, `${row?.id}:${row?.updated_at}`);
-  const save = useSaveRecord("office_agents");
-  const remove = useDeleteRecord("office_agents");
-  return (
-    <Panel
-      dirty={form.dirty}
-      open={!!row}
-      onClose={onClose}
-      title={row?.full_name}
-      subtitle="פרטים ברשימת צוות המשרד"
-      footer={
-        row && (
-          <SaveFooter
-            dirty={form.dirty}
-            saving={save.isPending}
-            onSave={() => form.validate() && save.mutate({ id: row.id, values: form.changes }, { onSuccess: onClose })}
-            onReset={form.reset}
-            onDelete={() => remove.mutate(row.id, { onSuccess: onClose })}
-            deleteLabel="הסר מהרשימה"
-          />
-        )
-      }
-    >
-      {row && (
-        <>
-          <AgentPhoto row={row} />
-          <EntityForm sections={AGENT_SECTIONS} values={form.values} onChange={form.set} idPrefix="team" />
-          <p className="mt-4 text-sm text-muted-foreground">
-            כשהסוכן יירשם לאתר עם אותו טלפון או מייל, המערכת תחבר אותו לשורה הזאת אוטומטית.
-            הסרה מהרשימה לא מוחקת את החשבון שלו במערכת, אבל מסירה אותו מכלי המודעות.
-          </p>
-        </>
-      )}
-    </Panel>
   );
 }
 
