@@ -24,7 +24,7 @@ export async function SiteHeader() {
       </a>
       <Container className="flex h-16 items-center gap-4 sm:h-20">
         <Link href="/" className="flex min-h-11 items-center gap-4">
-          <Logo priority className="h-8 sm:h-10" />
+          <Logo priority className="h-8 w-auto sm:h-10" />
           <span className="hidden border-s border-line-strong ps-4 sm:block">
             <span className="block font-serif text-lg leading-tight">{agent.full_name}</span>
             <span className="label-caps block">נכסים למכירה</span>

@@ -13,7 +13,7 @@ export async function SiteFooter() {
     <footer className="mt-32 border-t border-line bg-panel/40">
       <Container className="grid gap-12 py-16 md:grid-cols-[1.2fr_1fr_1fr]">
         <div>
-          <Logo className="h-12" />
+          <Logo className="h-12 w-auto" />
           <p className="mt-6 font-serif text-2xl font-light">{agent.full_name}</p>
           <p className="mt-1 text-ink-3">
             זכיין {OFFICE.name} · רישיון תיווך {LICENSE}

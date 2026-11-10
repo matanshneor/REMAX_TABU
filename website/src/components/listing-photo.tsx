@@ -24,7 +24,7 @@ export function PhotoPlaceholder({ label = "תמונות בקרוב" }: { label?
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-gradient-to-b from-panel to-night">
       <div className="absolute inset-4 border border-line" aria-hidden="true" />
-      <Logo className="w-2/5 max-w-56 opacity-60" />
+      <Logo className="h-auto w-2/5 max-w-56 opacity-60" />
       <span className="label-caps">{label}</span>
     </div>
   );

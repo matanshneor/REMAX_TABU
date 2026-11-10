@@ -5,7 +5,7 @@ import type { Text } from "@/content/site";
 
 export const cn = clsx;
 
-/** The office logo, recolored for the dark background (white wordmark, filled balloon). */
+/** The office logo, recolored for the dark background (white wordmark, filled balloon). Size it with className (a height plus w-auto, or a width plus h-auto). */
 export function Logo({ className, priority, sizes = "240px" }: { className?: string; priority?: boolean; sizes?: string }) {
   return (
     <Image
@@ -15,7 +15,7 @@ export function Logo({ className, priority, sizes = "240px" }: { className?: str
       height={384}
       sizes={sizes}
       priority={priority}
-      className={cn("h-auto w-auto", className)}
+      className={className}
     />
   );
 }
