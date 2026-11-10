@@ -1,0 +1,95 @@
+import Link from "next/link";
+import { applyFilters, describeFilters, filtersHref, isFiltered, PAGE_SIZE, parseFilters } from "@/lib/filters";
+import { firstName, whatsappToAgent } from "@/lib/contact";
+import { getAgent, getListings } from "@/lib/data";
+import { FilterForm } from "./filter-form";
+import { LeadForm } from "./lead-form";
+import { ListingCard } from "./listing-card";
+import { buttonClass } from "./ui";
+
+/** The list under the opening photo: search, results, "הצגת עוד", and the "not found" form. */
+export async function ListingsSection({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const [params, all, agent] = await Promise.all([searchParams, getListings(), getAgent()]);
+  const f = parseFilters(params);
+  const results = applyFilters(all, f);
+  const shown = results.slice(0, f.n);
+  const sorted = (xs: (string | null)[]) => [...new Set(xs.filter((x): x is string => !!x))].sort((a, b) => a.localeCompare(b, "he"));
+  const options = {
+    hoods: sorted(all.map((l) => l.neighborhood)),
+    cities: sorted(all.map((l) => l.city)),
+    types: sorted(all.map((l) => l.property_type)),
+  };
+  const filtered = isFiltered(f);
+  const first = firstName(agent.full_name);
+
+  return (
+    <>
+      <FilterForm key={filtersHref(f)} filters={f} options={options} />
+
+      <div id="results" className="mt-12 flex scroll-mt-28 flex-wrap items-baseline justify-between gap-4">
+        <p className="text-ink-2" role="status">
+          {results.length === 0
+            ? "אין נכסים שמתאימים לחיפוש"
+            : results.length === 1
+              ? "נכס אחד"
+              : `${results.length} נכסים`}
+          {filtered && results.length > 0 && <span className="text-ink-3"> · {describeFilters(f)}</span>}
+        </p>
+        {filtered && (
+          <Link href="/#listings" className="inline-flex min-h-11 items-center text-ink-2 underline decoration-line-strong underline-offset-8 hover:text-ink">
+            ניקוי החיפוש
+          </Link>
+        )}
+      </div>
+
+      {shown.length > 0 ? (
+        <ul className="mt-8 grid gap-x-10 gap-y-16 sm:grid-cols-2">
+          {shown.map((l, i) => (
+            <li key={l.id}>
+              <ListingCard listing={l} priority={i < 2} />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className="mt-8 grid gap-10 border border-line p-6 sm:p-10 lg:grid-cols-2">
+          <div>
+            <h3 className="accent-line font-serif text-3xl font-light leading-tight">לא מצאתם? ספרו ל{first} מה אתם מחפשים</h3>
+            <p className="mt-4 max-w-md text-ink-2">
+              לא כל נכס מגיע לאתר. {first} יחפש בשבילכם, ויחזור אליכם כשיהיה משהו שמתאים.
+            </p>
+          </div>
+          <LeadForm
+            defaultMessage={filtered ? `מחפשים: ${describeFilters(f)}` : ""}
+            messageLabel="מה אתם מחפשים?"
+            agentFirstName={first}
+            whatsappHref={agent.phone ? whatsappToAgent(agent.phone, undefined, first) : null}
+          />
+        </div>
+      )}
+
+      {results.length > shown.length && (
+        <div className="mt-16 flex justify-center">
+          <Link href={filtersHref({ ...f, n: f.n + PAGE_SIZE })} scroll={false} className={buttonClass("outline", "min-w-56")}>
+            הצגת עוד נכסים ({results.length - shown.length})
+          </Link>
+        </div>
+      )}
+    </>
+  );
+}
+
+export function ListingsFallback() {
+  return (
+    <div aria-busy="true" aria-label="טוען נכסים">
+      <div className="h-56 border border-line bg-panel/50" />
+      <div className="mt-20 grid gap-x-10 gap-y-16 sm:grid-cols-2">
+        {[0, 1].map((i) => (
+          <div key={i}>
+            <div className="aspect-[4/3] animate-pulse bg-panel" />
+            <div className="mt-6 h-8 w-2/3 animate-pulse bg-panel" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
