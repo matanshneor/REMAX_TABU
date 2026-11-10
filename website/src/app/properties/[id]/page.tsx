@@ -1,6 +1,7 @@
 import { ArrowRightIcon, CheckIcon, MapPinIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { ContactCard, MobileContactBar } from "@/components/contact-card";
 import { Gallery } from "@/components/gallery";
@@ -11,13 +12,12 @@ import { whatsappShare } from "@/lib/contact";
 import { getAgent, getListing, getListings } from "@/lib/data";
 import { entryText, formatPrice, formatRooms, fullAddress, hasFloor, type Listing, listingFeatures, listingName, listingPlace, photoUrl, similarListings } from "@/lib/listings";
 
-export async function generateStaticParams() {
-  const listings = await getListings();
-  // A build needs at least one value; "none" renders the "not on the site" page.
-  return listings.length ? listings.map((l) => ({ id: l.id })) : [{ id: "none" }];
-}
+// Listing pages are built on every visit from the cached list (lib/data.ts), which the CRM's refresh
+// call expires at once. A page-level copy could show a visitor (or WhatsApp's preview) the version
+// from before a change, or "not on the site" for a listing added a moment ago.
 
 export async function generateMetadata({ params }: PageProps<"/properties/[id]">): Promise<Metadata> {
+  await connection();
   const { id } = await params;
   const l = await getListing(id);
   if (!l) return { title: "הנכס כבר לא באתר", robots: { index: false } };
@@ -54,6 +54,7 @@ function keyFacts(l: Listing): { label: string; value: string }[] {
 }
 
 async function ListingDetails({ params }: { params: PageProps<"/properties/[id]">["params"] }) {
+  await connection();
   const { id } = await params;
   const [l, all, agent] = await Promise.all([getListing(id), getListings(), getAgent()]);
   if (!l) return <NotOnSite />;

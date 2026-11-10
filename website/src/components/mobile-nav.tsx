@@ -2,22 +2,13 @@
 
 import { MenuIcon, XIcon } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 
-/** The menu on phones: a button that opens the links under the header. Esc closes it. */
+/** The menu on phones: a button that opens the links under the header. A link or Esc closes it. */
 export function MobileNav({ items }: { items: { href: string; label: string }[] }) {
   const [open, setOpen] = useState(false);
   const id = useId();
-  const pathname = usePathname();
   const button = useRef<HTMLButtonElement>(null);
-  const [lastPath, setLastPath] = useState(pathname);
-
-  // Close after navigating.
-  if (pathname !== lastPath) {
-    setLastPath(pathname);
-    setOpen(false);
-  }
 
   useEffect(() => {
     if (!open) return;
