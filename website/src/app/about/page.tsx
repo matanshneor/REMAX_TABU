@@ -9,7 +9,7 @@ import { getAgent, getListings } from "@/lib/data";
 import { agentPhotoUrl } from "@/lib/listings";
 
 export const metadata: Metadata = {
-  title: "על משה שניאור",
+  title: " משה שניאור",
   description: "משה שניאור, זכיין RE/MAX טאבו נכסים: ליווי אישי במכירה ובקנייה של בתים בירושלים.",
   alternates: { canonical: "/about" },
 };

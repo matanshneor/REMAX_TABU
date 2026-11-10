@@ -7,7 +7,7 @@ import { buttonClass, Container, Logo } from "./ui";
 
 export const NAV = [
   { href: "/#listings", label: "נכסים" },
-  { href: "/about", label: "על משה" },
+  { href: "/about", label: "אודות משה" },
   { href: "/contact", label: "צור קשר" },
 ];
 

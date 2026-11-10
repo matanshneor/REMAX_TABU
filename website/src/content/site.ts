@@ -17,7 +17,7 @@ export const OFFICE = {
 export const LICENSE = "3181402";
 
 export const ABOUT = {
-  title: "על משה שניאור",
+  title: "משה שניאור",
   lead: "זכיין RE/MAX טאבו נכסים. מלווה משפחות וזוגות במכירה ובקנייה של בתים בירושלים, מהביקור הראשון ועד החתימה.",
   paragraphs: [
     TODO("כמה שנים משה בתחום, ואיך הגיע אליו (2–3 משפטים)"),
