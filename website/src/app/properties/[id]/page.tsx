@@ -26,9 +26,10 @@ export async function generateMetadata({ params }: PageProps<"/properties/[id]">
     .filter(Boolean)
     .join(" · ");
   const description = [facts, l.description?.replace(/\s+/g, " ").slice(0, 160)].filter(Boolean).join(". ");
-  // WhatsApp and Facebook previews: a 1200px JPEG of the first photo, through the image optimizer.
+  // WhatsApp and Facebook previews: the first photo through the image optimizer, kept near 200KB
+  // (WhatsApp skips preview images much over 300KB).
   const image = l.image_paths[0]
-    ? { url: `/_next/image?url=${encodeURIComponent(photoUrl(l.image_paths[0]))}&w=1200&q=75`, width: 1200, alt: title }
+    ? { url: `/_next/image?url=${encodeURIComponent(photoUrl(l.image_paths[0]))}&w=828&q=75`, width: 828, alt: title }
     : { url: "/og-default.png", width: 1200, height: 630, alt: "RE/MAX טאבו נכסים" };
   return {
     title,
