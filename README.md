@@ -4,7 +4,8 @@ An internal system for managing sellers (properties), buyers, tasks, deals, fina
 
 | Folder | What's in it |
 |---|---|
-| `frontend/` | The website: Next.js 16, Tailwind, shadcn/ui. Also holds the ad tool (`frontend/public/ad-tool/`) |
+| `frontend/` | The CRM: Next.js 16, Tailwind, shadcn/ui. Also holds the ad tool (`frontend/public/ad-tool/`) |
+| `website/` | The public listings site of the office manager (see [7. Public website](#7-public-website)) |
 | `backend/` | Server: FastAPI (data export for the admin, daily notifications job) |
 | `supabase/` | Database: tables, permissions (RLS), file storage, permission tests, and the `yad2-email-intake` edge function |
 | `docs/` | Brand guidelines and the Gmail script (`yad2-gmail-script.gs`) |
@@ -89,12 +90,13 @@ npm run dev                  # http://localhost:3000
 
 ## 3. Deploying to Railway
 
-The system runs in a Railway project called `remax-crm`, in the Europe (Netherlands) region. Each service is connected to the `matanshneor/remax-crm` repository and redeploys automatically on every push to `main`. The settings live in each service on Railway, not in files in the code.
+The system runs in a Railway project called `remax-crm`, in the Europe (Netherlands) region. Each service is connected to the `matanshneor/remax-crm` repository and redeploys automatically on every push to `main`. The settings live in each service on Railway, not in files in the code. Each service redeploys only when its own folder changes (watch paths: `/frontend/**`, `/backend/**` for backend and daily-digest, `/website/**`).
 
 | Service | Root Directory | Start command | Healthcheck | Environment variables |
 |---|---|---|---|---|
 | frontend | `/frontend` | `npm run start -- -p $PORT` | `/login` | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_API_URL` |
 | backend | `/backend` | `uvicorn app.main:app --host 0.0.0.0 --port $PORT` | `/health` | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `CORS_ORIGINS` (the frontend's URL) |
+| website | `/website` | `npm run start -- -p $PORT` | `/about` | `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_API_URL`, `CRM_URL`, `REVALIDATE_SECRET` |
 | daily-digest | `/backend` | `python -m app.jobs.daily_digest` · Cron `0 5,6 * * *` | — | Same as backend |
 
 After deploying, in Supabase under **Authentication → URL Configuration**, set the Site URL to the frontend's Railway address. Without it, links in the "forgot password" emails point to localhost.
@@ -150,3 +152,13 @@ Each user can subscribe their phone calendar to their own open tasks, from the *
   - Each agent sees only their own deals under "העסקאות שלי" (My deals).
 - **Tasks:** a personal list. Everyone, including the admin, sees only their own tasks, and you can't assign a task to someone else.
 - **Finances and candidates:** admin only, including attached files (receipts and CVs).
+
+## 7. Public website
+
+`website/` is the office manager's public site (https://website-production-abb771da.up.railway.app until a domain is set). It shows only the manager's listings that are active and not still being recruited, and every enquiry goes to the manager.
+
+- **Data:** the site reads with the publishable key, which can read only two views: `website_properties` (public fields, including the full address; never the seller) and `website_agent` (name, phone, email, photo). The manager is fixed by their team-list id (`website_private.agent_id()`), not by the admin role. Photos come through the site's `/media` route; the storage policy opens only photos listed on a property that is on the site.
+- **Instant updates:** a trigger on `properties` (and on the manager's contact details) posts to `/api/revalidate` through `pg_net`. The address and the shared secret are in Supabase Vault (`website_revalidate_url`, `website_revalidate_secret`); the secret matches `REVALIDATE_SECRET` on the website service. `select * from net._http_response order by created desc` shows the last calls.
+- **Enquiries:** the forms post to the backend, `POST /public/leads` (hidden trap field and rate limits against spam). Each enquiry becomes a buyer of the manager with lead source "אתר" (or a call-log entry on the manager's existing buyer with the same phone), a task linked to the property when it came from a listing page, a bell notification, and an email from `GMAIL_USER` with the Google app password in `GMAIL_APP_PASSWORD` (backend service). The backend's `CORS_ORIGINS` must include the site's address, and `WEBSITE_URL` is the site's address for links.
+- **Texts to fill in:** `website/src/content/site.ts` (office address, opening hours, the about page). Anything still marked `TODO` shows on the site in a dashed frame.
+- **Tests:** `supabase/tests/website_test.sql` (what the anonymous key can read, photos, refresh calls) and `backend/tests/test_leads.py`.
