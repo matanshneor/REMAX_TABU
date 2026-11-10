@@ -20,10 +20,6 @@ class Settings(BaseSettings):
     # Addresses used in links inside lead notes and emails.
     website_url: str = ""
     crm_url: str = "https://remax-tabu.up.railway.app"
-    # Lead emails go out from the office Gmail box. Without the app password, the lead is still
-    # saved and the bell notification created; only the email is skipped.
-    gmail_user: str = "remaxtabu@gmail.com"
-    gmail_app_password: str = ""
 
     @property
     def cors_origin_list(self) -> list[str]:

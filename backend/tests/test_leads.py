@@ -100,11 +100,6 @@ class FakeDb:
 def db(monkeypatch):
     fake = FakeDb()
     monkeypatch.setattr(leads, "get_service_client", lambda: fake)
-    sent: list[dict] = []
-    monkeypatch.setattr(leads, "email_configured", lambda: True)
-    monkeypatch.setattr(leads, "send_email", lambda to, subject, html, text: sent.append(
-        {"to": to, "subject": subject, "html": html, "text": text}))
-    fake.sent = sent
     leads.PER_VISITOR.reset()
     leads.OVERALL.reset()
     return fake
@@ -135,11 +130,7 @@ def test_new_lead_from_property_page(db):
     [note] = db.rows("notifications")
     assert note["recipient_id"] == AGENT and note["kind"] == "website_lead"
     assert note["link"] == f"/buyers?open={buyer['id']}"
-    assert note.get("emailed_at")  # the email went out and was marked
-
-    [mail] = db.sent
-    assert mail["to"] == "manager@test.local"
-    assert "ישראל ישראלי" in mail["subject"]
+    assert not note.get("emailed_at")  # the Gmail script emails it within a minute, then marks it
 
 
 def test_general_lead_has_no_task(db):
@@ -176,7 +167,7 @@ def test_another_agents_buyer_with_the_same_phone_is_not_touched(db):
 def test_hidden_field_drops_the_lead(db):
     r = post(website="http://spam.example")
     assert r.status_code == 200
-    assert len(db.rows("buyers")) == 1 and db.rows("notifications") == [] and db.sent == []
+    assert len(db.rows("buyers")) == 1 and db.rows("notifications") == []
 
 
 @pytest.mark.parametrize("body", [
@@ -194,22 +185,6 @@ def test_invalid_input_is_rejected(db, body):
 def test_rate_limit_per_visitor(db):
     codes = [post(phone=f"05212345{i:02d}").status_code for i in range(6)]
     assert codes == [200] * 5 + [429]
-
-
-def test_email_failure_keeps_the_lead(db, monkeypatch):
-    def boom(*_):
-        raise OSError("smtp down")
-    monkeypatch.setattr(leads, "send_email", boom)
-    assert post().status_code == 200
-    [note] = db.rows("notifications")
-    assert not note.get("emailed_at")
-    assert len([b for b in db.rows("buyers") if b["owner_agent_id"] == AGENT]) == 1
-
-
-def test_html_in_the_message_is_escaped_in_the_email(db):
-    assert post(message="<script>alert(1)</script>").status_code == 200
-    assert "<script>" not in db.sent[0]["html"]
-    assert "&lt;script&gt;" in db.sent[0]["html"]
 
 
 @pytest.mark.parametrize("raw, expected", [

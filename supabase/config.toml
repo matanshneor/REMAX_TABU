@@ -408,3 +408,7 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 [functions.yad2-email-intake]
 # The Gmail script authenticates with its own key (x-intake-key), not a user JWT.
 verify_jwt = false
+
+[functions.website-lead-emails]
+# The Gmail script authenticates with its own key (x-intake-key), not a user JWT.
+verify_jwt = false

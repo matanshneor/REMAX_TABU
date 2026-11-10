@@ -4,22 +4,22 @@ about one of the listings on the site. No sign-in; called from the visitor's bro
 Each lead becomes a new buyer of the site's agent (status "new", lead source "אתר"). A visitor
 the agent already has as a buyer (same phone) goes into that buyer's call log instead of a
 duplicate. A lead from a property page also opens a task "לחזור ל…" linked to the buyer and the
-property, so it shows on both cards. The agent gets a bell notification and an email at once.
+property, so it shows on both cards. The agent gets a bell notification; the email is sent within a minute by the Gmail script in the
+office mailbox, which picks up notifications with emailed_at empty (edge function website-lead-emails),
+because Railway's plan blocks outbound SMTP.
 
 Spam: a hidden field that people leave empty, and rate limits per visitor and overall.
 """
 
-import html
 import logging
 import re
 from datetime import datetime, timezone
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.config import get_settings
-from app.mailer import email_configured, send_email
 from app.rate_limit import RateLimiter
 from app.supabase_client import get_service_client
 
@@ -115,7 +115,7 @@ def lead_text(lead: LeadIn, prop: dict | None) -> str:
 
 
 @router.post("/leads")
-def create_lead(lead: LeadIn, request: Request, background: BackgroundTasks) -> dict:
+def create_lead(lead: LeadIn, request: Request) -> dict:
     if lead.website:
         # A bot filled the hidden field: answer as if it worked, save nothing.
         log.info("lead dropped: hidden field filled")
@@ -187,54 +187,11 @@ def create_lead(lead: LeadIn, request: Request, background: BackgroundTasks) -> 
         }).execute()
 
     body = " · ".join(x for x in (lead.phone, property_label(prop) if prop else None) if x)
-    notification = (
-        client.table("notifications")
-        .insert({
-            "recipient_id": agent_id,
-            "kind": "website_lead",
-            "title": title,
-            "body": body,
-            "link": f"/buyers?open={buyer_id}",
-        })
-        .execute()
-        .data[0]
-    )
-    background.add_task(email_lead, notification["id"], agent_id, title, lead, prop, buyer_id)
+    client.table("notifications").insert({
+        "recipient_id": agent_id,
+        "kind": "website_lead",
+        "title": title,
+        "body": body,
+        "link": f"/buyers?open={buyer_id}",
+    }).execute()
     return {"ok": True}
-
-
-def email_lead(notification_id: str, agent_id: str, subject: str, lead: LeadIn, prop: dict | None, buyer_id: str) -> None:
-    """Runs after the reply. A failure leaves emailed_at empty; the lead and the bell are saved anyway."""
-    if not email_configured():
-        log.warning("lead email skipped: GMAIL_APP_PASSWORD is not set")
-        return
-    client = get_service_client()
-    try:
-        profile = client.table("profiles").select("email").eq("id", agent_id).maybe_single().execute()
-        to = profile.data.get("email") if profile is not None and profile.data else None
-        if not to:
-            log.warning("lead email skipped: the agent has no email")
-            return
-        crm_link = f"{get_settings().crm_url.rstrip('/')}/buyers?open={buyer_id}"
-        esc = html.escape
-        digits = re.sub(r"\D", "", lead.phone)
-        wa = "972" + digits[1:]
-        rows = [
-            f"<p style='margin:0 0 4px'><b>{esc(lead.name)}</b></p>",
-            f"<p style='margin:0 0 12px'><a href='tel:{digits}'>{esc(lead.phone)}</a>"
-            f" · <a href='https://wa.me/{wa}'>וואטסאפ</a></p>",
-        ]
-        if lead.message:
-            rows.append(f"<p style='margin:0 0 12px;white-space:pre-line'>{esc(lead.message)}</p>")
-        if prop:
-            label = esc(property_label(prop))
-            url = property_url(prop)
-            link = f"<a href='{esc(url)}'>{label}</a>" if url else label
-            rows.append(f"<p style='margin:0 0 12px'>נכס: {link}</p>")
-        rows.append(f"<p style='margin:16px 0 0'><a href='{esc(crm_link)}'>לכרטיס הקונה ב-CRM</a></p>")
-        page = f"<div dir='rtl' style='font-family:Arial,sans-serif;font-size:15px;line-height:1.5'>{''.join(rows)}</div>"
-        plain = "\n".join(x for x in (lead.name, lead.phone, lead.message, property_label(prop) if prop else "", crm_link) if x)
-        send_email(to, subject, page, plain)
-        client.table("notifications").update({"emailed_at": datetime.now(timezone.utc).isoformat()}).eq("id", notification_id).execute()
-    except Exception:
-        log.exception("lead email failed (notification %s)", notification_id)
