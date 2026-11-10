@@ -9,7 +9,7 @@ import { ListingCard } from "@/components/listing-card";
 import { buttonClass, Container, NewTag, SectionTitle } from "@/components/ui";
 import { whatsappShare } from "@/lib/contact";
 import { getAgent, getListing, getListings } from "@/lib/data";
-import { entryText, formatPrice, formatRooms, hasFloor, type Listing, listingFeatures, listingName, listingPlace, photoUrl, similarListings } from "@/lib/listings";
+import { entryText, formatPrice, formatRooms, fullAddress, hasFloor, type Listing, listingFeatures, listingName, listingPlace, photoUrl, similarListings } from "@/lib/listings";
 
 export async function generateStaticParams() {
   const listings = await getListings();
@@ -62,7 +62,7 @@ async function ListingDetails({ params }: { params: PageProps<"/properties/[id]"
   const features = listingFeatures(l);
   const facts = keyFacts(l);
   const similar = similarListings(all, l);
-  const location = [l.street, l.neighborhood, l.city].filter(Boolean).join(", ");
+  const location = fullAddress(l);
 
   return (
     <>
@@ -125,13 +125,12 @@ async function ListingDetails({ params }: { params: PageProps<"/properties/[id]"
 
             <section aria-labelledby="location-title" className="mt-16">
               <h2 id="location-title" className="label-caps">
-                מיקום
+                כתובת
               </h2>
               <p className="mt-5 flex items-center gap-3 text-lg text-ink-2">
                 <MapPinIcon className="size-5 shrink-0 text-ink-3" aria-hidden="true" />
                 {location || "ירושלים"}
               </p>
-              <p className="mt-2 text-sm text-ink-3">הכתובת המדויקת נמסרת בתיאום הסיור.</p>
             </section>
 
             <a href={whatsappShare(l)} target="_blank" rel="noopener" className={buttonClass("outline", "mt-12")}>

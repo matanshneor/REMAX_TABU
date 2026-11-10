@@ -56,7 +56,7 @@ begin
   assert v_cols = 'id,city,neighborhood,street,property_type,floor,total_floors,rooms,size_sqm,current_price,'
                   'eviction_date,eviction_immediate,has_safe_room,has_balcony,balcony_count,balcony_sqm,'
                   'parking_spots,has_elevator,has_storage,is_renovated,has_garden,garden_sqm,has_rental_unit,'
-                  'description,image_paths,created_at,updated_at',
+                  'description,image_paths,created_at,updated_at,house_number,apartment_number',
     'website_properties has unexpected columns: ' || v_cols;
 
   select string_agg(column_name, ',' order by ordinal_position) into v_cols
@@ -106,9 +106,12 @@ begin
     end;
   end loop;
 
+  -- The address is public (house and apartment number), the seller is not.
+  assert (select house_number from public.website_properties where id = '50000000-0000-0000-0000-000000000001') = '12',
+    'site should show the house number';
   begin
-    execute 'select house_number from public.properties limit 1';
-    raise exception 'anon could read house_number';
+    execute 'select owner_name from public.property_owner_details limit 1';
+    raise exception 'anon could read the seller''s name';
   exception when insufficient_privilege then
     null;
   end;

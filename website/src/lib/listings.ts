@@ -1,6 +1,6 @@
 import { CRM_URL } from "./env";
 
-/** A row of the website_properties view: public fields only (no house number, seller, agents). */
+/** A row of the website_properties view: public fields only (the address yes; the seller and the agents no). */
 export type Listing = {
   id: string;
   city: string | null;
@@ -29,6 +29,9 @@ export type Listing = {
   image_paths: string[];
   created_at: string;
   updated_at: string;
+  /** Public since 11.11.2026 (migration website_address_and_backend); absent before it ran. */
+  house_number?: string | null;
+  apartment_number?: string | null;
   /** On the market for less than a week ("חדש בשוק"); worked out when the list is fetched. */
   is_new: boolean;
 };
@@ -67,10 +70,21 @@ export function formatRooms(r: number | null): string {
   return Number.isInteger(r) ? String(r) : r.toLocaleString("he-IL");
 }
 
-/** "דירת גן ברחוב הרב בצלאל", or "דירת גן בגילה" without a street. */
+/** "הרב בצלאל 12" (the street and house number). */
+export function streetAddress(l: Listing): string {
+  return [l.street?.replace(/\s+/g, " ").trim(), l.house_number?.trim()].filter(Boolean).join(" ");
+}
+
+/** "הרב בצלאל 12, דירה 3, גילה, ירושלים" */
+export function fullAddress(l: Listing): string {
+  const apt = l.apartment_number?.trim();
+  return [streetAddress(l), apt && `דירה ${apt}`, l.neighborhood, l.city].filter(Boolean).join(", ");
+}
+
+/** "דירת גן ברחוב הרב בצלאל 12", or "דירת גן בגילה" without a street. */
 export function listingName(l: Listing): string {
   const type = l.property_type || "נכס";
-  if (l.street) return `${type} ברחוב ${l.street}`;
+  if (l.street) return `${type} ברחוב ${streetAddress(l)}`;
   if (l.neighborhood) return `${type} ב${l.neighborhood}`;
   return type;
 }
