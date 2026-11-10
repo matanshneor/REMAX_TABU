@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.routers import export
+from app.routers import export, leads
 
 app = FastAPI(title="Real Estate CRM API")
 
@@ -15,6 +15,7 @@ app.add_middleware(
 )
 
 app.include_router(export.router)
+app.include_router(leads.router)
 
 
 @app.get("/health")

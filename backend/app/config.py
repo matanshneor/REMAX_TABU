@@ -10,8 +10,20 @@ class Settings(BaseSettings):
     # Optional at startup so the service (and its health check) can run before the key is
     # configured; endpoints that need it return 503 until it's set.
     supabase_service_role_key: str = ""
-    # Comma-separated list of allowed frontend origins.
+    # Comma-separated list of allowed frontend origins (the CRM and the public website).
     cors_origins: str = "http://localhost:3000"
+
+    # Public website leads (POST /public/leads).
+    # The site's agent: their row in the office team list (office_agents.id), the same id the
+    # database views use (migration public_website). Leads become their buyers.
+    website_agent_id: str = "63a51f45-fdef-4797-855d-12d8b9405960"
+    # Addresses used in links inside lead notes and emails.
+    website_url: str = ""
+    crm_url: str = "https://remax-tabu.up.railway.app"
+    # Lead emails go out from the office Gmail box. Without the app password, the lead is still
+    # saved and the bell notification created; only the email is skipped.
+    gmail_user: str = "remaxtabu@gmail.com"
+    gmail_app_password: str = ""
 
     @property
     def cors_origin_list(self) -> list[str]:

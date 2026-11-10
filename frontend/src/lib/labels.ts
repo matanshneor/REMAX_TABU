@@ -108,7 +108,7 @@ export const PROPERTY_TYPES = list(
 );
 
 /** Where a buyer or seller came from. Anything else is typed in under "אחר" and saved as written. */
-export const LEAD_SOURCES = list("יד2", "פייסבוק", "אינסטגרם", "לקוח עבר", "רימקס ישראל", "הפניה", "שלט", "הגיע למשרד");
+export const LEAD_SOURCES = list("יד2", "פייסבוק", "אינסטגרם", "אתר", "לקוח עבר", "רימקס ישראל", "הפניה", "שלט", "הגיע למשרד");
 export const OTHER_SOURCE = "אחר (לכתוב בעצמי)";
 
 /** Sources that also say who: "הפניה" is saved as "הפניה: דוד כהן". */

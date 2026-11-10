@@ -130,6 +130,16 @@ begin
   raise notice 'WEBSITE READ TESTS PASSED';
 end $$;
 
+-- ---- The backend (service_role) reads the views too --------------------------
+reset role;
+set local role service_role;
+do $$
+begin
+  assert (select count(*) from public.website_properties where id::text like '50000000-%') = 2,
+    'the backend should read the site''s listings';
+  assert (select count(*) from public.website_agent) = 1, 'the backend should read the site''s agent';
+end $$;
+
 -- ---- Refresh calls (as postgres again) --------------------------------------
 reset role;
 
