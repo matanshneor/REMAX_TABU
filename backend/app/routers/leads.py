@@ -92,8 +92,9 @@ def rooms_text(r: float | int | None) -> str:
 
 
 def property_label(p: dict) -> str:
-    """'דירת גן, 5 חד׳, הרב בצלאל, גילה · 2,500,000 ₪' (no house number: public facts only)."""
-    parts = [p.get("property_type"), rooms_text(p.get("rooms")), p.get("street"), p.get("neighborhood")]
+    """'דירת גן, 5 חד׳, הרב בצלאל 12, גילה · 2,500,000 ₪' (what the site shows)."""
+    street = " ".join(x for x in (p.get("street"), p.get("house_number")) if x)
+    parts = [p.get("property_type"), rooms_text(p.get("rooms")), street, p.get("neighborhood")]
     label = ", ".join(x for x in parts if x)
     price = money(p.get("current_price"))
     return f"{label} · {price}" if price else label
@@ -142,7 +143,7 @@ def create_lead(lead: LeadIn, request: Request, background: BackgroundTasks) -> 
     if lead.property_id:
         found = (
             client.table("website_properties")
-            .select("id, property_type, rooms, street, neighborhood, city, current_price")
+            .select("id, property_type, rooms, street, house_number, neighborhood, city, current_price")
             .eq("id", str(lead.property_id)).maybe_single().execute()
         )
         prop = found.data if found is not None and found.data else None

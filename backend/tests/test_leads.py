@@ -81,7 +81,7 @@ class FakeDb:
             "office_agents": [{"id": AGENT_ROW, "profile_id": AGENT}],
             "profiles": [{"id": AGENT, "email": "manager@test.local"}],
             "website_properties": [{
-                "id": LISTED, "property_type": "דירת גן", "rooms": 5, "street": "הרב בצלאל",
+                "id": LISTED, "property_type": "דירת גן", "rooms": 5, "street": "הרב בצלאל", "house_number": "12",
                 "neighborhood": "גילה", "city": "ירושלים", "current_price": 2500000,
             }],
             "buyers": [
@@ -126,7 +126,7 @@ def test_new_lead_from_property_page(db):
     assert buyer["phone"] == "052-123-4567"
     assert buyer["status"] == "new" and buyer["lead_source"] == "אתר"
     assert "מעוניין לראות את הדירה" in buyer["notes"]
-    assert "דירת גן, 5 חד׳, הרב בצלאל, גילה · 2,500,000 ₪" in buyer["notes"]
+    assert "דירת גן, 5 חד׳, הרב בצלאל 12, גילה · 2,500,000 ₪" in buyer["notes"]
     assert f"https://site.test/properties/{LISTED}" in buyer["notes"]
 
     [task] = db.rows("tasks")
