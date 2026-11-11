@@ -6,14 +6,14 @@ export const BRAND = {
   tagline: "עם הצלחה לא מתווכחים",
 };
 
-/** The office logo (RE/MAX balloon + wordmark). The artwork has a white background. */
+/** The office logo (the RE/MAX balloon, the wordmark and the office's name). The artwork has a white background. */
 export function BrandLogo({ className, priority }: { className?: string; priority?: boolean }) {
   return (
     <Image
       src="/brand/logo.png"
       alt={`RE/MAX ${BRAND.name}`}
-      width={1211}
-      height={384}
+      width={1200}
+      height={470}
       priority={priority}
       className={cn("h-auto w-full", className)}
     />
