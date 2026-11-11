@@ -12,7 +12,7 @@ import { buttonClass } from "./ui";
  */
 export function TeamList({ team }: { team: Agent[] }) {
   return (
-    <section aria-labelledby="team-title" className="mt-24 border-t border-line pt-16 sm:mt-32 sm:pt-24">
+    <section aria-labelledby="team-title" className="mt-16 border-t border-line pt-12 sm:mt-20 sm:pt-16">
       <h2 id="team-title" className="accent-line type-headline">
         הסוכנים שלנו
       </h2>

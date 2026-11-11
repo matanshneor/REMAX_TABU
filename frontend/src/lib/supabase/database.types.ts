@@ -999,6 +999,10 @@ export type Database = {
         Args: { p_row: string }
         Returns: undefined
       }
+      set_my_website_bio: {
+        Args: { p_bio: string }
+        Returns: string
+      }
       ad_tool_agents: {
         Args: never
         Returns: {

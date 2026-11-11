@@ -35,7 +35,6 @@ export const ABOUT = {
   ] as Text[],
   facts: [
     { label: "רישיון תיווך", value: LICENSE as Text },
-    { label: "עסקאות", value: "עשרות" as Text },
   ],
 };
 

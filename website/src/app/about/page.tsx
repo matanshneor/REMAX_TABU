@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import { PageTransition } from "@/components/motion/page-transition";
-import { Reveal } from "@/components/motion/reveal";
 import { TeamList } from "@/components/team-list";
-import { buttonClass, Container, Fill } from "@/components/ui";
+import { Container, Fill } from "@/components/ui";
 import { ABOUT, OFFICE, OFFICE_ABOUT } from "@/content/site";
 import { getAgent, getTeam } from "@/lib/data";
 import { agentPhotoUrl } from "@/lib/listings";
@@ -34,43 +32,29 @@ export default async function AboutPage() {
           ))}
         </div>
       </header>
-      <section aria-labelledby="manager-title" className="mt-24 grid items-start gap-12 border-t border-line pt-16 sm:mt-32 sm:pt-24 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-20">
+      {/* The manager: one compact block, since the whole team follows. */}
+      <section aria-labelledby="manager-title" className="mt-16 flex flex-col gap-8 border-t border-line pt-12 sm:mt-20 sm:flex-row sm:items-start sm:gap-10 sm:pt-16">
         {photo && (
-          <div className="relative aspect-[4/5] overflow-hidden border border-line bg-gradient-to-b from-panel to-night">
-            <Image src={photo} alt={agent.full_name} fill sizes="(min-width: 1024px) 40vw, 100vw" className="object-cover object-top" />
+          <div className="relative aspect-[4/5] w-40 shrink-0 overflow-hidden border border-line bg-gradient-to-b from-panel to-night sm:w-56">
+            <Image src={photo} alt={agent.full_name} fill sizes="(min-width: 640px) 224px, 160px" className="object-cover object-top" />
           </div>
         )}
-        <div>
+        <div className="max-w-2xl">
           <p className="label-caps">זכיין {OFFICE.name}</p>
-          <h2 id="manager-title" className="accent-line type-headline mt-5">{ABOUT.title}</h2>
-          <p className="mt-8 text-xl leading-relaxed text-ink-2">{ABOUT.lead}</p>
-          {ABOUT.paragraphs.length > 0 && (
-            <div className="mt-8 space-y-5 text-lg leading-relaxed text-ink-2">
-              {ABOUT.paragraphs.map((p, i) => (
-                <p key={i}>
-                  <Fill text={p} />
-                </p>
-              ))}
-            </div>
-          )}
-
-          <dl className="mt-14 grid grid-cols-2 gap-8 sm:max-w-md">
-            {ABOUT.facts.map((f, i) => (
-              <Reveal key={f.label} index={i} className="accent-line flex flex-col-reverse">
-                <dt className="label-caps mt-2">{f.label}</dt>
-                <dd className="type-subtitle">
-                  <Fill text={f.value} className="text-base" />
-                </dd>
-              </Reveal>
+          <h2 id="manager-title" className="accent-line type-headline mt-4">{ABOUT.title}</h2>
+          <p className="mt-5 text-lg leading-relaxed text-ink-2">{ABOUT.lead}</p>
+          {ABOUT.paragraphs.map((p, i) => (
+            <p key={i} className="mt-4 leading-relaxed text-ink-2">
+              <Fill text={p} />
+            </p>
+          ))}
+          <p className="mt-5 text-ink-3">
+            {ABOUT.facts.map((f) => (
+              <span key={f.label}>
+                {f.label} <Fill text={f.value} className="text-base" />
+              </span>
             ))}
-          </dl>
-
-          {/* The page's own next step; WhatsApp and the phone are right below, in the footer. */}
-          <Reveal className="mt-14">
-            <Link href="/#listings" className={buttonClass("red")}>
-              לרשימת הנכסים
-            </Link>
-          </Reveal>
+          </p>
         </div>
       </section>
       {others.length > 0 && <TeamList team={others} />}
