@@ -37,9 +37,8 @@ export default async function ContactPage() {
   return (
     <PageTransition>
     <Container className="py-16 sm:py-24">
-      <p className="label-caps">צור קשר</p>
-      <h1 className="accent-line type-display mt-5">נדבר?</h1>
-      <p className="mt-6 max-w-xl text-xl text-ink-2">שאלה על נכס, תיאום סיור, או חיפוש של משהו שעוד לא באתר. {first} זמין בטלפון, בוואטסאפ ובטופס.</p>
+      <h1 className="accent-line type-display">צור קשר</h1>
+      <p className="mt-6 max-w-xl text-xl text-ink-2">שאלה על נכס, תיאום סיור, או שיחת ייעוץ.</p>
 
       <div className="mt-16 grid gap-16 lg:grid-cols-2">
         <dl>
@@ -77,7 +76,7 @@ export default async function ContactPage() {
           <h2 id="form-title" className="type-title">
             השאירו פרטים
           </h2>
-          <p className="mb-8 mt-2 text-ink-2">{first} יחזור אליכם בהקדם.</p>
+          <p className="mb-8 mt-2 text-ink-2">ונחזור אליכם בהקדם.</p>
           <LeadForm agentFirstName={first} whatsappHref={wa} />
         </section>
       </div>

@@ -79,6 +79,11 @@ export async function SiteFooter() {
                 הצהרת נגישות
               </Link>
             </li>
+            <li>
+              <Link href="/privacy" className={link}>
+                מדיניות פרטיות
+              </Link>
+            </li>
           </ul>
         </nav>
       </Container>

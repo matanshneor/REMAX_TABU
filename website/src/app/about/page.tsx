@@ -5,8 +5,7 @@ import { PageTransition } from "@/components/motion/page-transition";
 import { Reveal } from "@/components/motion/reveal";
 import { buttonClass, Container, Fill } from "@/components/ui";
 import { ABOUT, OFFICE } from "@/content/site";
-import { firstName } from "@/lib/contact";
-import { getAgent, getListings } from "@/lib/data";
+import { getAgent } from "@/lib/data";
 import { agentPhotoUrl } from "@/lib/listings";
 
 export const metadata: Metadata = {
@@ -16,10 +15,8 @@ export const metadata: Metadata = {
 };
 
 export default async function AboutPage() {
-  const [agent, listings] = await Promise.all([getAgent(), getListings()]);
+  const agent = await getAgent();
   const photo = agentPhotoUrl(agent);
-  const areas = [...new Set([...ABOUT.areas, ...listings.map((l) => l.neighborhood).filter((x): x is string => !!x)])];
-  const first = firstName(agent.full_name);
 
   return (
     <PageTransition>
@@ -53,21 +50,10 @@ export default async function AboutPage() {
             ))}
           </dl>
 
-          <Reveal as="section" className="mt-14">
-            <h2 className="label-caps">{ABOUT.areasTitle}</h2>
-            <ul className="mt-4 flex flex-wrap gap-2">
-              {areas.map((a) => (
-                <li key={a} className="border border-line-strong px-4 py-2 text-ink-2">
-                  {a}
-                </li>
-              ))}
-            </ul>
-          </Reveal>
-
           {/* The page's own next step; WhatsApp and the phone are right below, in the footer. */}
           <Reveal className="mt-14">
             <Link href="/#listings" className={buttonClass("red")}>
-              לנכסים של {first}
+              לרשימת הנכסים
             </Link>
           </Reveal>
         </div>

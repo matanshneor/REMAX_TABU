@@ -140,7 +140,7 @@ async function ListingDetails({ params }: { params: PageProps<"/properties/[id]"
               </p>
               <a href={whatsappShare(l)} target="_blank" rel="noopener" className={buttonClass("outline", "mt-12")}>
                 <WhatsAppIcon className="size-5" />
-                שתף את הנכס
+                שתפו את הנכס
               </a>
             </Reveal>
           </article>
