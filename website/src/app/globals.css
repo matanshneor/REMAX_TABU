@@ -191,6 +191,18 @@
   transform: translateY(18px);
 }
 
+/* Phones: the list starts with three listings and a button shows the rest (components/phone-list.tsx).
+   Only once JavaScript is running (data-js, set in the layout); without it every listing is there. */
+html:not([data-js]) .phone-more {
+  display: none;
+}
+@media (width < 40rem) {
+  html[data-js] .phone-three:not([data-all]) > li:nth-child(n + 4),
+  html[data-js] .phone-three:not([data-all]) ~ .phone-after {
+    display: none;
+  }
+}
+
 /* A photo that was still loading when it came on screen fades in (components/listing-photo.tsx). */
 [data-fade] {
   transition: opacity var(--dur-enter) var(--ease-out);

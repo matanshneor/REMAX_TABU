@@ -7,6 +7,7 @@ import { FilterForm } from "./filter-form";
 import { LeadForm } from "./lead-form";
 import { ListingCard } from "./listing-card";
 import { Reveal } from "./motion/reveal";
+import { PhoneList } from "./phone-list";
 import { buttonClass } from "./ui";
 
 /** The list under the opening photo: search, results, "הצגת עוד", and the "not found" form. */
@@ -49,13 +50,13 @@ export async function ListingsSection({ searchParams }: { searchParams: Promise<
           </div>
 
           {shown.length > 0 ? (
-            <ul className="mt-8 grid gap-x-10 gap-y-16 sm:grid-cols-2">
+            <PhoneList count={shown.length} className="mt-8 grid gap-x-10 gap-y-16 sm:grid-cols-2">
               {shown.map((l, i) => (
                 <Reveal as="li" key={l.id} index={i % 2}>
                   <ListingCard listing={l} eager={i < 2} />
                 </Reveal>
               ))}
-            </ul>
+            </PhoneList>
           ) : (
             <div className="mt-8 grid gap-10 border border-line p-6 sm:p-10 lg:grid-cols-2">
               <h3 className="accent-line type-title">לא מצאתם? צרו קשר</h3>
@@ -69,7 +70,7 @@ export async function ListingsSection({ searchParams }: { searchParams: Promise<
           )}
 
           {results.length > shown.length && (
-            <div className="mt-16 flex justify-center">
+            <div className="phone-after mt-16 flex justify-center">
               <Link
                 href={filtersHref({ ...f, n: f.n + PAGE_SIZE })}
                 scroll={false}
