@@ -46,7 +46,7 @@ export async function SiteFooter() {
           </ul>
         </div>
         <nav aria-label="תחתון">
-          <h2 className="label-caps mb-4">באתר</h2>
+          <h2 className="label-caps mb-4">עוד באתר</h2>
           <ul className="grid grid-cols-2 gap-x-6 gap-y-1 text-ink-2 sm:grid-cols-1">
             {NAV.map((n) => (
               <li key={n.href}>
