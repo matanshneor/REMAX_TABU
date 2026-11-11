@@ -63,7 +63,7 @@ export function ContactCard({ agent, listing, title = "לתיאום פגישה" 
       )}
       <div className="mt-8 border-t border-line pt-8">
         <p className="mb-5 text-ink-2">
-          או השאירו פרטים, ו{first} {female ? "תחזור" : "יחזור"} אליכם:
+          או השאירו פרטים, ונחזור אליכם:
         </p>
         <LeadForm propertyId={listing?.id} whatsappHref={wa} agentFirstName={first} agentFemale={female} />
       </div>
