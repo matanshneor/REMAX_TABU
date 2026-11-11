@@ -2,7 +2,7 @@ import { MailIcon, PhoneIcon } from "lucide-react";
 import Image from "next/image";
 import { OFFICE } from "@/content/site";
 import { firstName, telHref, whatsappToAgent } from "@/lib/contact";
-import { type Agent, agentPhotoUrl, isFemale, type Listing } from "@/lib/listings";
+import { type Agent, agentPhotoUrl, type Listing } from "@/lib/listings";
 import { WhatsAppIcon } from "./icons";
 import { LeadForm } from "./lead-form";
 import { PORTRAIT_FADE } from "./team-list";
@@ -12,7 +12,6 @@ import { buttonClass } from "./ui";
 export function ContactCard({ agent, listing, title = "לתיאום פגישה" }: { agent: Agent; listing?: Listing; title?: string }) {
   const photo = agentPhotoUrl(agent);
   const first = firstName(agent.full_name);
-  const female = isFemale(agent);
   const wa = agent.phone ? whatsappToAgent(agent.phone, listing, first) : null;
   return (
     <section aria-labelledby="contact-card-title" className="border border-line bg-panel p-6 sm:p-8">
@@ -65,7 +64,7 @@ export function ContactCard({ agent, listing, title = "לתיאום פגישה" 
         <p className="mb-5 text-ink-2">
           או השאירו פרטים, ונחזור אליכם:
         </p>
-        <LeadForm propertyId={listing?.id} whatsappHref={wa} agentFirstName={first} agentFemale={female} />
+        <LeadForm propertyId={listing?.id} whatsappHref={wa} agentFirstName={first} />
       </div>
     </section>
   );
