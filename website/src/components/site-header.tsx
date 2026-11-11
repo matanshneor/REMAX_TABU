@@ -8,7 +8,7 @@ import { buttonClass, cn, Container, Logo, PRESS } from "./ui";
 
 export const NAV = [
   { href: "/#listings", label: "נכסים" },
-  { href: "/about", label: "אודות משה" },
+  { href: "/about", label: "המשרד שלנו" },
   { href: "/contact", label: "צור קשר" },
 ];
 
@@ -25,7 +25,7 @@ export async function SiteHeader() {
       </a>
       <Container className="flex h-16 items-center gap-4 sm:h-20">
         <Link href="/" className="flex min-h-11 items-center gap-4">
-          <Logo preload className="h-8 w-auto sm:h-10" />
+          <Logo preload sizes="360px" className="h-10 w-auto sm:h-14" />
           <span className="hidden border-s border-line-strong ps-4 font-serif text-lg leading-tight sm:block">{agent.full_name}</span>
         </Link>
         <nav aria-label="ראשי" className="ms-auto hidden md:block">
