@@ -21,7 +21,7 @@ Each product has its own README: [crm](crm/README.md), [website](website/README.
 
 ## Railway
 
-One project, `remax-crm` (Europe, Netherlands), all services connected to the `matanshneor/remax-crm` repository and redeployed on every push to `main`. The settings live in each service on Railway, not in files. A service redeploys only when its own folder changes (watch paths).
+One project, `remax-crm` (Europe, Netherlands), all services connected to the `matanshneor/REMAX_TABU` repository and redeployed on every push to `main`. The settings live in each service on Railway, not in files. A service redeploys only when its own folder changes (watch paths).
 
 | Service | Root directory | Start command | Healthcheck | Variables |
 |---|---|---|---|---|
