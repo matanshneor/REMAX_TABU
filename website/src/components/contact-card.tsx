@@ -5,10 +5,11 @@ import { firstName, telHref, whatsappToAgent } from "@/lib/contact";
 import { type Agent, agentPhotoUrl, isFemale, type Listing } from "@/lib/listings";
 import { WhatsAppIcon } from "./icons";
 import { LeadForm } from "./lead-form";
+import { PORTRAIT_FADE } from "./team-list";
 import { buttonClass } from "./ui";
 
 /** The card of the listing's own agent: photo, name, title, license, phone, email, WhatsApp / call buttons and the form. */
-export function ContactCard({ agent, listing, title = "לתיאום סיור" }: { agent: Agent; listing?: Listing; title?: string }) {
+export function ContactCard({ agent, listing, title = "לתיאום פגישה" }: { agent: Agent; listing?: Listing; title?: string }) {
   const photo = agentPhotoUrl(agent);
   const first = firstName(agent.full_name);
   const female = isFemale(agent);
@@ -20,8 +21,8 @@ export function ContactCard({ agent, listing, title = "לתיאום סיור" }:
       </h2>
       <div className="mt-6 flex items-center gap-5">
         {photo && (
-          <div className="relative size-24 shrink-0 overflow-hidden bg-night">
-            <Image src={photo} alt={agent.full_name} fill sizes="96px" className="object-cover object-top" />
+          <div className="relative size-24 shrink-0" style={PORTRAIT_FADE}>
+            <Image src={photo} alt={agent.full_name} fill sizes="96px" className="object-contain object-bottom" />
           </div>
         )}
         <div>
