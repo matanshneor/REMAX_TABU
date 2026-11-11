@@ -16,7 +16,10 @@ function db() {
 const NEW_DAYS = 7;
 
 // Each change in the CRM expires these at once (the refresh call); the timed refresh is only a safety net.
-const LIFE = { stale: 60, revalidate: 600, expire: 3600 };
+// It is one minute, not ten: a refresh call that arrives while a new version of the site is going up
+// reaches the version being replaced, and the new one would otherwise show the old list for ten minutes
+// (12.11.2026: a listing put on the site during a deploy was missing from the home page).
+const LIFE = { stale: 60, revalidate: 60, expire: 3600 };
 
 /** All the agent's listings on the site, newest first. */
 export async function getListings(): Promise<Listing[]> {
