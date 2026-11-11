@@ -43,7 +43,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             home page (also at /p/<listing>) opens with a photo under a clear header. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: 'document.documentElement.dataset.js="1";if(location.pathname==="/"||location.pathname.indexOf("/p/")===0)document.documentElement.dataset.header="overlay"',
+            __html:
+              'document.documentElement.dataset.js="1";' +
+              'if(location.pathname==="/"||location.pathname.indexOf("/p/")===0){document.documentElement.dataset.header="overlay";' +
+              // A refresh of the home page opens it from the top. The browser's "stay where you were" is switched off for a
+              // reload (not for back and forward), a #listings from the menu is dropped, and for the first moments any scroll
+              // that the visitor did not start (the page restoring its old place) is sent back to the top.
+              'var n=performance.getEntriesByType("navigation")[0];if(n&&n.type==="reload"){history.scrollRestoration="manual";if(location.hash)history.replaceState(null,"",location.pathname+location.search);scrollTo(0,0);' +
+              'var g=1,s=function(){g=0};["wheel","touchstart","keydown","mousedown"].forEach(function(e){addEventListener(e,s,{passive:true,once:true})});' +
+              'addEventListener("scroll",function(){if(g&&scrollY>0)scrollTo({top:0,behavior:"instant"})},{passive:true});setTimeout(s,2500)}}',
           }}
         />
         <SiteHeader />

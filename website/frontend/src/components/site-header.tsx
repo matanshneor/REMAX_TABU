@@ -3,6 +3,7 @@ import Link from "next/link";
 import { firstName, telHref, whatsappToAgent } from "@/lib/contact";
 import { getAgent } from "@/lib/data";
 import { WhatsAppIcon } from "./icons";
+import { HomeLink } from "./motion/home-link";
 import { MobileNav } from "./mobile-nav";
 import { buttonClass, cn, Container, Logo, PRESS } from "./ui";
 
@@ -24,10 +25,10 @@ export async function SiteHeader() {
         דילוג לתוכן
       </a>
       <Container className="flex h-16 items-center gap-4 sm:h-20">
-        <Link href="/" className="flex min-h-11 items-center gap-4">
+        <HomeLink className="flex min-h-11 items-center gap-4">
           <Logo preload sizes="360px" className="h-10 w-auto sm:h-14" />
           <span className="hidden border-s border-line-strong ps-4 font-serif text-lg leading-tight sm:block">פסגת זאב, ירושלים</span>
-        </Link>
+        </HomeLink>
         <nav aria-label="ראשי" className="ms-auto hidden md:block">
           <ul className="flex items-center gap-8">
             {NAV.map((n) => (
