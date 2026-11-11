@@ -1,4 +1,4 @@
-import { ArrowRightIcon, CheckIcon, MapPinIcon } from "lucide-react";
+import { ArrowRightIcon, MapPinIcon, Rotate3dIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
@@ -13,7 +13,7 @@ import { ListingCard } from "@/components/listing-card";
 import { buttonClass, Container, NewTag, SectionTitle } from "@/components/ui";
 import { whatsappShare } from "@/lib/contact";
 import { getAgent, getListing, getListings } from "@/lib/data";
-import { entryText, formatPrice, formatRooms, fullAddress, hasFloor, type Listing, listingFeatures, listingName, listingPlace, photoUrl, similarListings } from "@/lib/listings";
+import { entryText, formatPrice, formatRooms, fullAddress, hasFloor, type Listing, listingDetails, listingFeatures, listingName, listingPlace, photoUrl, similarListings, tourUrl } from "@/lib/listings";
 
 // Listing pages are built on every visit from the cached list (lib/data.ts), which the CRM's refresh
 // call expires at once. A page-level copy could show a visitor (or WhatsApp's preview) the version
@@ -75,7 +75,8 @@ async function ListingDetails({ params }: { params: PageProps<"/properties/[id]"
   if (!l) return <NotOnSite />;
 
   const name = listingName(l);
-  const features = listingFeatures(l);
+  const details = listingDetails(l);
+  const tour = tourUrl(l);
   const facts = keyFacts(l);
   const similar = similarListings(all, l);
   const location = fullAddress(l);
@@ -118,17 +119,17 @@ async function ListingDetails({ params }: { params: PageProps<"/properties/[id]"
               </Reveal>
             )}
 
-            {features.length > 0 && (
+            {details.length > 0 && (
               <Reveal as="section" className="mt-16">
-                <h2 className="label-caps">מאפיינים</h2>
-                <ul className="mt-5 grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3">
-                  {features.map((x) => (
-                    <li key={x} className="flex items-center gap-3 border-b border-line pb-4 text-ink-2">
-                      <CheckIcon className="size-4 shrink-0 text-ink-3" aria-hidden="true" />
-                      {x}
-                    </li>
+                <h2 className="label-caps">פרטי הנכס</h2>
+                <dl className="mt-5 grid gap-x-12 sm:grid-cols-2">
+                  {details.map((d) => (
+                    <div key={d.label} className="flex items-baseline justify-between gap-6 border-b border-line py-4">
+                      <dt className="text-ink-3">{d.label}</dt>
+                      <dd className="text-end text-ink">{d.value}</dd>
+                    </div>
                   ))}
-                </ul>
+                </dl>
               </Reveal>
             )}
 
@@ -138,10 +139,18 @@ async function ListingDetails({ params }: { params: PageProps<"/properties/[id]"
                 <MapPinIcon className="size-5 shrink-0 text-ink-3" aria-hidden="true" />
                 {location || "ירושלים"}
               </p>
-              <a href={whatsappShare(l)} target="_blank" rel="noopener" className={buttonClass("outline", "mt-12")}>
-                <WhatsAppIcon className="size-5" />
-                שתפו את הנכס
-              </a>
+              <div className="mt-12 flex flex-wrap gap-3">
+                {tour && (
+                  <a href={tour} target="_blank" rel="noopener noreferrer" className={buttonClass("outline")}>
+                    <Rotate3dIcon className="size-5" aria-hidden="true" />
+                    סיור וירטואלי
+                  </a>
+                )}
+                <a href={whatsappShare(l)} target="_blank" rel="noopener" className={buttonClass("outline")}>
+                  <WhatsAppIcon className="size-5" />
+                  שתפו את הנכס
+                </a>
+              </div>
             </Reveal>
           </article>
 

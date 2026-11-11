@@ -32,6 +32,11 @@ export type Listing = {
   /** Public since 11.11.2026 (migration website_address_and_backend); absent before it ran. */
   house_number?: string | null;
   apartment_number?: string | null;
+  /** Public since migration website_more_details; absent before it ran. */
+  garden_count?: number | null;
+  rental_unit_count?: number | null;
+  rental_unit_sqm?: number | null;
+  virtual_tour_url?: string | null;
   /** On the market for less than a week ("חדש בשוק"); worked out when the list is fetched. */
   is_new: boolean;
 };
@@ -94,21 +99,66 @@ export function listingPlace(l: Listing): string {
   return [l.neighborhood, l.city].filter(Boolean).join(", ");
 }
 
-/** The listing's features, as short Hebrew labels. */
+/** "גינה (80 מ״ר)" / "2 מרפסות (30 מ״ר)": one or several of something, with its size when known. */
+function counted(count: number | null | undefined, one: string, many: string, sqm: number | null | undefined): string {
+  const what = (count ?? 0) > 1 ? `${count} ${many}` : one;
+  return sqm ? `${what} (${formatRooms(sqm)} מ״ר)` : what;
+}
+
+/** The listing's features, as short Hebrew labels (cards, the opening, the WhatsApp text). */
 export function listingFeatures(l: Listing): string[] {
   const out: string[] = [];
   if (l.has_safe_room) out.push("ממ״ד");
   if (l.has_elevator) out.push("מעלית");
   if (l.parking_spots > 0) out.push(l.parking_spots === 1 ? "חניה" : `${l.parking_spots} חניות`);
-  if (l.has_balcony) {
-    const count = l.balcony_count && l.balcony_count > 1 ? `${l.balcony_count} מרפסות` : "מרפסת";
-    out.push(l.balcony_sqm ? `${count} (${formatRooms(l.balcony_sqm)} מ״ר)` : count);
-  }
-  if (l.has_garden) out.push(l.garden_sqm ? `גינה (${formatRooms(l.garden_sqm)} מ״ר)` : "גינה");
+  if (l.has_balcony) out.push(counted(l.balcony_count, "מרפסת", "מרפסות", l.balcony_sqm));
+  if (l.has_garden) out.push(counted(l.garden_count, "גינה", "גינות", l.garden_sqm));
   if (l.has_storage) out.push("מחסן");
-  if (l.has_rental_unit) out.push("יחידת דיור");
+  if (l.has_rental_unit) out.push(counted(l.rental_unit_count, "יחידת דיור", "יחידות דיור", l.rental_unit_sqm));
   if (l.is_renovated) out.push("משופץ");
   return out;
+}
+
+/** "2 · 30 מ״ר סה״כ" / "1 · 13 מ״ר" / "16 מ״ר" / "יש": how many and how big, from whatever the CRM has. */
+function amount(count: number | null | undefined, sqm: number | null | undefined): string {
+  const size = sqm ? `${formatRooms(sqm)} מ״ר${(count ?? 0) > 1 ? " סה״כ" : ""}` : null;
+  const parts = [count && count > 0 ? String(count) : null, size].filter(Boolean);
+  return parts.length ? parts.join(" · ") : "יש";
+}
+
+/**
+ * Everything the CRM knows about the listing that a buyer may see, as rows of a details table.
+ * A row appears only when there is something to say: a feature the CRM doesn't have ticked is
+ * left out, not shown as "no" (an empty box in the CRM may only mean nobody filled it in).
+ */
+export function listingDetails(l: Listing): { label: string; value: string }[] {
+  const rows: { label: string; value: string }[] = [];
+  const add = (label: string, value: string | null | undefined | false) => {
+    if (value) rows.push({ label, value });
+  };
+  add("סוג נכס", l.property_type);
+  add("חדרים", formatRooms(l.rooms));
+  add("שטח", l.size_sqm != null && `${formatRooms(l.size_sqm)} מ״ר`);
+  if (hasFloor(l)) {
+    const floor = l.floor === 0 ? "קרקע" : String(l.floor);
+    add("קומה", l.total_floors ? `${floor} מתוך ${l.total_floors}` : floor);
+  }
+  add("כניסה", entryText(l));
+  add("חניות", l.parking_spots > 0 && String(l.parking_spots));
+  add("מרפסות", l.has_balcony && amount(l.balcony_count, l.balcony_sqm));
+  add("גינה", l.has_garden && amount(l.garden_count, l.garden_sqm));
+  add("יחידת דיור", l.has_rental_unit && amount(l.rental_unit_count, l.rental_unit_sqm));
+  add("ממ״ד", l.has_safe_room && "יש");
+  add("מעלית", l.has_elevator && "יש");
+  add("מחסן", l.has_storage && "יש");
+  add("מצב הנכס", l.is_renovated && "משופץ");
+  return rows;
+}
+
+/** The virtual tour's link, only when it is a real web address. */
+export function tourUrl(l: Listing): string | null {
+  const url = l.virtual_tour_url?.trim();
+  return url && /^https?:\/\/\S+$/i.test(url) ? url : null;
 }
 
 /** "כניסה מיידית" / "כניסה: 1.3.2027" / null */
