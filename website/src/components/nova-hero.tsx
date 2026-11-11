@@ -1,9 +1,9 @@
 "use client";
 
-import { ArrowLeftIcon, ChevronLeftIcon, ChevronRightIcon, MapPinIcon, PauseIcon, PlayIcon } from "lucide-react";
+import { ArrowLeftIcon, ChevronLeftIcon, ChevronRightIcon, MapPinIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { type TouchEvent, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { type TouchEvent, useCallback, useEffect, useRef, useState } from "react";
 import { stashPhoto } from "@/lib/handoff";
 import { PhotoPlaceholder } from "./listing-photo";
 import { HeaderMode } from "./motion/header-mode";
@@ -22,16 +22,9 @@ export type NovaSlide = {
 };
 
 const OPEN_MS = 900; // --dur-open
-const SLIDE_SECONDS = 8;
 const CARDS = 3;
 
-const LESS_MOTION = "(prefers-reduced-motion: reduce)";
-const reducedMotion = () => window.matchMedia(LESS_MOTION).matches;
-function onMotionChange(onChange: () => void) {
-  const mq = window.matchMedia(LESS_MOTION);
-  mq.addEventListener("change", onChange);
-  return () => mq.removeEventListener("change", onChange);
-}
+const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /**
  * The opening of the home page: the current listing's photo fills the screen (under the header,
@@ -39,31 +32,16 @@ function onMotionChange(onChange: () => void) {
  * listings wait as cards on the end side. Choosing a card opens its photo from the card into the
  * full screen, then the details rise in.
  *
- * Listings change by themselves every few seconds; the red line is the timer. Any arrow, card,
- * swipe or key stops that for good, the pause button stops and restarts it, and it never runs for
- * visitors who asked for less motion. It also waits while the pointer or the keyboard focus is on
- * the details or the cards, and while the slider is off screen.
+ * Listings change only when the visitor asks: an arrow, a card, a swipe, or the arrow keys.
  */
 export function NovaHero({ slides }: { slides: NovaSlide[] }) {
   const [active, setActive] = useState(0);
   const [previous, setPrevious] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
-  // Changing by itself: only with more than one listing, never when less motion was asked for
-  // (and not on the server, where that isn't known), and until the visitor stops it.
-  const motionOk = useSyncExternalStore(
-    onMotionChange,
-    () => !reducedMotion(),
-    () => false,
-  );
-  const [stopped, setStopped] = useState(false);
-  const [held, setHeld] = useState(false);
-  const [inView, setInView] = useState(true);
   const section = useRef<HTMLElement>(null);
   const layers = useRef<(HTMLDivElement | null)[]>([]);
   const touchX = useRef<number | null>(null);
   const count = slides.length;
-  const canPlay = motionOk && count > 1;
-  const playing = canPlay && !stopped;
 
   const show = useCallback(
     (target: number) => {
@@ -116,21 +94,6 @@ export function NovaHero({ slides }: { slides: NovaSlide[] }) {
     const rect = card && card.offsetParent ? card.getBoundingClientRect() : undefined;
     go(active + dir, rect);
   };
-  /** The visitor took over: no more changing by itself (until they press play). */
-  const byHand = (move: () => void) => {
-    setStopped(true);
-    move();
-  };
-
-  // The timer waits while most of the slider is off screen.
-  useEffect(() => {
-    const el = section.current;
-    if (!el) return;
-    const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting), { threshold: 0.5 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
   // Keyboard, while focus is inside the slider. RTL: ← is the next listing.
   useEffect(() => {
     const el = section.current;
@@ -138,18 +101,14 @@ export function NovaHero({ slides }: { slides: NovaSlide[] }) {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
       e.preventDefault();
-      byHand(() => step(e.key === "ArrowLeft" ? 1 : -1));
+      step(e.key === "ArrowLeft" ? 1 : -1);
     };
     el.addEventListener("keydown", onKey);
     return () => el.removeEventListener("keydown", onKey);
   });
 
   const swipe = {
-    onTouchStart: (e: TouchEvent) => {
-      touchX.current = e.touches[0].clientX;
-      // On a phone there is no pointer to rest on the details: the first touch stops the changing.
-      setStopped(true);
-    },
+    onTouchStart: (e: TouchEvent) => (touchX.current = e.touches[0].clientX),
     onTouchEnd: (e: TouchEvent) => {
       if (touchX.current == null) return;
       const dx = e.changedTouches[0].clientX - touchX.current;
@@ -161,16 +120,7 @@ export function NovaHero({ slides }: { slides: NovaSlide[] }) {
   if (!count) return null;
   const s = slides[active];
   const waiting = Array.from({ length: Math.min(CARDS, count - 1) }, (_, k) => (active + 1 + k) % count);
-  const ticking = playing && !busy;
   const control = cn("inline-flex size-12 shrink-0 items-center justify-center border border-line-strong text-ink hover:border-ink-2 hover:bg-night/60", PRESS);
-  // The timer waits while the pointer or the keyboard focus is on the details or the cards
-  // (a listing must not change under someone who is reading it or about to press it).
-  const hold = {
-    onMouseEnter: () => setHeld(true),
-    onMouseLeave: () => setHeld(false),
-    onFocus: () => setHeld(true),
-    onBlur: () => setHeld(false),
-  };
 
   return (
     <section
@@ -220,9 +170,8 @@ export function NovaHero({ slides }: { slides: NovaSlide[] }) {
         </div>
 
         <div className="flex items-end justify-between gap-10">
-          {/* The current listing. Keyed so its lines rise in again on every change. Announced to
-              screen readers only when the visitor changes it, not while it changes by itself. */}
-          <div key={s.id} className="max-w-xl" aria-live={playing ? "off" : "polite"} {...hold}>
+          {/* The current listing. Keyed so its lines rise in again on every change. */}
+          <div key={s.id} className="max-w-xl" aria-live="polite">
             <p className="rise label-caps flex items-center gap-2 text-ink-2" style={{ animationDelay: "40ms" }}>
               <MapPinIcon className="size-3.5" aria-hidden="true" />
               {s.place}
@@ -266,7 +215,7 @@ export function NovaHero({ slides }: { slides: NovaSlide[] }) {
 
           {/* The next listings, waiting as cards (desktop). */}
           {waiting.length > 0 && (
-            <ul className="hidden shrink-0 items-end gap-4 lg:flex" aria-label="הנכסים הבאים" {...hold}>
+            <ul className="hidden shrink-0 items-end gap-4 lg:flex" aria-label="הנכסים הבאים">
               {waiting.map((i, k) => {
                 const w = slides[i];
                 return (
@@ -275,8 +224,7 @@ export function NovaHero({ slides }: { slides: NovaSlide[] }) {
                       type="button"
                       data-card={k === 0 ? "first" : undefined}
                       onClick={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        byHand(() => go(i, rect));
+                        go(i, e.currentTarget.getBoundingClientRect());
                       }}
                       disabled={busy}
                       className={cn("group/card relative block h-64 w-44 overflow-hidden bg-panel text-start xl:h-72 xl:w-48", PRESS)}
@@ -305,42 +253,19 @@ export function NovaHero({ slides }: { slides: NovaSlide[] }) {
           )}
         </div>
 
-        {/* Controls: arrows, pause, the line (where we are, and the time to the next one) and the count. */}
+        {/* Controls: arrows and the line that shows where we are. */}
         {count > 1 && (
           <div className="flex items-center gap-3">
-            <button type="button" onClick={() => byHand(() => step(-1))} disabled={busy} aria-label="הנכס הקודם" className={control}>
+            <button type="button" onClick={() => step(-1)} disabled={busy} aria-label="הנכס הקודם" className={control}>
               <ChevronRightIcon className="size-5" aria-hidden="true" />
             </button>
-            <button type="button" onClick={() => byHand(() => step(1))} disabled={busy} aria-label="הנכס הבא" className={control}>
+            <button type="button" onClick={() => step(1)} disabled={busy} aria-label="הנכס הבא" className={control}>
               <ChevronLeftIcon className="size-5" aria-hidden="true" />
             </button>
-            {canPlay && (
-              <button
-                type="button"
-                onClick={() => setStopped((v) => !v)}
-                aria-label={playing ? "עצירת ההחלפה האוטומטית של הנכסים" : "הפעלת החלפה אוטומטית של הנכסים"}
-                className={control}
-              >
-                {playing ? <PauseIcon className="size-4" aria-hidden="true" /> : <PlayIcon className="size-4" aria-hidden="true" />}
-              </button>
-            )}
             <div className="relative ms-1 h-px flex-1 bg-line-strong" aria-hidden="true">
-              {/* Listings already passed */}
               <div
                 className="absolute inset-y-[-1px] start-0 bg-red transition-[width] duration-(--dur-enter) ease-out"
-                style={{ width: `${(active / count) * 100}%` }}
-              />
-              {/* The listing on show: full when still, filling while the timer runs */}
-              <div
-                key={`${active}-${ticking}`}
-                className="absolute inset-y-[-1px] origin-right bg-red"
-                style={{
-                  insetInlineStart: `${(active / count) * 100}%`,
-                  width: `${100 / count}%`,
-                  animation: ticking ? `fill-x ${SLIDE_SECONDS}s linear both` : undefined,
-                  animationPlayState: held || !inView ? "paused" : undefined,
-                }}
-                onAnimationEnd={() => step(1)}
+                style={{ width: `${((active + 1) / count) * 100}%` }}
               />
             </div>
             {/* Where we are, in words, for screen readers (the line says it to the eye). */}

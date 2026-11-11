@@ -200,16 +200,6 @@
   animation: drift 16s linear both;
 }
 
-/* The opening slider's timer line (fills while a listing is on screen). */
-@keyframes fill-x {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .drift {
     animation: none;
