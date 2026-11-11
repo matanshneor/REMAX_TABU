@@ -12,7 +12,7 @@ export function TeamList({ team }: { team: Agent[] }) {
       <h2 id="team-title" className="accent-line type-headline">
         הסוכנים שלנו
       </h2>
-      <ul className="mt-12 grid gap-x-8 gap-y-12 grid-cols-2 lg:grid-cols-4">
+      <ul className="mt-10 grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-4">
         {team.map((a, i) => (
           <Reveal key={`${a.full_name}:${a.phone ?? i}`} as="li" index={i % 4}>
             <TeamMember agent={a} />
@@ -23,14 +23,22 @@ export function TeamList({ team }: { team: Agent[] }) {
   );
 }
 
+/** The cut-out fades into the page at the bottom and the sides, so no straight edge shows. */
+export const PORTRAIT_FADE = {
+  maskImage: "linear-gradient(to bottom, #000 72%, transparent 100%), linear-gradient(to right, transparent 0%, #000 12%, #000 88%, transparent 100%)",
+  maskComposite: "intersect",
+  WebkitMaskImage: "linear-gradient(to bottom, #000 72%, transparent 100%), linear-gradient(to right, transparent 0%, #000 12%, #000 88%, transparent 100%)",
+  WebkitMaskComposite: "source-in",
+} as const;
+
 function TeamMember({ agent }: { agent: Agent }) {
   const photo = agentPhotoUrl(agent);
   return (
-    <article>
-      <div className="relative aspect-[4/5] overflow-hidden">
-        {photo && <Image src={photo} alt="" fill sizes="(min-width: 1024px) 290px, 50vw" className="object-cover object-top" />}
+    <article className="flex flex-col items-center text-center">
+      <div className="relative size-28 sm:size-36" style={PORTRAIT_FADE}>
+        {photo && <Image src={photo} alt="" fill sizes="144px" className="object-contain object-bottom" />}
       </div>
-      <h3 className="type-subtitle mt-5">{agent.full_name}</h3>
+      <h3 className="mt-3 font-serif text-lg">{agent.full_name}</h3>
     </article>
   );
 }
