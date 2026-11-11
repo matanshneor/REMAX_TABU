@@ -33,8 +33,12 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="he" dir="rtl" className={`${heading.variable} ${heebo.variable} antialiased`}>
+    // data-scroll-behavior: page changes jump to the top at once (a smooth scroll there would fight
+    // the page transition). suppressHydrationWarning: the script below sets data-header before React starts.
+    <html lang="he" dir="rtl" data-scroll-behavior="smooth" suppressHydrationWarning className={`${heading.variable} ${heebo.variable} antialiased`}>
       <body className="flex min-h-dvh flex-col">
+        {/* The home page opens with a photo under a clear header; say so before the first paint. */}
+        <script dangerouslySetInnerHTML={{ __html: 'if(location.pathname==="/")document.documentElement.dataset.header="overlay"' }} />
         <SiteHeader />
         <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
           {children}

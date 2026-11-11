@@ -4,7 +4,7 @@ import { ChevronDownIcon, SlidersHorizontalIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, type ReactNode, useId } from "react";
 import { FEATURES, type Filters, filtersHref, priceText, SORTS, TYPE_GROUPS } from "@/lib/filters";
-import { buttonClass, cn } from "./ui";
+import { buttonClass, cn, PRESS } from "./ui";
 
 const PRICES = [1_000_000, 1_500_000, 2_000_000, 2_500_000, 3_000_000, 3_500_000, 4_000_000, 5_000_000, 6_000_000, 8_000_000, 10_000_000];
 const SIZES = [50, 60, 70, 80, 90, 100, 120, 140, 160, 200, 250, 300];
@@ -25,7 +25,7 @@ function Select({ name, label, value, children }: { name: string; label: string;
           id={id}
           name={name}
           defaultValue={value ?? ""}
-          className="h-12 w-full cursor-pointer appearance-none border border-line-strong bg-panel pe-10 ps-4 text-ink hover:border-ink-3 focus:border-ink-2"
+          className="h-12 w-full cursor-pointer appearance-none border border-line-strong bg-panel pe-10 ps-4 text-ink transition-colors duration-(--dur-ui) hover:border-ink-3 focus:border-ink-2"
         >
           {children}
         </select>
@@ -60,8 +60,10 @@ export function FilterForm({ filters: f, options }: { filters: Filters; options:
       features: d.getAll("f") as Filters["features"],
       sort: (String(d.get("sort") || "new") as Filters["sort"]),
     });
-    router.push(`${href}#results`, { scroll: false });
-    document.getElementById("results")?.scrollIntoView({ block: "start" });
+    // Tagged "filter" so listing photos stay put while results change (they only travel to a listing's page).
+    router.push(`${href}#results`, { scroll: false, transitionTypes: ["filter"] });
+    // At once: a smooth scroll would still be moving while the results cross-fade.
+    document.getElementById("results")?.scrollIntoView({ block: "start", behavior: "instant" });
   }
 
   const moreCount = [f.pmin, f.fmin, f.fmax, f.smin, f.smax].filter((v) => v != null).length + f.features.length;
@@ -109,10 +111,10 @@ export function FilterForm({ filters: f, options }: { filters: Filters; options:
       </div>
 
       <details className="group mt-6 border-t border-line pt-4" open={moreCount > 0}>
-        <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-2 text-ink-2 hover:text-ink [&::-webkit-details-marker]:hidden">
+        <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-2 text-ink-2 transition-colors duration-(--dur-ui) hover:text-ink [&::-webkit-details-marker]:hidden">
           <SlidersHorizontalIcon className="size-4" aria-hidden="true" />
           עוד סינונים{moreCount > 0 && ` (${moreCount})`}
-          <ChevronDownIcon className="size-4 transition-transform group-open:rotate-180" aria-hidden="true" />
+          <ChevronDownIcon className="size-4 transition-transform duration-(--dur-ui) ease-out group-open:rotate-180" aria-hidden="true" />
         </summary>
         <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-5 lg:grid-cols-4">
           {options.cities.length > 1 && (
@@ -174,6 +176,7 @@ export function FilterForm({ filters: f, options }: { filters: Filters; options:
                 key={k}
                 className={cn(
                   "inline-flex min-h-11 cursor-pointer items-center gap-2.5 border border-line-strong px-4 text-ink-2 hover:border-ink-3",
+                  PRESS,
                   "has-[:checked]:border-ink-2 has-[:checked]:bg-line has-[:checked]:text-ink has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ink",
                 )}
               >

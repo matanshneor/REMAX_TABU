@@ -90,13 +90,15 @@ export function LeadForm({
   if (state === "sent") {
     return (
       <div role="status" className="border border-line-strong p-6">
-        <p className="flex items-center gap-3 font-serif text-2xl font-light">
+        <p className="rise type-subtitle flex items-center gap-3">
           <CheckIcon className="size-6 shrink-0 text-ink-2" aria-hidden="true" />
           תודה, הפנייה נשלחה
         </p>
-        <p className="mt-2 text-ink-2">{agentFirstName} יחזור אליכם בהקדם.</p>
+        <p className="rise mt-2 text-ink-2" style={{ animationDelay: "80ms" }}>
+          {agentFirstName} יחזור אליכם בהקדם.
+        </p>
         {whatsappHref && (
-          <a href={whatsappHref} target="_blank" rel="noopener" className={buttonClass("red", "mt-6 w-full")}>
+          <a href={whatsappHref} target="_blank" rel="noopener" className={buttonClass("red", "rise mt-6 w-full")} style={{ animationDelay: "160ms" }}>
             <WhatsAppIcon className="size-5" />
             לתשובה מהירה בוואטסאפ
           </a>
@@ -105,7 +107,8 @@ export function LeadForm({
     );
   }
 
-  const field = "mt-2 block w-full border bg-night px-4 text-ink placeholder:text-ink-3/70 focus:border-ink-2 focus:outline-none focus-visible:outline-2";
+  const field =
+    "mt-2 block w-full border bg-night px-4 text-ink transition-colors duration-(--dur-ui) placeholder:text-ink-3/70 focus:border-ink-2 focus:outline-none focus-visible:outline-2";
   return (
     <form ref={form} onSubmit={submit} noValidate className="space-y-5" aria-describedby={`${id}-privacy`}>
       <div>

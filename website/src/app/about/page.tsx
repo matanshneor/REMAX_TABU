@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { WhatsAppIcon } from "@/components/icons";
+import { PageTransition } from "@/components/motion/page-transition";
+import { Reveal } from "@/components/motion/reveal";
 import { buttonClass, Container, Fill } from "@/components/ui";
 import { ABOUT, OFFICE } from "@/content/site";
-import { firstName, whatsappToAgent } from "@/lib/contact";
+import { firstName } from "@/lib/contact";
 import { getAgent, getListings } from "@/lib/data";
 import { agentPhotoUrl } from "@/lib/listings";
 
@@ -21,16 +22,17 @@ export default async function AboutPage() {
   const first = firstName(agent.full_name);
 
   return (
+    <PageTransition>
     <Container className="py-16 sm:py-24">
       <div className="grid items-start gap-12 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-20">
         {photo && (
           <div className="relative aspect-[4/5] overflow-hidden border border-line bg-gradient-to-b from-panel to-night">
-            <Image src={photo} alt={agent.full_name} fill priority sizes="(min-width: 1024px) 40vw, 100vw" className="object-cover object-top" />
+            <Image src={photo} alt={agent.full_name} fill loading="eager" sizes="(min-width: 1024px) 40vw, 100vw" className="object-cover object-top" />
           </div>
         )}
         <div>
           <p className="label-caps">זכיין {OFFICE.name}</p>
-          <h1 className="accent-line mt-5 font-serif text-5xl font-light leading-tight sm:text-6xl">{ABOUT.title}</h1>
+          <h1 className="accent-line type-display mt-5">{ABOUT.title}</h1>
           <p className="mt-8 text-xl leading-relaxed text-ink-2">{ABOUT.lead}</p>
           <div className="mt-8 space-y-5 text-lg leading-relaxed text-ink-2">
             {ABOUT.paragraphs.map((p, i) => (
@@ -41,20 +43,18 @@ export default async function AboutPage() {
           </div>
 
           <dl className="mt-14 grid gap-8 sm:grid-cols-3">
-            {ABOUT.facts.map((f) => (
-              <div key={f.label} className="accent-line flex flex-col-reverse">
+            {ABOUT.facts.map((f, i) => (
+              <Reveal key={f.label} index={i} className="accent-line flex flex-col-reverse">
                 <dt className="label-caps mt-2">{f.label}</dt>
-                <dd className="font-serif text-2xl font-light">
+                <dd className="type-subtitle">
                   <Fill text={f.value} className="text-base" />
                 </dd>
-              </div>
+              </Reveal>
             ))}
           </dl>
 
-          <section aria-labelledby="areas-title" className="mt-14">
-            <h2 id="areas-title" className="label-caps">
-              {ABOUT.areasTitle}
-            </h2>
+          <Reveal as="section" className="mt-14">
+            <h2 className="label-caps">{ABOUT.areasTitle}</h2>
             <ul className="mt-4 flex flex-wrap gap-2">
               {areas.map((a) => (
                 <li key={a} className="border border-line-strong px-4 py-2 text-ink-2">
@@ -62,21 +62,17 @@ export default async function AboutPage() {
                 </li>
               ))}
             </ul>
-          </section>
+          </Reveal>
 
-          <div className="mt-14 flex flex-wrap gap-3">
-            {agent.phone && (
-              <a href={whatsappToAgent(agent.phone, undefined, first)} target="_blank" rel="noopener" className={buttonClass("red")}>
-                <WhatsAppIcon className="size-5" />
-                וואטסאפ ל{first}
-              </a>
-            )}
-            <Link href="/#listings" className={buttonClass("outline")}>
+          {/* The page's own next step; WhatsApp and the phone are right below, in the footer. */}
+          <Reveal className="mt-14">
+            <Link href="/#listings" className={buttonClass("red")}>
               לנכסים של {first}
             </Link>
-          </div>
+          </Reveal>
         </div>
       </div>
     </Container>
+    </PageTransition>
   );
 }

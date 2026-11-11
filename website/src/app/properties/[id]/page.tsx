@@ -5,10 +5,13 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { ContactCard, MobileContactBar } from "@/components/contact-card";
 import { Gallery } from "@/components/gallery";
+import { PageTransition } from "@/components/motion/page-transition";
+import { PhotoHandoff } from "@/components/motion/photo-handoff";
+import { Reveal } from "@/components/motion/reveal";
 import { WhatsAppIcon } from "@/components/icons";
 import { ListingCard } from "@/components/listing-card";
 import { buttonClass, Container, NewTag, SectionTitle } from "@/components/ui";
-import { whatsappShare } from "@/lib/contact";
+import { firstName, whatsappShare } from "@/lib/contact";
 import { getAgent, getListing, getListings } from "@/lib/data";
 import { entryText, formatPrice, formatRooms, fullAddress, hasFloor, type Listing, listingFeatures, listingName, listingPlace, photoUrl, similarListings } from "@/lib/listings";
 
@@ -53,6 +56,18 @@ function keyFacts(l: Listing): { label: string; value: string }[] {
   return facts.slice(0, 4);
 }
 
+/** The way back to the list. In the page and in its loading state, so the photo below never shifts. */
+function BackLink() {
+  return (
+    <nav aria-label="ניווט" className="py-6">
+      <Link href="/#listings" className="inline-flex min-h-11 items-center gap-2 text-ink-2 transition-colors duration-(--dur-ui) hover:text-ink">
+        <ArrowRightIcon className="size-4" aria-hidden="true" />
+        לכל הנכסים
+      </Link>
+    </nav>
+  );
+}
+
 async function ListingDetails({ params }: { params: PageProps<"/properties/[id]">["params"] }) {
   await connection();
   const { id } = await params;
@@ -68,24 +83,21 @@ async function ListingDetails({ params }: { params: PageProps<"/properties/[id]"
   return (
     <>
       <Container className="pb-24 lg:pb-0">
-        <nav aria-label="ניווט" className="py-6">
-          <Link href="/#listings" className="inline-flex min-h-11 items-center gap-2 text-ink-2 hover:text-ink">
-            <ArrowRightIcon className="size-4" aria-hidden="true" />
-            לכל הנכסים
-          </Link>
-        </nav>
+        <BackLink />
 
-        <Gallery photos={l.image_paths.map(photoUrl)} title={name} />
+        {/* The photo is already in place when the details arrive (it came with the visitor from
+            the card), so it doesn't animate; everything under it rises in. */}
+        <Gallery id={l.id} photos={l.image_paths.map(photoUrl)} title={name} />
 
-        <div className="mt-12 grid gap-16 lg:mt-16 lg:grid-cols-[minmax(0,1fr)_400px]">
+        <div className="arrive mt-12 grid gap-16 lg:mt-16 lg:grid-cols-[minmax(0,1fr)_400px]">
           <article aria-labelledby="listing-title">
             <header className="accent-line">
               {l.is_new && <NewTag className="mb-4" />}
-              <h1 id="listing-title" className="font-serif text-4xl font-light leading-tight sm:text-5xl">
+              <h1 id="listing-title" className="type-display">
                 {name}
               </h1>
               <p className="mt-3 text-lg text-ink-3">{listingPlace(l)}</p>
-              <p className="mt-8 font-serif text-4xl font-light sm:text-5xl">{formatPrice(l.current_price)}</p>
+              <p className="type-title mt-8">{formatPrice(l.current_price)}</p>
             </header>
 
             {facts.length > 0 && (
@@ -93,26 +105,22 @@ async function ListingDetails({ params }: { params: PageProps<"/properties/[id]"
                 {facts.map((f) => (
                   <div key={f.label} className="accent-line flex flex-col-reverse">
                     <dt className="label-caps mt-2">{f.label}</dt>
-                    <dd className="font-serif text-3xl font-light">{f.value}</dd>
+                    <dd className="type-title">{f.value}</dd>
                   </div>
                 ))}
               </dl>
             )}
 
             {l.description && (
-              <section aria-labelledby="about-title" className="mt-16">
-                <h2 id="about-title" className="label-caps">
-                  על הנכס
-                </h2>
+              <Reveal as="section" className="mt-16">
+                <h2 className="label-caps">על הנכס</h2>
                 <p className="mt-5 max-w-prose whitespace-pre-line text-lg leading-relaxed text-ink-2">{l.description}</p>
-              </section>
+              </Reveal>
             )}
 
             {features.length > 0 && (
-              <section aria-labelledby="features-title" className="mt-16">
-                <h2 id="features-title" className="label-caps">
-                  מאפיינים
-                </h2>
+              <Reveal as="section" className="mt-16">
+                <h2 className="label-caps">מאפיינים</h2>
                 <ul className="mt-5 grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3">
                   {features.map((x) => (
                     <li key={x} className="flex items-center gap-3 border-b border-line pb-4 text-ink-2">
@@ -121,23 +129,20 @@ async function ListingDetails({ params }: { params: PageProps<"/properties/[id]"
                     </li>
                   ))}
                 </ul>
-              </section>
+              </Reveal>
             )}
 
-            <section aria-labelledby="location-title" className="mt-16">
-              <h2 id="location-title" className="label-caps">
-                כתובת
-              </h2>
+            <Reveal as="section" className="mt-16">
+              <h2 className="label-caps">כתובת</h2>
               <p className="mt-5 flex items-center gap-3 text-lg text-ink-2">
                 <MapPinIcon className="size-5 shrink-0 text-ink-3" aria-hidden="true" />
                 {location || "ירושלים"}
               </p>
-            </section>
-
-            <a href={whatsappShare(l)} target="_blank" rel="noopener" className={buttonClass("outline", "mt-12")}>
-              <WhatsAppIcon className="size-5" />
-              שיתוף הנכס בוואטסאפ
-            </a>
+              <a href={whatsappShare(l)} target="_blank" rel="noopener" className={buttonClass("outline", "mt-12")}>
+                <WhatsAppIcon className="size-5" />
+                שיתוף הנכס בוואטסאפ
+              </a>
+            </Reveal>
           </article>
 
           <aside className="lg:sticky lg:top-28 lg:self-start">
@@ -147,12 +152,14 @@ async function ListingDetails({ params }: { params: PageProps<"/properties/[id]"
 
         {similar.length > 0 && (
           <section aria-labelledby="similar-title" className="mt-32">
-            <SectionTitle id="similar-title" label="עוד מהנכסים של משה" title="נכסים דומים" />
+            <Reveal>
+              <SectionTitle id="similar-title" label={`עוד מהנכסים של ${firstName(agent.full_name)}`} title="נכסים דומים" />
+            </Reveal>
             <ul className="mt-10 grid gap-x-10 gap-y-16 sm:grid-cols-2 lg:grid-cols-3">
-              {similar.map((s) => (
-                <li key={s.id}>
+              {similar.map((s, i) => (
+                <Reveal as="li" key={s.id} index={i}>
                   <ListingCard listing={s} />
-                </li>
+                </Reveal>
               ))}
             </ul>
           </section>
@@ -166,7 +173,7 @@ async function ListingDetails({ params }: { params: PageProps<"/properties/[id]"
 function NotOnSite() {
   return (
     <Container className="py-32">
-      <h1 className="accent-line font-serif text-4xl font-light">הנכס הזה כבר לא באתר</h1>
+      <h1 className="accent-line type-title">הנכס הזה כבר לא באתר</h1>
       <p className="mt-4 max-w-md text-lg text-ink-2">ייתכן שהוא נמכר או ירד מהשוק. אפשר לראות את הנכסים שמוצעים עכשיו.</p>
       <Link href="/#listings" className={buttonClass("red", "mt-10")}>
         לכל הנכסים
@@ -175,20 +182,23 @@ function NotOnSite() {
   );
 }
 
+/** While the details are on their way: the same top of the page, with the pressed photo in its slot. */
 function DetailsFallback() {
   return (
     <Container aria-busy="true" aria-label="טוען את הנכס">
-      <div className="h-17" />
-      <div className="aspect-[4/5] animate-pulse bg-panel lg:aspect-auto lg:h-[min(72vh,640px)]" />
-      <div className="mt-16 h-12 w-1/2 animate-pulse bg-panel" />
+      <BackLink />
+      <PhotoHandoff />
+      <div className="mt-12 h-12 w-1/2 animate-pulse bg-panel lg:mt-16" />
     </Container>
   );
 }
 
 export default function ListingPage(props: PageProps<"/properties/[id]">) {
   return (
-    <Suspense fallback={<DetailsFallback />}>
-      <ListingDetails params={props.params} />
-    </Suspense>
+    <PageTransition>
+      <Suspense fallback={<DetailsFallback />}>
+        <ListingDetails params={props.params} />
+      </Suspense>
+    </PageTransition>
   );
 }

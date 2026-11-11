@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { WhatsAppIcon } from "@/components/icons";
 import { LeadForm } from "@/components/lead-form";
+import { PageTransition } from "@/components/motion/page-transition";
 import { Container, Fill } from "@/components/ui";
 import { OFFICE } from "@/content/site";
 import { firstName, telHref, whatsappToAgent } from "@/lib/contact";
@@ -32,11 +33,12 @@ export default async function ContactPage() {
   const agent = await getAgent();
   const first = firstName(agent.full_name);
   const wa = agent.phone ? whatsappToAgent(agent.phone, undefined, first) : null;
-  const link = "inline-flex min-h-11 items-center hover:text-ink underline decoration-line-strong underline-offset-8";
+  const link = "inline-flex min-h-11 items-center underline decoration-line-strong underline-offset-8 transition-colors duration-(--dur-ui) hover:text-ink";
   return (
+    <PageTransition>
     <Container className="py-16 sm:py-24">
       <p className="label-caps">צור קשר</p>
-      <h1 className="accent-line mt-5 font-serif text-5xl font-light leading-tight sm:text-6xl">נדבר?</h1>
+      <h1 className="accent-line type-display mt-5">נדבר?</h1>
       <p className="mt-6 max-w-xl text-xl text-ink-2">שאלה על נכס, תיאום סיור, או חיפוש של משהו שעוד לא באתר. {first} זמין בטלפון, בוואטסאפ ובטופס.</p>
 
       <div className="mt-16 grid gap-16 lg:grid-cols-2">
@@ -72,7 +74,7 @@ export default async function ContactPage() {
           </Row>
         </dl>
         <section aria-labelledby="form-title" className="border border-line bg-panel p-6 sm:p-10">
-          <h2 id="form-title" className="font-serif text-3xl font-light">
+          <h2 id="form-title" className="type-title">
             השאירו פרטים
           </h2>
           <p className="mb-8 mt-2 text-ink-2">{first} יחזור אליכם בהקדם.</p>
@@ -80,5 +82,6 @@ export default async function ContactPage() {
         </section>
       </div>
     </Container>
+    </PageTransition>
   );
 }

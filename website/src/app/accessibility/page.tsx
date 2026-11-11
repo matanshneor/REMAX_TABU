@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PageTransition } from "@/components/motion/page-transition";
 import { Container } from "@/components/ui";
 import { ACCESSIBILITY_UPDATED, OFFICE } from "@/content/site";
 import { telHref } from "@/lib/contact";
@@ -12,11 +13,12 @@ export const metadata: Metadata = {
 
 export default async function AccessibilityPage() {
   const agent = await getAgent();
-  const h2 = "mt-12 font-serif text-2xl font-light";
+  const h2 = "type-subtitle mt-12";
   const p = "mt-4 text-lg leading-relaxed text-ink-2";
   return (
+    <PageTransition>
     <Container className="max-w-3xl py-16 sm:py-24">
-      <h1 className="accent-line font-serif text-5xl font-light">הצהרת נגישות</h1>
+      <h1 className="accent-line type-display">הצהרת נגישות</h1>
       <p className={p}>
         אנחנו רואים חשיבות בכך שכל אחד ואחת יוכלו להשתמש באתר בקלות, כולל אנשים עם מוגבלות. האתר נבנה לפי תקנות שוויון זכויות לאנשים עם מוגבלות
         (התאמות נגישות לשירות), התשע״ג-2013, ולפי התקן הישראלי ת״י 5568, שמבוסס על הנחיות WCAG 2.1 ברמה AA.
@@ -30,7 +32,7 @@ export default async function AccessibilityPage() {
         <li>לכל שדה בטפסים יש תווית, והודעות השגיאה אומרות מה צריך לתקן.</li>
         <li>לתמונות הנכסים יש תיאור טקסט. בגלריה אפשר לעבור בין התמונות בחצים במקלדת ולסגור עם Esc.</li>
         <li>כפתורים וקישורים בגודל 44 פיקסלים לפחות, ונוחים ללחיצה בטלפון.</li>
-        <li>האתר מכבד את הגדרת ״הפחתת תנועה״ של המכשיר.</li>
+        <li>האתר מכבד את הגדרת ״הפחתת תנועה״ של המכשיר: בלי אנימציות ובלי החלפה אוטומטית של נכסים. להחלפה האוטומטית בפתיחת דף הבית יש כפתור עצירה.</li>
         <li>אפשר להגדיל את הטקסט עד 200% בלי לאבד תוכן.</li>
       </ul>
 
@@ -66,5 +68,6 @@ export default async function AccessibilityPage() {
 
       <p className="mt-12 text-sm text-ink-3">ההצהרה עודכנה ב-{ACCESSIBILITY_UPDATED}.</p>
     </Container>
+    </PageTransition>
   );
 }

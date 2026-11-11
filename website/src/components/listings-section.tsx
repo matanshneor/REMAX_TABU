@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { ViewTransition } from "react";
 import { applyFilters, describeFilters, filtersHref, isFiltered, PAGE_SIZE, parseFilters } from "@/lib/filters";
 import { firstName, whatsappToAgent } from "@/lib/contact";
 import { getAgent, getListings } from "@/lib/data";
 import { FilterForm } from "./filter-form";
 import { LeadForm } from "./lead-form";
 import { ListingCard } from "./listing-card";
+import { Reveal } from "./motion/reveal";
 import { buttonClass } from "./ui";
 
 /** The list under the opening photo: search, results, "הצגת עוד", and the "not found" form. */
@@ -26,54 +28,64 @@ export async function ListingsSection({ searchParams }: { searchParams: Promise<
     <>
       <FilterForm key={filtersHref(f)} filters={f} options={options} />
 
-      <div id="results" className="mt-12 flex scroll-mt-28 flex-wrap items-baseline justify-between gap-4">
-        <p className="text-ink-2" role="status">
-          {results.length === 0
-            ? "אין נכסים שמתאימים לחיפוש"
-            : results.length === 1
-              ? "נכס אחד"
-              : `${results.length} נכסים`}
-          {filtered && results.length > 0 && <span className="text-ink-3"> · {describeFilters(f)}</span>}
-        </p>
-        {filtered && (
-          <Link href="/#listings" className="inline-flex min-h-11 items-center text-ink-2 underline decoration-line-strong underline-offset-8 hover:text-ink">
-            ניקוי החיפוש
-          </Link>
-        )}
-      </div>
-
-      {shown.length > 0 ? (
-        <ul className="mt-8 grid gap-x-10 gap-y-16 sm:grid-cols-2">
-          {shown.map((l, i) => (
-            <li key={l.id}>
-              <ListingCard listing={l} priority={i < 2} />
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <div className="mt-8 grid gap-10 border border-line p-6 sm:p-10 lg:grid-cols-2">
-          <div>
-            <h3 className="accent-line font-serif text-3xl font-light leading-tight">לא מצאתם? ספרו ל{first} מה אתם מחפשים</h3>
-            <p className="mt-4 max-w-md text-ink-2">
-              לא כל נכס מגיע לאתר. {first} יחפש בשבילכם, ויחזור אליכם כשיהיה משהו שמתאים.
+      {/* Results cross-fade when the search changes. "More" keeps the same block, so only the new cards arrive. */}
+      <ViewTransition key={filtersHref({ ...f, n: PAGE_SIZE })} name="results" share="results-fade" default="none">
+        <div>
+          <div id="results" className="mt-12 flex scroll-mt-28 flex-wrap items-baseline justify-between gap-4">
+            <p className="text-ink-2" role="status">
+              {results.length === 0 ? "אין נכסים שמתאימים לחיפוש" : results.length === 1 ? "נכס אחד" : `${results.length} נכסים`}
+              {filtered && results.length > 0 && <span className="text-ink-3"> · {describeFilters(f)}</span>}
             </p>
+            {filtered && (
+              <Link
+                href="/#listings"
+                transitionTypes={["filter"]}
+                className="inline-flex min-h-11 items-center text-ink-2 underline decoration-line-strong underline-offset-8 transition-colors duration-(--dur-ui) hover:text-ink"
+              >
+                ניקוי החיפוש
+              </Link>
+            )}
           </div>
-          <LeadForm
-            defaultMessage={filtered ? `מחפשים: ${describeFilters(f)}` : ""}
-            messageLabel="מה אתם מחפשים?"
-            agentFirstName={first}
-            whatsappHref={agent.phone ? whatsappToAgent(agent.phone, undefined, first) : null}
-          />
-        </div>
-      )}
 
-      {results.length > shown.length && (
-        <div className="mt-16 flex justify-center">
-          <Link href={filtersHref({ ...f, n: f.n + PAGE_SIZE })} scroll={false} className={buttonClass("outline", "min-w-56")}>
-            הצגת עוד נכסים ({results.length - shown.length})
-          </Link>
+          {shown.length > 0 ? (
+            <ul className="mt-8 grid gap-x-10 gap-y-16 sm:grid-cols-2">
+              {shown.map((l, i) => (
+                <Reveal as="li" key={l.id} index={i % 2}>
+                  <ListingCard listing={l} eager={i < 2} />
+                </Reveal>
+              ))}
+            </ul>
+          ) : (
+            <div className="mt-8 grid gap-10 border border-line p-6 sm:p-10 lg:grid-cols-2">
+              <div>
+                <h3 className="accent-line type-title">לא מצאתם? ספרו ל{first} מה אתם מחפשים</h3>
+                <p className="mt-4 max-w-md text-ink-2">
+                  לא כל נכס מגיע לאתר. {first} יחפש בשבילכם, ויחזור אליכם כשיהיה משהו שמתאים.
+                </p>
+              </div>
+              <LeadForm
+                defaultMessage={filtered ? `מחפשים: ${describeFilters(f)}` : ""}
+                messageLabel="מה אתם מחפשים?"
+                agentFirstName={first}
+                whatsappHref={agent.phone ? whatsappToAgent(agent.phone, undefined, first) : null}
+              />
+            </div>
+          )}
+
+          {results.length > shown.length && (
+            <div className="mt-16 flex justify-center">
+              <Link
+                href={filtersHref({ ...f, n: f.n + PAGE_SIZE })}
+                scroll={false}
+                transitionTypes={["filter"]}
+                className={buttonClass("outline", "min-w-56")}
+              >
+                הצגת עוד נכסים ({results.length - shown.length})
+              </Link>
+            </div>
+          )}
         </div>
-      )}
+      </ViewTransition>
     </>
   );
 }

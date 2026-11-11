@@ -6,7 +6,7 @@ import type { Text } from "@/content/site";
 export const cn = clsx;
 
 /** The office logo, recolored for the dark background (white wordmark, filled balloon). Size it with className (a height plus w-auto, or a width plus h-auto). */
-export function Logo({ className, priority, sizes = "240px" }: { className?: string; priority?: boolean; sizes?: string }) {
+export function Logo({ className, preload, sizes = "240px" }: { className?: string; preload?: boolean; sizes?: string }) {
   return (
     <Image
       src="/logo-light.png"
@@ -14,7 +14,7 @@ export function Logo({ className, priority, sizes = "240px" }: { className?: str
       width={1211}
       height={384}
       sizes={sizes}
-      priority={priority}
+      preload={preload}
       className={className}
     />
   );
@@ -26,10 +26,14 @@ const BUTTON = {
   panel: "bg-panel text-ink hover:bg-line",
 } as const;
 
+/** Pressed state for anything pressable: it gives a little under the finger, and comes back. */
+export const PRESS = "transition-[color,background-color,border-color,scale] duration-(--dur-press) ease-out active:scale-[0.97]";
+
 /** Buttons and button-looking links: at least 44px tall, straight corners. */
 export function buttonClass(variant: keyof typeof BUTTON = "red", className?: string) {
   return cn(
-    "inline-flex min-h-12 items-center justify-center gap-2.5 px-6 text-[15px] font-medium tracking-wide transition-colors",
+    "inline-flex min-h-12 items-center justify-center gap-2.5 px-6 text-[15px] font-medium tracking-wide",
+    PRESS,
     BUTTON[variant],
     className,
   );
@@ -39,12 +43,12 @@ export function Container({ className, ...props }: ComponentProps<"div">) {
   return <div className={cn("mx-auto w-full max-w-7xl px-4 sm:px-8", className)} {...props} />;
 }
 
-/** Section heading: small spaced label above a light serif title. */
+/** Section heading: small spaced label above a light title. */
 export function SectionTitle({ label, title, id, as: Tag = "h2" }: { label?: string; title: ReactNode; id?: string; as?: "h1" | "h2" }) {
   return (
     <div>
       {label && <p className="label-caps mb-3">{label}</p>}
-      <Tag id={id} className="font-serif text-3xl font-light leading-tight sm:text-4xl">
+      <Tag id={id} className="type-title">
         {title}
       </Tag>
     </div>
