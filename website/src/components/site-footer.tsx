@@ -1,43 +1,24 @@
-import { MailIcon, MapPinIcon, PhoneIcon } from "lucide-react";
+import { MailIcon, MapPinIcon } from "lucide-react";
 import Link from "next/link";
-import { LICENSE, OFFICE } from "@/content/site";
-import { firstName, telHref, whatsappToAgent } from "@/lib/contact";
+import { OFFICE } from "@/content/site";
 import { getAgent } from "@/lib/data";
-import { WhatsAppIcon } from "./icons";
 import { NAV } from "./site-header";
-import { Reveal } from "./motion/reveal";
-import { buttonClass, Container, Logo } from "./ui";
+import { Container, Logo } from "./ui";
 
 /**
- * Every page ends here: first the two quickest ways to reach the agent, then the quiet details.
+ * Every page ends here: the office's details, the site links and the legal pages.
  */
 export async function SiteFooter() {
   const agent = await getAgent();
-  const first = firstName(agent.full_name);
   const link = "inline-flex min-h-11 items-center gap-3 transition-colors duration-(--dur-ui) hover:text-ink";
   return (
     <footer className="mt-32 border-t border-line bg-panel/40">
-      {agent.phone && (
-        <Container className="border-b border-line py-12 sm:py-14">
-          <Reveal className="flex flex-col gap-3 sm:flex-row">
-            <a href={whatsappToAgent(agent.phone, undefined, first)} target="_blank" rel="noopener" className={buttonClass("red", "min-h-14 px-8")}>
-              <WhatsAppIcon className="size-5" />
-              וואטסאפ ל{first}
-            </a>
-            <a href={telHref(agent.phone)} className={buttonClass("outline", "min-h-14 px-8")}>
-              <PhoneIcon className="size-5" aria-hidden="true" />
-              <span dir="ltr">{agent.phone}</span>
-            </a>
-          </Reveal>
-        </Container>
-      )}
       <Container className="grid gap-12 py-16 md:grid-cols-[1.2fr_1fr_1fr]">
         <div>
           <Logo className="h-12 w-auto" />
-          <p className="type-subtitle mt-6">{agent.full_name}</p>
-          <p className="mt-1 text-ink-3">
-            זכיין {OFFICE.name} · רישיון תיווך {LICENSE}
-          </p>
+          <p className="type-subtitle mt-6">{OFFICE.name}</p>
+          <p className="mt-1 text-ink-3">{OFFICE.tagline}</p>
+          {typeof OFFICE.hours === "string" && <p className="mt-1 text-ink-3">{OFFICE.hours}</p>}
         </div>
         <div>
           <h2 className="label-caps mb-4">פרטים</h2>
@@ -83,7 +64,7 @@ export async function SiteFooter() {
         </nav>
       </Container>
       <div className="border-t border-line">
-        <Container className="py-6 text-sm text-ink-3">© {OFFICE.name} | {agent.full_name}</Container>
+        <Container className="py-6 text-sm text-ink-3">© {OFFICE.name}</Container>
       </div>
     </footer>
   );
