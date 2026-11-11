@@ -161,7 +161,6 @@ export function NovaHero({ slides }: { slides: NovaSlide[] }) {
   if (!count) return null;
   const s = slides[active];
   const waiting = Array.from({ length: Math.min(CARDS, count - 1) }, (_, k) => (active + 1 + k) % count);
-  const num = (n: number) => String(n).padStart(2, "0");
   const ticking = playing && !busy;
   const control = cn("inline-flex size-12 shrink-0 items-center justify-center border border-line-strong text-ink hover:border-ink-2 hover:bg-night/60", PRESS);
   // The timer waits while the pointer or the keyboard focus is on the details or the cards
@@ -344,12 +343,9 @@ export function NovaHero({ slides }: { slides: NovaSlide[] }) {
                 onAnimationEnd={() => step(1)}
               />
             </div>
-            <p className="shrink-0 font-serif text-lg font-light tabular-nums text-ink-2">
-              <span className="sr-only">נכס </span>
-              {num(active + 1)}
-              <span className="mx-1.5 text-ink-3">/</span>
-              <span className="sr-only"> מתוך </span>
-              {num(count)}
+            {/* Where we are, in words, for screen readers (the line says it to the eye). */}
+            <p className="sr-only" data-position>
+              נכס {active + 1} מתוך {count}
             </p>
           </div>
         )}

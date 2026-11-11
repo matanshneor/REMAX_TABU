@@ -2,7 +2,7 @@
 
 import { ChevronDownIcon, SlidersHorizontalIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type FormEvent, type ReactNode, useId } from "react";
+import { type FormEvent, type ReactNode, useId, useState } from "react";
 import { FEATURES, type Filters, filtersHref, priceText, SORTS, TYPE_GROUPS } from "@/lib/filters";
 import { buttonClass, cn, PRESS } from "./ui";
 
@@ -41,6 +41,9 @@ function Select({ name, label, value, children }: { name: string; label: string;
  */
 export function FilterForm({ filters: f, options }: { filters: Filters; options: FilterOptions }) {
   const router = useRouter();
+  const id = useId();
+  // On phones the search starts folded behind one button (on wider screens it is always open).
+  const [open, setOpen] = useState(false);
 
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -67,9 +70,33 @@ export function FilterForm({ filters: f, options }: { filters: Filters; options:
   }
 
   const moreCount = [f.pmin, f.fmin, f.fmax, f.smin, f.smax].filter((v) => v != null).length + f.features.length;
+  // How many choices are in force, shown on the phone button.
+  const activeCount = [f.type, f.hood, f.city, f.rooms, f.pmax].filter((v) => v != null && v !== "").length + moreCount + (f.sort !== "new" ? 1 : 0);
 
   return (
-    <form action="/" method="get" onSubmit={submit} role="search" aria-label="חיפוש נכסים" className="border border-line bg-panel/50 p-5 sm:p-8">
+    <>
+    <button
+      type="button"
+      aria-expanded={open}
+      aria-controls={id}
+      onClick={() => setOpen((o) => !o)}
+      className={buttonClass("outline", "w-full justify-between sm:hidden")}
+    >
+      <span className="inline-flex items-center gap-2.5">
+        <SlidersHorizontalIcon className="size-4" aria-hidden="true" />
+        סינון ומיון{activeCount > 0 && ` (${activeCount})`}
+      </span>
+      <ChevronDownIcon className={cn("size-4 transition-transform duration-(--dur-ui) ease-out", open && "rotate-180")} aria-hidden="true" />
+    </button>
+    <form
+      id={id}
+      action="/"
+      method="get"
+      onSubmit={submit}
+      role="search"
+      aria-label="חיפוש נכסים"
+      className={cn("border border-line bg-panel/50 p-5 sm:p-8", open ? "max-sm:rise max-sm:mt-3" : "max-sm:hidden")}
+    >
       <div className="grid grid-cols-2 gap-x-4 gap-y-5 lg:grid-cols-4">
         <Select name="type" label="סוג נכס" value={f.type}>
           <option value="">הכל</option>
@@ -203,5 +230,6 @@ export function FilterForm({ filters: f, options }: { filters: Filters; options:
         </button>
       </div>
     </form>
+    </>
   );
 }

@@ -26,10 +26,11 @@ export async function ListingsSection({ searchParams }: { searchParams: Promise<
 
   return (
     <>
-      <FilterForm key={filtersHref(f)} filters={f} options={options} />
+      {/* The form and the results below are siblings: their keys must differ, or React keeps a stale copy of one. */}
+      <FilterForm key={`form ${filtersHref(f)}`} filters={f} options={options} />
 
       {/* Results cross-fade when the search changes. "More" keeps the same block, so only the new cards arrive. */}
-      <ViewTransition key={filtersHref({ ...f, n: PAGE_SIZE })} name="results" share="results-fade" default="none">
+      <ViewTransition key={`results ${filtersHref({ ...f, n: PAGE_SIZE })}`} name="results" share="results-fade" default="none">
         <div>
           <div id="results" className="mt-12 flex scroll-mt-28 flex-wrap items-baseline justify-between gap-4">
             <p className="text-ink-2" role="status">
@@ -93,7 +94,7 @@ export async function ListingsSection({ searchParams }: { searchParams: Promise<
 export function ListingsFallback() {
   return (
     <div aria-busy="true" aria-label="טוען נכסים">
-      <div className="h-56 border border-line bg-panel/50" />
+      <div className="h-12 border border-line bg-panel/50 sm:h-56" />
       <div className="mt-20 grid gap-x-10 gap-y-16 sm:grid-cols-2">
         {[0, 1].map((i) => (
           <div key={i}>
