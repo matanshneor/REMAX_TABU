@@ -21,14 +21,14 @@ Each product has its own README: [crm](crm/README.md), [website](website/README.
 
 ## Railway
 
-One project, `remax-crm` (Europe, Netherlands), all services connected to the `matanshneor/REMAX_TABU` repository and redeployed on every push to `main`. The settings live in each service on Railway, not in files. A service redeploys only when its own folder changes (watch paths).
+One project, `REMAX_TABU` (Europe, Netherlands), all services connected to the `matanshneor/REMAX_TABU` repository and redeployed on every push to `main`. The settings live in each service on Railway, not in files. A service redeploys only when its own folder changes (watch paths).
 
 | Service | Root directory | Start command | Healthcheck | Variables |
 |---|---|---|---|---|
-| frontend (CRM) | `/crm/frontend` | `npm run start -- -p $PORT` | `/login` | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_API_URL` (CRM backend), `AD_TOOL_ORIGIN` (the ad tool service) |
-| backend (CRM) | `/crm/backend` | `uvicorn app.main:app --host 0.0.0.0 --port $PORT` | `/health` | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `CORS_ORIGINS` (the CRM's address) |
-| daily-digest (CRM) | `/crm/backend` | `python -m app.jobs.daily_digest` · cron `0 5,6 * * *` | none | as the CRM backend |
-| website (frontend) | `/website/frontend` | `npm run start -- -p $PORT` | `/about` | see [website/README.md](website/README.md#settings-on-railway) |
+| crm-frontend | `/crm/frontend` | `npm run start -- -p $PORT` | `/login` | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_API_URL` (CRM backend), `AD_TOOL_ORIGIN` (the ad tool service) |
+| crm-backend | `/crm/backend` | `uvicorn app.main:app --host 0.0.0.0 --port $PORT` | `/health` | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `CORS_ORIGINS` (the CRM's address) |
+| crm-daily-digest | `/crm/backend` | `python -m app.jobs.daily_digest` · cron `0 5,6 * * *` | none | as the CRM backend |
+| website-frontend | `/website/frontend` | `npm run start -- -p $PORT` | `/about` | see [website/README.md](website/README.md#settings-on-railway) |
 | website-backend | `/website/backend` | `uvicorn app.main:app --host 0.0.0.0 --port $PORT` | `/health` | see [website/README.md](website/README.md#settings-on-railway) |
 | ad-tool | `/ad-tool/frontend` | `npm start` | `/` | none |
 
