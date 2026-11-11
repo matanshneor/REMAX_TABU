@@ -10,17 +10,19 @@ const heading = Rubik({ variable: "--font-heading", weight: ["300", "400"], subs
 const heebo = Heebo({ variable: "--font-heebo", weight: ["300", "400", "500"], subsets: ["hebrew", "latin"] });
 
 const TITLE = "משה שניאור · RE/MAX טאבו נכסים";
-const DESCRIPTION = "בתים, קוטג׳ים ודירות גן למכירה בירושלים, מבית משה שניאור, RE/MAX טאבו נכסים. תמונות, מחירים ותיאום סיור בוואטסאפ.";
+/** The home page in Google and in link previews (the owner's wording). Inner pages: "<page> | TITLE". */
+const HOME_TITLE = "RE/MAX טאבו נכסים | נכסים למכירה בירושלים";
+const DESCRIPTION = "בתים למכירה בירושלים, RE/MAX טאבו נכסים | משה שניאור";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: { default: `${TITLE} | נכסים למכירה בירושלים`, template: `%s | ${TITLE}` },
+  title: { default: HOME_TITLE, template: `%s | ${TITLE}` },
   description: DESCRIPTION,
   openGraph: {
     type: "website",
     locale: "he_IL",
     siteName: TITLE,
-    title: `${TITLE} | נכסים למכירה בירושלים`,
+    title: HOME_TITLE,
     description: DESCRIPTION,
     images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "RE/MAX טאבו נכסים" }],
   },

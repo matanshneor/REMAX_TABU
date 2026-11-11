@@ -9,8 +9,7 @@ import { Reveal } from "./motion/reveal";
 import { buttonClass, Container, Logo } from "./ui";
 
 /**
- * Every page ends here: first one line and the two quickest ways to reach the agent (the page's
- * destination), then the quiet details.
+ * Every page ends here: first the two quickest ways to reach the agent, then the quiet details.
  */
 export async function SiteFooter() {
   const agent = await getAgent();
@@ -19,12 +18,8 @@ export async function SiteFooter() {
   return (
     <footer className="mt-32 border-t border-line bg-panel/40">
       {agent.phone && (
-        <Container className="border-b border-line py-20 sm:py-24">
-          <Reveal>
-            <p className="label-caps">לתיאום סיור, או סתם לשאול</p>
-            <p className="accent-line type-display mt-5 max-w-3xl">הבית הבא שלכם מתחיל בשיחה.</p>
-          </Reveal>
-          <Reveal index={1} className="mt-10 flex flex-col gap-3 sm:flex-row">
+        <Container className="border-b border-line py-12 sm:py-14">
+          <Reveal className="flex flex-col gap-3 sm:flex-row">
             <a href={whatsappToAgent(agent.phone, undefined, first)} target="_blank" rel="noopener" className={buttonClass("red", "min-h-14 px-8")}>
               <WhatsAppIcon className="size-5" />
               וואטסאפ ל{first}
@@ -88,7 +83,7 @@ export async function SiteFooter() {
         </nav>
       </Container>
       <div className="border-t border-line">
-        <Container className="py-6 text-sm text-ink-3">© {OFFICE.name}. כל הנכסים באתר מוצעים למכירה דרך {agent.full_name}.</Container>
+        <Container className="py-6 text-sm text-ink-3">© {OFFICE.name} | {agent.full_name}</Container>
       </div>
     </footer>
   );
