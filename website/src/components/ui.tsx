@@ -5,14 +5,14 @@ import type { Text } from "@/content/site";
 
 export const cn = clsx;
 
-/** The office logo, recolored for the dark background (white wordmark, filled balloon). Size it with className (a height plus w-auto, or a width plus h-auto). */
+/** The office logo for the dark background (cream wordmark, the office's name in red, the new balloon). Size it with className (a height plus w-auto, or a width plus h-auto). */
 export function Logo({ className, preload, sizes = "240px" }: { className?: string; preload?: boolean; sizes?: string }) {
   return (
     <Image
       src="/logo-light.png"
       alt="RE/MAX טאבו נכסים"
-      width={1211}
-      height={384}
+      width={1200}
+      height={470}
       sizes={sizes}
       preload={preload}
       className={className}

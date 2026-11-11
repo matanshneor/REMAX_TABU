@@ -6,7 +6,7 @@ import { SITE_URL } from "@/lib/env";
 import "./globals.css";
 
 // Headings and prices: a clean sans (no serif). Body text stays Heebo.
-const heading = Rubik({ variable: "--font-heading", weight: ["300", "400"], subsets: ["hebrew", "latin"] });
+const heading = Rubik({ variable: "--font-heading", weight: ["300", "400", "500", "700"], subsets: ["hebrew", "latin"] });
 const heebo = Heebo({ variable: "--font-heebo", weight: ["300", "400", "500"], subsets: ["hebrew", "latin"] });
 
 const TITLE = "משה שניאור · RE/MAX טאבו נכסים";
