@@ -58,12 +58,7 @@ export async function ListingsSection({ searchParams }: { searchParams: Promise<
             </ul>
           ) : (
             <div className="mt-8 grid gap-10 border border-line p-6 sm:p-10 lg:grid-cols-2">
-              <div>
-                <h3 className="accent-line type-title">לא מצאתם? ספרו ל{first} מה אתם מחפשים</h3>
-                <p className="mt-4 max-w-md text-ink-2">
-                  לא כל נכס מגיע לאתר. {first} יחפש בשבילכם, ויחזור אליכם כשיהיה משהו שמתאים.
-                </p>
-              </div>
+              <h3 className="accent-line type-title">לא מצאתם? צרו קשר</h3>
               <LeadForm
                 defaultMessage={filtered ? `מחפשים: ${describeFilters(f)}` : ""}
                 messageLabel="מה אתם מחפשים?"

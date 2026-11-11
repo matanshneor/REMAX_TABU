@@ -9,8 +9,8 @@ export type Text = string | { todo: string };
 export const OFFICE = {
   name: "RE/MAX טאבו נכסים",
   tagline: "עם הצלחה לא מתווכחים",
-  address: TODO("כתובת המשרד (רחוב, מספר, שכונה, עיר)") as Text,
-  hours: TODO("שעות פעילות, למשל: א׳–ה׳ 9:00–19:00") as Text,
+  address: "משה דיין 154, פסגת זאב, ירושלים" as Text,
+  hours: "9:00 עד 21:00" as Text,
 };
 
 /** The agent's license number (printed on the office's ads too). */
@@ -19,18 +19,17 @@ export const LICENSE = "3181402";
 export const ABOUT = {
   title: "משה שניאור",
   lead: "זכיין RE/MAX טאבו נכסים. מלווה משפחות וזוגות במכירה ובקנייה של בתים בירושלים, מהביקור הראשון ועד החתימה.",
+  // The owner's own words (11.11.2026), with typos fixed.
   paragraphs: [
-    TODO("כמה שנים משה בתחום, ואיך הגיע אליו (2–3 משפטים)"),
-    TODO("מה מייחד את הדרך שבה משה עובד עם קונים: זמינות, היכרות עם השכונות, ליווי עד החתימה"),
-    TODO("משפט אישי: משפחה, קשר לשכונות, למה הוא אוהב את העבודה"),
+    "משרד המתמחה בשיווק, ניהול ותיווך נדל״ן. ל-RE/MAX טאבו נכסים גישה מרכזית המתמקדת בהבנת צרכיו הייחודיים של הלקוח, בשילוב ידע מקצועי מקיף.",
+    "אנו נמצאים בקשרי עבודה הדוקים עם מיטב עורכי הדין המתמחים בנדל״ן, במטרה לספק ייעוץ משפטי להשלמת עסקת קנייה או מכירה של דירה על הצד הטוב ביותר ובזמן הקצר ביותר.",
   ] as Text[],
   areasTitle: "אזורי פעילות",
   /** Shown together with the neighborhoods of the listings on the site. */
   areas: ["פסגת זאב", "הר חומה", "גילה"],
   facts: [
     { label: "רישיון תיווך", value: LICENSE as Text },
-    { label: "ניסיון", value: TODO("מספר שנות ניסיון") as Text },
-    { label: "עסקאות", value: TODO("מספר עסקאות או משפחות שליווה") as Text },
+    { label: "עסקאות", value: "עשרות" as Text },
   ],
 };
 

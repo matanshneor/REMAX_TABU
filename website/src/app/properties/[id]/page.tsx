@@ -11,7 +11,7 @@ import { Reveal } from "@/components/motion/reveal";
 import { WhatsAppIcon } from "@/components/icons";
 import { ListingCard } from "@/components/listing-card";
 import { buttonClass, Container, NewTag, SectionTitle } from "@/components/ui";
-import { firstName, whatsappShare } from "@/lib/contact";
+import { whatsappShare } from "@/lib/contact";
 import { getAgent, getListing, getListings } from "@/lib/data";
 import { entryText, formatPrice, formatRooms, fullAddress, hasFloor, type Listing, listingFeatures, listingName, listingPlace, photoUrl, similarListings } from "@/lib/listings";
 
@@ -140,7 +140,7 @@ async function ListingDetails({ params }: { params: PageProps<"/properties/[id]"
               </p>
               <a href={whatsappShare(l)} target="_blank" rel="noopener" className={buttonClass("outline", "mt-12")}>
                 <WhatsAppIcon className="size-5" />
-                שיתוף הנכס בוואטסאפ
+                שתף את הנכס
               </a>
             </Reveal>
           </article>
@@ -153,7 +153,7 @@ async function ListingDetails({ params }: { params: PageProps<"/properties/[id]"
         {similar.length > 0 && (
           <section aria-labelledby="similar-title" className="mt-32">
             <Reveal>
-              <SectionTitle id="similar-title" label={`עוד מהנכסים של ${firstName(agent.full_name)}`} title="נכסים דומים" />
+              <SectionTitle id="similar-title" title="נכסים דומים" />
             </Reveal>
             <ul className="mt-10 grid gap-x-10 gap-y-16 sm:grid-cols-2 lg:grid-cols-3">
               {similar.map((s, i) => (

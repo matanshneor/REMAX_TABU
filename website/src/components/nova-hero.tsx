@@ -162,12 +162,9 @@ export function NovaHero({ slides }: { slides: NovaSlide[] }) {
 
       <div className="relative z-[4] mx-auto flex w-full max-w-7xl flex-col justify-between gap-10 px-4 pb-8 pt-26 sm:px-8 sm:pb-10 sm:pt-34">
         {/* Top: the site's own line */}
-        <div>
-          <p className="label-caps text-ink-2">RE/MAX טאבו נכסים · ירושלים</p>
-          <h1 id="hero-title" className="type-title mt-4 max-w-xl">
-            בתים יוצאי דופן, מבפנים החוצה
-          </h1>
-        </div>
+        <h1 id="hero-title" className="label-caps text-ink-2">
+          RE/MAX טאבו נכסים · ירושלים
+        </h1>
 
         <div className="flex items-end justify-between gap-10">
           {/* The current listing. Keyed so its lines rise in again on every change. */}
@@ -208,7 +205,7 @@ export function NovaHero({ slides }: { slides: NovaSlide[] }) {
                 href="#listings"
                 className="inline-flex min-h-11 items-center text-sm text-ink-2 underline decoration-line-strong underline-offset-8 transition-colors duration-(--dur-ui) hover:text-ink"
               >
-                לגלות את כל הנכסים
+                לכל הנכסים
               </a>
             </div>
           </div>

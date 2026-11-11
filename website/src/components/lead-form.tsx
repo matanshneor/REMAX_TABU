@@ -110,7 +110,7 @@ export function LeadForm({
   const field =
     "mt-2 block w-full border bg-night px-4 text-ink transition-colors duration-(--dur-ui) placeholder:text-ink-3/70 focus:border-ink-2 focus:outline-none focus-visible:outline-2";
   return (
-    <form ref={form} onSubmit={submit} noValidate className="space-y-5" aria-describedby={`${id}-privacy`}>
+    <form ref={form} onSubmit={submit} noValidate className="space-y-5">
       <div>
         <label htmlFor={`${id}-name`} className="text-sm font-medium text-ink-2">
           שם
@@ -189,9 +189,6 @@ export function LeadForm({
       <button type="submit" disabled={state === "sending"} className={buttonClass("red", "w-full disabled:opacity-70")}>
         {state === "sending" ? "שולחים…" : submitLabel}
       </button>
-      <p id={`${id}-privacy`} className="text-xs leading-relaxed text-ink-3">
-        הפרטים מגיעים רק ל{agentFirstName}, ומשמשים רק כדי לחזור אליכם.
-      </p>
     </form>
   );
 }

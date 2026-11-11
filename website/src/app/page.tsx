@@ -4,9 +4,8 @@ import { Suspense } from "react";
 import { ListingsFallback, ListingsSection } from "@/components/listings-section";
 import { HeaderMode } from "@/components/motion/header-mode";
 import { PageTransition } from "@/components/motion/page-transition";
-import { Reveal } from "@/components/motion/reveal";
 import { type NovaSlide, NovaHero } from "@/components/nova-hero";
-import { buttonClass, Container, SectionTitle } from "@/components/ui";
+import { buttonClass, Container } from "@/components/ui";
 import { getListings } from "@/lib/data";
 import { formatPrice, formatRooms, listingFeatures, listingName, listingPlace, photoUrl } from "@/lib/listings";
 
@@ -41,9 +40,9 @@ function EmptyHero() {
       <Container className="pb-16 pt-34">
         <p className="label-caps text-ink-2">RE/MAX טאבו נכסים · ירושלים</p>
         <h1 id="hero-title" className="accent-line type-display mt-5 max-w-3xl">
-          בתים יוצאי דופן, מבפנים החוצה
+          נכסים חדשים עולים לאתר בקרוב
         </h1>
-        <p className="mt-6 max-w-xl text-lg text-ink-2">נכסים חדשים עולים לאתר בקרוב. בינתיים אפשר לספר למשה מה אתם מחפשים, והוא יחזור אליכם.</p>
+        <p className="mt-6 max-w-xl text-lg text-ink-2">בינתיים אפשר לספר למשה מה אתם מחפשים, והוא יחזור אליכם.</p>
         <Link href="/contact" className={buttonClass("red", "mt-10")}>
           לספר למשה מה מחפשים
         </Link>
@@ -56,11 +55,11 @@ export default function HomePage({ searchParams }: PageProps<"/">) {
   return (
     <PageTransition>
       <Hero />
-      <section id="listings" aria-labelledby="listings-title" className="scroll-mt-20 pt-24 sm:pt-32">
+      <section id="listings" aria-labelledby="listings-title" className="scroll-mt-20 pt-16 sm:pt-24">
         <Container>
-          <Reveal className="mb-10">
-            <SectionTitle id="listings-title" label="למכירה עכשיו" title="הנכסים" />
-          </Reveal>
+          <h2 id="listings-title" className="sr-only">
+            הנכסים
+          </h2>
           <Suspense fallback={<ListingsFallback />}>
             <ListingsSection searchParams={searchParams} />
           </Suspense>

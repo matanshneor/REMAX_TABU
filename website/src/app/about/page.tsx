@@ -42,7 +42,7 @@ export default async function AboutPage() {
             ))}
           </div>
 
-          <dl className="mt-14 grid gap-8 sm:grid-cols-3">
+          <dl className="mt-14 grid grid-cols-2 gap-8 sm:max-w-md">
             {ABOUT.facts.map((f, i) => (
               <Reveal key={f.label} index={i} className="accent-line flex flex-col-reverse">
                 <dt className="label-caps mt-2">{f.label}</dt>
