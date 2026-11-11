@@ -1,4 +1,4 @@
-import { ArrowRightIcon, MapPinIcon, Rotate3dIcon } from "lucide-react";
+import { ArrowRightIcon, MapPinIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
@@ -13,7 +13,7 @@ import { ListingCard } from "@/components/listing-card";
 import { buttonClass, Container, NewTag, SectionTitle } from "@/components/ui";
 import { whatsappShare } from "@/lib/contact";
 import { getAgent, getListing, getListings } from "@/lib/data";
-import { entryText, formatPrice, formatRooms, fullAddress, hasFloor, type Listing, listingDetails, listingFeatures, listingName, listingPlace, photoUrl, similarListings, tourUrl } from "@/lib/listings";
+import { entryText, formatPrice, formatRooms, fullAddress, hasFloor, type Listing, listingDetails, listingFeatures, listingName, listingPlace, photoUrl, similarListings } from "@/lib/listings";
 
 // Listing pages are built on every visit from the cached list (lib/data.ts), which the CRM's refresh
 // call expires at once. A page-level copy could show a visitor (or WhatsApp's preview) the version
@@ -76,7 +76,6 @@ async function ListingDetails({ params }: { params: PageProps<"/properties/[id]"
 
   const name = listingName(l);
   const details = listingDetails(l);
-  const tour = tourUrl(l);
   const facts = keyFacts(l);
   const similar = similarListings(all, l);
   const location = fullAddress(l);
@@ -139,18 +138,10 @@ async function ListingDetails({ params }: { params: PageProps<"/properties/[id]"
                 <MapPinIcon className="size-5 shrink-0 text-ink-3" aria-hidden="true" />
                 {location || "ירושלים"}
               </p>
-              <div className="mt-12 flex flex-wrap gap-3">
-                {tour && (
-                  <a href={tour} target="_blank" rel="noopener noreferrer" className={buttonClass("outline")}>
-                    <Rotate3dIcon className="size-5" aria-hidden="true" />
-                    סיור וירטואלי
-                  </a>
-                )}
-                <a href={whatsappShare(l)} target="_blank" rel="noopener" className={buttonClass("outline")}>
-                  <WhatsAppIcon className="size-5" />
-                  שתפו את הנכס
-                </a>
-              </div>
+              <a href={whatsappShare(l)} target="_blank" rel="noopener" className={buttonClass("outline", "mt-12")}>
+                <WhatsAppIcon className="size-5" />
+                שתפו את הנכס
+              </a>
             </Reveal>
           </article>
 

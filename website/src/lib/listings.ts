@@ -36,7 +36,6 @@ export type Listing = {
   garden_count?: number | null;
   rental_unit_count?: number | null;
   rental_unit_sqm?: number | null;
-  virtual_tour_url?: string | null;
   /** On the market for less than a week ("חדש בשוק"); worked out when the list is fetched. */
   is_new: boolean;
 };
@@ -153,12 +152,6 @@ export function listingDetails(l: Listing): { label: string; value: string }[] {
   add("מחסן", l.has_storage && "יש");
   add("מצב הנכס", l.is_renovated && "משופץ");
   return rows;
-}
-
-/** The virtual tour's link, only when it is a real web address. */
-export function tourUrl(l: Listing): string | null {
-  const url = l.virtual_tour_url?.trim();
-  return url && /^https?:\/\/\S+$/i.test(url) ? url : null;
 }
 
 /** "כניסה מיידית" / "כניסה: 1.3.2027" / null */
