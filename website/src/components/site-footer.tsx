@@ -6,7 +6,7 @@ import { getAgent } from "@/lib/data";
 import { WhatsAppIcon } from "./icons";
 import { NAV } from "./site-header";
 import { Reveal } from "./motion/reveal";
-import { buttonClass, Container, Fill, Logo } from "./ui";
+import { buttonClass, Container, Logo } from "./ui";
 
 /**
  * Every page ends here: first one line and the two quickest ways to reach the agent (the page's
@@ -55,10 +55,13 @@ export async function SiteFooter() {
                 </a>
               </li>
             )}
-            <li className="flex min-h-11 items-center gap-3">
-              <MapPinIcon className="size-4 shrink-0 text-ink-3" aria-hidden="true" />
-              <Fill text={OFFICE.address} />
-            </li>
+            {/* Shown once the address is written in content/site.ts (the contact page marks it as missing). */}
+            {typeof OFFICE.address === "string" && (
+              <li className="flex min-h-11 items-center gap-3">
+                <MapPinIcon className="size-4 shrink-0 text-ink-3" aria-hidden="true" />
+                {OFFICE.address}
+              </li>
+            )}
           </ul>
         </div>
         <nav aria-label="תחתון">

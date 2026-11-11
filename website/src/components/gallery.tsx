@@ -43,6 +43,8 @@ export function Gallery({ id, photos, title }: { id: string; photos: string[]; t
   const [{ index, leaving }, setView] = useState<{ index: number; leaving: number | null }>({ index: 0, leaving: null });
   const [open, setOpen] = useState(false);
   const [everOpened, setEverOpened] = useState(false);
+  // The small copy of the photo that was pressed: shown in the viewer until the full-size one loads.
+  const [opened, setOpened] = useState<{ index: number; src: string } | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const opener = useRef<HTMLElement | null>(null);
   const isDesktop = useIsDesktop();
@@ -60,6 +62,8 @@ export function Gallery({ id, photos, title }: { id: string; photos: string[]; t
     const r = from.getBoundingClientRect();
     dialog.current?.style.setProperty("--ox", `${((r.left + r.width / 2) / window.innerWidth) * 100}%`);
     dialog.current?.style.setProperty("--oy", `${((r.top + r.height / 2) / window.innerHeight) * 100}%`);
+    const small = from.querySelector("img")?.currentSrc;
+    setOpened(small ? { index: i, src: small } : null);
     setView({ index: i, leaving: null });
     setEverOpened(true);
     setOpen(true);
@@ -197,7 +201,10 @@ export function Gallery({ id, photos, title }: { id: string; photos: string[]; t
                 <XIcon className="size-5" aria-hidden="true" />
               </button>
             </div>
-            <div className="lightbox-stage relative min-h-0 flex-1">
+            <div
+              className="lightbox-stage relative min-h-0 flex-1 bg-contain bg-center bg-no-repeat"
+              style={opened?.index === index ? { backgroundImage: `url("${opened.src}")` } : undefined}
+            >
               {leaving != null && leaving !== index && (
                 <Image key={`out-${leaving}`} src={photos[leaving]} alt="" fill sizes="100vw" className="photo-out object-contain" />
               )}

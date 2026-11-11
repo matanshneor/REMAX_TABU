@@ -145,12 +145,16 @@ export function NovaHero({ slides }: { slides: NovaSlide[] }) {
   });
 
   const swipe = {
-    onTouchStart: (e: TouchEvent) => (touchX.current = e.touches[0].clientX),
+    onTouchStart: (e: TouchEvent) => {
+      touchX.current = e.touches[0].clientX;
+      // On a phone there is no pointer to rest on the details: the first touch stops the changing.
+      setStopped(true);
+    },
     onTouchEnd: (e: TouchEvent) => {
       if (touchX.current == null) return;
       const dx = e.changedTouches[0].clientX - touchX.current;
       touchX.current = null;
-      if (Math.abs(dx) > 50) byHand(() => step(dx > 0 ? 1 : -1)); // RTL: a swipe to the right brings the next one
+      if (Math.abs(dx) > 50) step(dx > 0 ? 1 : -1); // RTL: a swipe to the right brings the next one
     },
   };
 
@@ -291,7 +295,7 @@ export function NovaHero({ slides }: { slides: NovaSlide[] }) {
                       )}
                       <span aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-night/90 via-night/20 to-transparent" />
                       <span className="absolute inset-x-4 bottom-4 block">
-                        <span className="block truncate text-[11px] font-medium tracking-[0.18em] text-ink-2">{w.place.split(",")[0]}</span>
+                        <span className="label-caps block truncate text-ink-2">{w.place.split(",")[0]}</span>
                         <span className="mt-1.5 block font-serif text-lg leading-snug">{w.name}</span>
                       </span>
                     </button>
