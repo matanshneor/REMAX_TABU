@@ -16,7 +16,7 @@
   --color-red: #dc1c2e;
   --color-red-dark: #b81424;
 
-  --font-serif: var(--font-frank), "Frank Ruhl Libre", serif;
+  --font-serif: var(--font-heading), "Rubik", system-ui, sans-serif;
   --font-sans: var(--font-heebo), "Heebo", system-ui, sans-serif;
 
   --radius: 0;

@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Frank_Ruhl_Libre, Heebo } from "next/font/google";
+import { Heebo, Rubik } from "next/font/google";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SITE_URL } from "@/lib/env";
 import "./globals.css";
 
-const frank = Frank_Ruhl_Libre({ variable: "--font-frank", weight: ["300", "400"], subsets: ["hebrew", "latin"] });
+// Headings and prices: a clean sans (no serif). Body text stays Heebo.
+const heading = Rubik({ variable: "--font-heading", weight: ["300", "400"], subsets: ["hebrew", "latin"] });
 const heebo = Heebo({ variable: "--font-heebo", weight: ["300", "400", "500"], subsets: ["hebrew", "latin"] });
 
 const TITLE = "משה שניאור · RE/MAX טאבו נכסים";
@@ -32,7 +33,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="he" dir="rtl" className={`${frank.variable} ${heebo.variable} antialiased`}>
+    <html lang="he" dir="rtl" className={`${heading.variable} ${heebo.variable} antialiased`}>
       <body className="flex min-h-dvh flex-col">
         <SiteHeader />
         <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
