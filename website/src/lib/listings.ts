@@ -181,6 +181,23 @@ export function entryText(l: Listing): string | null {
   return d.toLocaleDateString("he-IL", { day: "numeric", month: "numeric", year: "numeric" });
 }
 
+/**
+ * How a link to the listing looks when it is shared (the tab title, and the WhatsApp / Facebook
+ * preview): its name, place and price, its main facts, and its first photo through the image
+ * optimizer, kept near 200KB (WhatsApp skips preview images much over 300KB).
+ */
+export function listingPreview(l: Listing): { title: string; description: string; image: { url: string; width: number; height?: number; alt: string } } {
+  const title = `${listingName(l)}, ${listingPlace(l)} · ${formatPrice(l.current_price)}`;
+  const facts = [l.rooms != null && `${formatRooms(l.rooms)} חדרים`, l.size_sqm != null && `${formatRooms(l.size_sqm)} מ״ר`, ...listingFeatures(l).slice(0, 3)]
+    .filter(Boolean)
+    .join(" · ");
+  const description = [facts, l.description?.replace(/\s+/g, " ").slice(0, 160)].filter(Boolean).join(". ");
+  const image = l.image_paths[0]
+    ? { url: `/_next/image?url=${encodeURIComponent(photoUrl(l.image_paths[0]))}&w=828&q=75`, width: 828, alt: title }
+    : { url: "/og-default.png", width: 1200, height: 630, alt: "RE/MAX טאבו נכסים" };
+  return { title, description, image };
+}
+
 /** Up to `n` other listings: same neighborhood first, then the closest price. */
 export function similarListings(all: Listing[], l: Listing, n = 3): Listing[] {
   const price = l.current_price ?? 0;

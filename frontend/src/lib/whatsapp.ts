@@ -1,5 +1,6 @@
 import { formatILS } from "./format";
 import type { Property } from "./types";
+import { websiteLink } from "./website";
 
 /** Israeli phone → international digits for wa.me (050-1234567 → 972501234567). */
 export function toWhatsAppNumber(phone: string | null | undefined): string | null {
@@ -43,9 +44,13 @@ export function propertyFeatures(p: Property): string[] {
   ].filter((f): f is string => !!f);
 }
 
-/** Ready-to-send property summary. Leaves out the apartment number and owner details. */
+/**
+ * Ready-to-send property summary. Leaves out the apartment number and owner details.
+ * A property that is on the public site also gets its link there (photos and all the details).
+ */
 export function propertyMessage(p: Property, greetingName?: string): string {
   const features = propertyFeatures(p);
+  const link = websiteLink(p);
   const specs = [
     p.rooms && `${p.rooms} חדרים`,
     p.size_sqm && `${p.size_sqm} מ״ר`,
@@ -62,6 +67,7 @@ export function propertyMessage(p: Property, greetingName?: string): string {
     p.current_price ? `💰 ${formatILS(p.current_price)}` : null,
     features.length ? `✨ ${features.join(" · ")}` : null,
     p.virtual_tour_url ? `🎥 סיור וירטואלי: ${p.virtual_tour_url}` : null,
+    link ? `🔗 תמונות וכל הפרטים באתר: ${link}` : null,
     "",
     "אשמח לתאם צפייה 🙂",
   ]

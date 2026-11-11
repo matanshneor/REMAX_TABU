@@ -10,9 +10,19 @@ import { Reveal } from "./motion/reveal";
 import { PhoneList } from "./phone-list";
 import { buttonClass } from "./ui";
 
-/** The list under the opening photo: search, results, "הצגת עוד", and the "not found" form. */
-export async function ListingsSection({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const [params, all, agent] = await Promise.all([searchParams, getListings(), getAgent()]);
+/**
+ * The list under the opening photo: search, results, "הצגת עוד", and the "not found" form.
+ * `base` is the address the search stays on: "/" , or "/p/<listing>" for a visitor who came through
+ * a link from the CRM (so the listing they were sent stays at the top while they search).
+ */
+export async function ListingsSection({
+  searchParams,
+  base: basePromise,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  base?: Promise<string>;
+}) {
+  const [params, all, agent, base = "/"] = await Promise.all([searchParams, getListings(), getAgent(), basePromise]);
   const f = parseFilters(params);
   const results = applyFilters(all, f);
   const shown = results.slice(0, f.n);
@@ -28,7 +38,7 @@ export async function ListingsSection({ searchParams }: { searchParams: Promise<
   return (
     <>
       {/* The form and the results below are siblings: their keys must differ, or React keeps a stale copy of one. */}
-      <FilterForm key={`form ${filtersHref(f)}`} filters={f} options={options} />
+      <FilterForm key={`form ${filtersHref(f)}`} filters={f} options={options} base={base} />
 
       {/* Results cross-fade when the search changes. "More" keeps the same block, so only the new cards arrive. */}
       <ViewTransition key={`results ${filtersHref({ ...f, n: PAGE_SIZE })}`} name="results" share="results-fade" default="none">
@@ -40,7 +50,7 @@ export async function ListingsSection({ searchParams }: { searchParams: Promise<
             </p>
             {filtered && (
               <Link
-                href="/#listings"
+                href={`${base}#listings`}
                 transitionTypes={["filter"]}
                 className="inline-flex min-h-11 items-center text-ink-2 underline decoration-line-strong underline-offset-8 transition-colors duration-(--dur-ui) hover:text-ink"
               >
@@ -72,7 +82,7 @@ export async function ListingsSection({ searchParams }: { searchParams: Promise<
           {results.length > shown.length && (
             <div className="phone-after mt-16 flex justify-center">
               <Link
-                href={filtersHref({ ...f, n: f.n + PAGE_SIZE })}
+                href={filtersHref({ ...f, n: f.n + PAGE_SIZE }, base)}
                 scroll={false}
                 transitionTypes={["filter"]}
                 className={buttonClass("outline", "min-w-56")}

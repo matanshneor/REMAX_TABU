@@ -13,7 +13,7 @@ import { ListingCard } from "@/components/listing-card";
 import { buttonClass, Container, NewTag, SectionTitle } from "@/components/ui";
 import { whatsappShare } from "@/lib/contact";
 import { getAgent, getListing, getListings } from "@/lib/data";
-import { entryText, formatPrice, formatRooms, fullAddress, hasFloor, type Listing, listingDetails, listingFeatures, listingName, listingPlace, photoUrl, similarListings } from "@/lib/listings";
+import { entryText, formatPrice, formatRooms, fullAddress, hasFloor, type Listing, listingDetails, listingFeatures, listingName, listingPlace, listingPreview, photoUrl, similarListings } from "@/lib/listings";
 
 // Listing pages are built on every visit from the cached list (lib/data.ts), which the CRM's refresh
 // call expires at once. A page-level copy could show a visitor (or WhatsApp's preview) the version
@@ -24,16 +24,7 @@ export async function generateMetadata({ params }: PageProps<"/properties/[id]">
   const { id } = await params;
   const l = await getListing(id);
   if (!l) return { title: "הנכס כבר לא באתר", robots: { index: false } };
-  const title = `${listingName(l)}, ${listingPlace(l)} · ${formatPrice(l.current_price)}`;
-  const facts = [l.rooms != null && `${formatRooms(l.rooms)} חדרים`, l.size_sqm != null && `${formatRooms(l.size_sqm)} מ״ר`, ...listingFeatures(l).slice(0, 3)]
-    .filter(Boolean)
-    .join(" · ");
-  const description = [facts, l.description?.replace(/\s+/g, " ").slice(0, 160)].filter(Boolean).join(". ");
-  // WhatsApp and Facebook previews: the first photo through the image optimizer, kept near 200KB
-  // (WhatsApp skips preview images much over 300KB).
-  const image = l.image_paths[0]
-    ? { url: `/_next/image?url=${encodeURIComponent(photoUrl(l.image_paths[0]))}&w=828&q=75`, width: 828, alt: title }
-    : { url: "/og-default.png", width: 1200, height: 630, alt: "RE/MAX טאבו נכסים" };
+  const { title, description, image } = listingPreview(l);
   return {
     title,
     description,

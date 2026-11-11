@@ -32,6 +32,7 @@ import {
   SELLER_CREATE_FIELDS,
   SELLER_CREATE_SECTION,
 } from "./property-fields";
+import { CopyWebsiteLinkButton } from "./copy-website-link-button";
 import { CreateAdButton } from "./create-ad-dialog";
 import { PendingImages, PropertyImages, uploadPropertyImages } from "./property-images";
 import { ShareWhatsAppButton } from "./share-whatsapp-dialog";
@@ -179,6 +180,7 @@ export function PropertyPanel({
               </Button>
             )}
             <ShareWhatsAppButton property={property} />
+            <CopyWebsiteLinkButton property={property} />
             <CreateAdButton property={property} />
             <ReminderButton
               propertyId={property.id}

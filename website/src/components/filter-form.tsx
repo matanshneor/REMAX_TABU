@@ -39,7 +39,7 @@ function Select({ name, label, value, children }: { name: string; label: string;
  * The search. Works as a plain form (GET to /) and, with JavaScript, keeps the address short
  * (only what was chosen), so the agent can send a search as a link.
  */
-export function FilterForm({ filters: f, options }: { filters: Filters; options: FilterOptions }) {
+export function FilterForm({ filters: f, options, base = "/" }: { filters: Filters; options: FilterOptions; base?: string }) {
   const router = useRouter();
   const id = useId();
   // On phones the search starts folded behind one button (on wider screens it is always open).
@@ -62,7 +62,7 @@ export function FilterForm({ filters: f, options }: { filters: Filters; options:
       smax: n("smax"),
       features: d.getAll("f") as Filters["features"],
       sort: (String(d.get("sort") || "new") as Filters["sort"]),
-    });
+    }, base);
     // Tagged "filter" so listing photos stay put while results change (they only travel to a listing's page).
     router.push(`${href}#results`, { scroll: false, transitionTypes: ["filter"] });
     // At once: a smooth scroll would still be moving while the results cross-fade.
@@ -90,7 +90,7 @@ export function FilterForm({ filters: f, options }: { filters: Filters; options:
     </button>
     <form
       id={id}
-      action="/"
+      action={base}
       method="get"
       onSubmit={submit}
       role="search"

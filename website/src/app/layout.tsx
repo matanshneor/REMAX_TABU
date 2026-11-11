@@ -40,10 +40,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="he" dir="rtl" data-scroll-behavior="smooth" suppressHydrationWarning className={`${heading.variable} ${heebo.variable} antialiased`}>
       <body className="flex min-h-dvh flex-col">
         {/* Before the first paint: JavaScript is running (data-js: phones may fold the list), and the
-            home page opens with a photo under a clear header. */}
+            home page (also at /p/<listing>) opens with a photo under a clear header. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: 'document.documentElement.dataset.js="1";if(location.pathname==="/")document.documentElement.dataset.header="overlay"',
+            __html: 'document.documentElement.dataset.js="1";if(location.pathname==="/"||location.pathname.indexOf("/p/")===0)document.documentElement.dataset.header="overlay"',
           }}
         />
         <SiteHeader />
