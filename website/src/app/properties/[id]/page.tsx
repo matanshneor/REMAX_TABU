@@ -47,11 +47,11 @@ function keyFacts(l: Listing): { label: string; value: string }[] {
   return facts.slice(0, 4);
 }
 
-/** The way back to the list. In the page and in its loading state, so the photo below never shifts. */
+/** The way back to the list, over the opening photo. */
 function BackLink() {
   return (
-    <nav aria-label="ניווט" className="py-3">
-      <Link href="/#listings" className="inline-flex min-h-11 items-center gap-2 text-ink-2 transition-colors duration-(--dur-ui) hover:text-ink">
+    <nav aria-label="ניווט">
+      <Link href="/#listings" className="inline-flex min-h-11 items-center gap-2 text-ink transition-colors duration-(--dur-ui) hover:text-ink-2">
         <ArrowRightIcon className="size-4" aria-hidden="true" />
         לכל הנכסים
       </Link>
@@ -67,43 +67,33 @@ async function ListingDetails({ params }: { params: PageProps<"/properties/[id]"
 
   const name = listingName(l);
   const details = listingDetails(l);
-  const facts = keyFacts(l);
+  const facts = keyFacts(l).map((f) => (f.label === "מ״ר" ? `${f.value} מ״ר` : f.label === "חדרים" ? `${f.value} חדרים` : f.label === "קומה" ? `קומה ${f.value}` : null)).filter(Boolean);
   const similar = similarListings(all, l);
   const location = fullAddress(l);
 
   return (
     <>
+      {/* The opening photo is already in place when the details arrive (it came with the visitor
+          from the card), so it doesn't animate; the name and price over it rise in. */}
+      <Gallery id={l.id} photos={l.image_paths.map(photoUrl)} title={name} top={<BackLink />}>
+        <div className="accent-line">
+          {l.is_new && <NewTag className="mb-4" />}
+          <h1 id="listing-title" className="rise type-display">
+            {name}
+          </h1>
+          <p className="rise mt-3 text-lg text-ink-2" style={{ animationDelay: "60ms" }}>
+            {listingPlace(l)}
+          </p>
+          <div className="rise mt-5 flex flex-wrap items-baseline gap-x-6 gap-y-2" style={{ animationDelay: "120ms" }}>
+            <span className="type-title">{formatPrice(l.current_price)}</span>
+            {facts.length > 0 && <span className="text-sm text-ink-2">{facts.join(" · ")}</span>}
+          </div>
+        </div>
+      </Gallery>
+
       <Container className="pb-24 lg:pb-0">
-        <BackLink />
-
-        {/* The photo is already in place when the details arrive (it came with the visitor from
-            the card), so it doesn't animate; everything under it rises in. */}
-        <Gallery id={l.id} photos={l.image_paths.map(photoUrl)} title={name} />
-
-        <div className="arrive mt-10 grid gap-16 lg:grid-cols-[minmax(0,1fr)_400px]">
+        <div className="mt-16 grid gap-16 lg:grid-cols-[minmax(0,1fr)_400px]">
           <article aria-labelledby="listing-title">
-            {/* What it is and what it costs, both in view without scrolling. */}
-            <header className="accent-line flex flex-wrap items-end justify-between gap-x-10 gap-y-5">
-              <div>
-                {l.is_new && <NewTag className="mb-4" />}
-                <h1 id="listing-title" className="type-headline">
-                  {name}
-                </h1>
-                <p className="mt-2 text-lg text-ink-3">{listingPlace(l)}</p>
-              </div>
-              <p className="type-title">{formatPrice(l.current_price)}</p>
-            </header>
-
-            {facts.length > 0 && (
-              <dl className="mt-14 grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-4">
-                {facts.map((f) => (
-                  <div key={f.label} className="accent-line flex flex-col-reverse">
-                    <dt className="label-caps mt-2">{f.label}</dt>
-                    <dd className="type-title">{f.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            )}
 
             {l.description && (
               <Reveal as="section" className="mt-16">
@@ -179,11 +169,9 @@ function NotOnSite() {
 /** While the details are on their way: the same top of the page, with the pressed photo in its slot. */
 function DetailsFallback() {
   return (
-    <Container aria-busy="true" aria-label="טוען את הנכס">
-      <BackLink />
+    <div aria-busy="true" aria-label="טוען את הנכס">
       <PhotoHandoff />
-      <div className="mt-10 h-12 w-1/2 animate-pulse bg-panel" />
-    </Container>
+    </div>
   );
 }
 

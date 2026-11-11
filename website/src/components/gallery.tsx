@@ -2,43 +2,23 @@
 
 import { ChevronLeftIcon, ChevronRightIcon, ImagesIcon, XIcon } from "lucide-react";
 import Image from "next/image";
-import { type CSSProperties, type TouchEvent, useCallback, useEffect, useRef, useState, useSyncExternalStore, ViewTransition } from "react";
+import { type CSSProperties, type ReactNode, type TouchEvent, useCallback, useEffect, useRef, useState, ViewTransition } from "react";
 import { photoName, pressedPhoto } from "@/lib/handoff";
 import { PhotoPlaceholder } from "./listing-photo";
-import { FadeImage } from "./motion/fade-image";
+import { HeaderMode } from "./motion/header-mode";
 import { LEAD_FRAME } from "./motion/photo-handoff";
 import { cn, PRESS } from "./ui";
 
-/** Desktop grid (4 columns × 2 rows) without holes, whatever the number of photos. */
-function tileSpan(i: number, count: number): string {
-  if (count === 1) return "col-span-4 row-span-2";
-  if (i === 0 || count === 2) return "col-span-2 row-span-2";
-  if (count === 3 || (count === 4 && i === 1)) return "col-span-2";
-  return "";
-}
-
-const DESKTOP = "(min-width: 1024px)";
-function useIsDesktop(): boolean {
-  return useSyncExternalStore(
-    (onChange) => {
-      const mq = window.matchMedia(DESKTOP);
-      mq.addEventListener("change", onChange);
-      return () => mq.removeEventListener("change", onChange);
-    },
-    () => window.matchMedia(DESKTOP).matches,
-    () => false,
-  );
-}
-
 /**
- * Listing photos. Desktop: one large photo and four small ones beside it. Phone: one tall photo
- * with arrows. Either way, "כל התמונות" opens every photo full screen (Esc / arrows / swipe), and
- * the viewer opens out of the photo that was pressed.
+ * The opening of a listing's page: its first photo on the whole screen, under the header (clear
+ * until the page scrolls), like the home page's. `children` is what is written over the photo
+ * (name, price, main facts); `top` sits under the header (the way back). "כל התמונות" opens every
+ * photo full screen (Esc / arrows / swipe), growing out of the photo.
  *
- * The main photo carries the listing's photo name, so a photo pressed on a card travels into it
- * (lib/handoff.ts). Only the layout that is on screen carries the name: a name may exist once.
+ * The photo carries the listing's photo name, so a photo pressed on a card travels into it
+ * (lib/handoff.ts).
  */
-export function Gallery({ id, photos, title }: { id: string; photos: string[]; title: string }) {
+export function Gallery({ id, photos, title, top, children }: { id: string; photos: string[]; title: string; top?: ReactNode; children?: ReactNode }) {
   // The photo on show, and the one it replaced (kept for a moment so the two cross-fade in the viewer).
   const [{ index, leaving }, setView] = useState<{ index: number; leaving: number | null }>({ index: 0, leaving: null });
   const [open, setOpen] = useState(false);
@@ -47,7 +27,6 @@ export function Gallery({ id, photos, title }: { id: string; photos: string[]; t
   const [opened, setOpened] = useState<{ index: number; src: string } | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const opener = useRef<HTMLElement | null>(null);
-  const isDesktop = useIsDesktop();
   // The pressed photo (small, already loaded) stays under the full-size one until that has loaded.
   const [poster] = useState(() => pressedPhoto(id)?.src);
   const posterStyle: CSSProperties | undefined = poster ? { backgroundImage: `url("${poster}")`, backgroundSize: "cover", backgroundPosition: "center" } : undefined;
@@ -106,80 +85,42 @@ export function Gallery({ id, photos, title }: { id: string; photos: string[]; t
     },
   };
 
-  if (count === 0) {
-    return (
-      <div className="relative aspect-[4/3] w-full sm:aspect-[16/7]">
-        <PhotoPlaceholder />
-      </div>
-    );
-  }
-
   const control = cn("inline-flex items-center justify-center bg-night/80 text-ink backdrop-blur hover:bg-night", PRESS);
   const arrow = cn(control, "size-11");
-  const allButton = (className?: string) => (
-    <button type="button" onClick={(e) => show(index, e.currentTarget)} className={cn(control, "min-h-11 gap-2 px-4 text-sm font-medium", className)}>
-      <ImagesIcon className="size-4" aria-hidden="true" />
-      כל התמונות ({count})
-    </button>
-  );
+  const shade =
+    "pointer-events-none absolute inset-0 z-[3] bg-[linear-gradient(to_bottom,rgba(10,26,58,0.85)_0%,rgba(10,26,58,0)_26%),linear-gradient(to_left,rgba(10,26,58,0.92)_0%,rgba(10,26,58,0.6)_38%,rgba(10,26,58,0.1)_70%),linear-gradient(to_top,rgba(10,26,58,0.85)_0%,rgba(10,26,58,0)_45%)] max-md:bg-[linear-gradient(to_bottom,rgba(10,26,58,0.85)_0%,rgba(10,26,58,0)_22%),linear-gradient(to_top,rgba(10,26,58,0.95)_0%,rgba(10,26,58,0.7)_50%,rgba(10,26,58,0.25)_100%)]";
 
   return (
     <div>
-      {/* Phone: one photo with arrows */}
-      <ViewTransition name={isDesktop ? undefined : photoName(id)} share="morph" default="none">
-        <div className={cn(LEAD_FRAME, "lg:hidden")} style={posterStyle} {...swipe}>
-          <button type="button" onClick={(e) => show(index, e.currentTarget)} className="absolute inset-0" aria-label={`הגדלת ${alt(index)}`}>
-            <Image src={photos[index]} alt={alt(index)} fill fetchPriority="high" sizes="100vw" className="object-cover" />
-          </button>
-          {count > 1 && (
-            <div className="absolute inset-x-4 bottom-4 flex items-center justify-between">
-              <button type="button" onClick={() => go(-1)} className={arrow} aria-label="התמונה הקודמת">
-                <ChevronRightIcon className="size-5" aria-hidden="true" />
-              </button>
-              <span className="bg-night/80 px-3 py-1.5 text-sm tabular-nums" aria-live="polite">
-                {index + 1} / {count}
-              </span>
-              <button type="button" onClick={() => go(1)} className={arrow} aria-label="התמונה הבאה">
-                <ChevronLeftIcon className="size-5" aria-hidden="true" />
-              </button>
-            </div>
+      <ViewTransition name={photoName(id)} share="morph" default="none">
+        <div className={LEAD_FRAME} style={posterStyle}>
+          <HeaderMode />
+          {count === 0 ? (
+            <PhotoPlaceholder />
+          ) : (
+            <button type="button" onClick={(e) => show(0, e.currentTarget)} className="absolute inset-0 z-[1]" aria-label={`הגדלת ${alt(0)}`}>
+              <Image src={photos[0]} alt={alt(0)} fill fetchPriority="high" sizes="100vw" className="object-cover" />
+            </button>
           )}
-          {allButton("absolute end-4 top-4")}
+          <div aria-hidden="true" className={shade} />
+          <div className="pointer-events-none relative z-[4] mx-auto flex w-full max-w-7xl flex-col justify-between gap-10 px-4 pb-24 pt-18 sm:px-8 sm:pt-24 lg:pb-14">
+            <div className="pointer-events-auto self-start">{top}</div>
+            <div className="flex flex-wrap items-end justify-between gap-6">
+              <div className="pointer-events-auto max-w-2xl">{children}</div>
+              {count > 0 && (
+                <button
+                  type="button"
+                  onClick={(e) => show(0, e.currentTarget)}
+                  className={cn(control, "pointer-events-auto min-h-11 gap-2 px-4 text-sm font-medium")}
+                >
+                  <ImagesIcon className="size-4" aria-hidden="true" />
+                  כל התמונות ({count})
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </ViewTransition>
-
-      {/* Desktop: a large photo and four small ones */}
-      <div className="relative hidden h-[min(48vh,460px)] grid-cols-4 grid-rows-2 gap-2 lg:grid">
-        {photos.slice(0, 5).map((src, i) => {
-          const tile = (
-            <button
-              key={src}
-              type="button"
-              onClick={(e) => show(i, e.currentTarget)}
-              className={cn("group/tile relative overflow-hidden bg-panel", tileSpan(i, count))}
-              style={i === 0 ? posterStyle : undefined}
-              aria-label={`הגדלת ${alt(i)}`}
-            >
-              {/* The zoom is on a wrapper, so the photo itself is free to fade in when it loads. */}
-              <span className="absolute inset-0 block transition-transform duration-(--dur-open) ease-out group-hover/tile:scale-[1.04]">
-                {i === 0 ? (
-                  <Image src={src} alt={alt(i)} fill fetchPriority="high" sizes="(min-width: 1280px) 640px, 50vw" className="object-cover" />
-                ) : (
-                  <FadeImage src={src} alt={alt(i)} fill sizes="(min-width: 1280px) 320px, 25vw" className="object-cover" />
-                )}
-              </span>
-            </button>
-          );
-          return i === 0 ? (
-            <ViewTransition key={src} name={isDesktop ? photoName(id) : undefined} share="morph" default="none">
-              {tile}
-            </ViewTransition>
-          ) : (
-            tile
-          );
-        })}
-        {allButton("absolute bottom-4 end-4")}
-      </div>
 
       <dialog
         ref={dialog}
