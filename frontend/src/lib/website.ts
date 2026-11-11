@@ -15,9 +15,9 @@ export function isOnWebsite(p: Pick<Property, "recruiter_id" | "status" | "engag
 }
 
 /**
- * The link to send a buyer: the site's home page, opening with this listing (the rest of the
- * listings are right below it). Null when the property isn't on the site.
+ * The link to send a buyer: the listing's own page on the site (photos, details, enquiry form).
+ * Null when the property isn't on the site.
  */
 export function websiteLink(p: Pick<Property, "id" | "recruiter_id" | "status" | "engagement">): string | null {
-  return isOnWebsite(p) ? `${WEBSITE_URL}/p/${p.id}` : null;
+  return isOnWebsite(p) ? `${WEBSITE_URL}/properties/${p.id}` : null;
 }
