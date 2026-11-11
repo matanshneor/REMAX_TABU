@@ -10,7 +10,7 @@ export const BRAND = {
 export function BrandLogo({ className, priority }: { className?: string; priority?: boolean }) {
   return (
     <Image
-      src="/brand/logo.png"
+      src="/brand/remax-tabu-logo.png"
       alt={`RE/MAX ${BRAND.name}`}
       width={1200}
       height={470}

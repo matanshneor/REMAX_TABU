@@ -10,7 +10,7 @@ export function PropertyPlaceholder({ className, label = "אין תמונה עד
         className,
       )}
     >
-      <Image src="/brand/balloon.png" alt="" width={96} height={96} className="size-10 opacity-40 mix-blend-multiply grayscale-[35%]" />
+      <Image src="/brand/remax-balloon.png" alt="" width={96} height={96} className="size-10 opacity-40 mix-blend-multiply grayscale-[35%]" />
       {label && <span className="text-xs font-medium">{label}</span>}
     </div>
   );
