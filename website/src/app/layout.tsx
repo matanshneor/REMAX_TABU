@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     siteName: TITLE,
     title: HOME_TITLE,
     description: DESCRIPTION,
-    images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "RE/MAX טאבו נכסים" }],
+    images: [{ url: "/og-office.png", width: 1200, height: 630, alt: "RE/MAX טאבו נכסים" }],
   },
 };
 

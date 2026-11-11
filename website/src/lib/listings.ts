@@ -230,7 +230,7 @@ export function listingPreview(l: Listing): { title: string; description: string
   const description = [facts, l.description?.replace(/\s+/g, " ").slice(0, 160)].filter(Boolean).join(". ");
   const image = l.image_paths[0]
     ? { url: `/_next/image?url=${encodeURIComponent(photoUrl(l.image_paths[0]))}&w=828&q=75`, width: 828, alt: title }
-    : { url: "/og-default.png", width: 1200, height: 630, alt: "RE/MAX טאבו נכסים" };
+    : { url: "/og-office.png", width: 1200, height: 630, alt: "RE/MAX טאבו נכסים" };
   return { title, description, image };
 }
 
