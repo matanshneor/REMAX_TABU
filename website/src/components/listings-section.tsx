@@ -73,7 +73,6 @@ export async function ListingsSection({
               <LeadForm
                 defaultMessage={filtered ? `מחפשים: ${describeFilters(f)}` : ""}
                 messageLabel="מה אתם מחפשים?"
-                agentFirstName={first}
                 whatsappHref={agent.phone ? whatsappToAgent(agent.phone, undefined, first) : null}
               />
             </div>

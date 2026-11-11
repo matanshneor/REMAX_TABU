@@ -33,14 +33,12 @@ export function LeadForm({
   propertyId,
   defaultMessage = "",
   whatsappHref,
-  agentFirstName,
   submitLabel = "שליחה",
   messageLabel = "הודעה (לא חובה)",
 }: {
   propertyId?: string;
   defaultMessage?: string;
   whatsappHref?: string | null;
-  agentFirstName: string;
   submitLabel?: string;
   messageLabel?: string;
 }) {

@@ -77,7 +77,7 @@ export default async function ContactPage() {
             השאירו פרטים
           </h2>
           <p className="mb-8 mt-2 text-ink-2">ונחזור אליכם בהקדם.</p>
-          <LeadForm agentFirstName={first} whatsappHref={wa} />
+          <LeadForm whatsappHref={wa} />
         </section>
       </div>
     </Container>

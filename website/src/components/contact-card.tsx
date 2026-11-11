@@ -64,7 +64,7 @@ export function ContactCard({ agent, listing, title = "לתיאום פגישה" 
         <p className="mb-5 text-ink-2">
           או השאירו פרטים, ונחזור אליכם:
         </p>
-        <LeadForm propertyId={listing?.id} whatsappHref={wa} agentFirstName={first} />
+        <LeadForm propertyId={listing?.id} whatsappHref={wa} />
       </div>
     </section>
   );
