@@ -141,7 +141,7 @@ async function ListingDetails({ params }: { params: PageProps<"/properties/[id]"
             <Reveal>
               <SectionTitle id="similar-title" title="נכסים דומים" />
             </Reveal>
-            <ul className="mt-10 grid gap-x-10 gap-y-16 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {similar.map((s, i) => (
                 <Reveal as="li" key={s.id} index={i}>
                   <ListingCard listing={s} />

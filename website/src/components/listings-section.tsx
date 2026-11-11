@@ -60,10 +60,10 @@ export async function ListingsSection({
           </div>
 
           {shown.length > 0 ? (
-            <PhoneList count={shown.length} className="mt-8 grid gap-x-10 gap-y-16 sm:grid-cols-2">
+            <PhoneList count={shown.length} className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {shown.map((l, i) => (
-                <Reveal as="li" key={l.id} index={i % 2}>
-                  <ListingCard listing={l} eager={i < 2} />
+                <Reveal as="li" key={l.id} index={i % 3}>
+                  <ListingCard listing={l} eager={i < 3} />
                 </Reveal>
               ))}
             </PhoneList>
@@ -100,12 +100,9 @@ export function ListingsFallback() {
   return (
     <div aria-busy="true" aria-label="טוען נכסים">
       <div className="h-12 border border-line bg-panel/50 sm:h-64 lg:h-46" />
-      <div className="mt-20 grid gap-x-10 gap-y-16 sm:grid-cols-2">
-        {[0, 1].map((i) => (
-          <div key={i}>
-            <div className="aspect-[4/3] animate-pulse bg-panel" />
-            <div className="mt-6 h-8 w-2/3 animate-pulse bg-panel" />
-          </div>
+      <div className="mt-20 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className={`aspect-[3/4] animate-pulse bg-panel ${i === 2 ? "max-lg:hidden" : i === 1 ? "max-sm:hidden" : ""}`} />
         ))}
       </div>
     </div>
