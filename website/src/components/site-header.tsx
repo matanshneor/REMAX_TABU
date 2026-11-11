@@ -24,9 +24,8 @@ export async function SiteHeader() {
         דילוג לתוכן
       </a>
       <Container className="flex h-16 items-center gap-4 sm:h-20">
-        <Link href="/" className="flex min-h-11 items-center gap-4">
+        <Link href="/" className="flex min-h-11 items-center">
           <Logo preload sizes="360px" className="h-10 w-auto sm:h-14" />
-          <span className="hidden border-s border-line-strong ps-4 font-serif text-lg leading-tight sm:block">{agent.full_name}</span>
         </Link>
         <nav aria-label="ראשי" className="ms-auto hidden md:block">
           <ul className="flex items-center gap-8">
