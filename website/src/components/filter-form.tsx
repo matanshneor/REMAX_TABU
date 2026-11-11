@@ -95,9 +95,10 @@ export function FilterForm({ filters: f, options }: { filters: Filters; options:
       onSubmit={submit}
       role="search"
       aria-label="חיפוש נכסים"
-      className={cn("border border-line bg-panel/50 p-5 sm:p-8", open ? "max-sm:rise max-sm:mt-3" : "max-sm:hidden")}
+      className={cn("border border-line bg-panel/50 p-5 sm:p-6", open ? "max-sm:rise max-sm:mt-3" : "max-sm:hidden")}
     >
-      <div className="grid grid-cols-2 gap-x-4 gap-y-5 lg:grid-cols-4">
+      {/* Row one: the four choices and the order. Row two: more filters, and the button. */}
+      <div className="grid grid-cols-2 gap-x-4 gap-y-5 lg:grid-cols-5">
         <Select name="type" label="סוג נכס" value={f.type}>
           <option value="">הכל</option>
           {Object.entries(TYPE_GROUPS).map(([v, l]) => (
@@ -135,10 +136,20 @@ export function FilterForm({ filters: f, options }: { filters: Filters; options:
             </option>
           ))}
         </Select>
+        <div className="max-lg:col-span-2">
+          <Select name="sort" label="מיון" value={f.sort}>
+            {Object.entries(SORTS).map(([v, l]) => (
+              <option key={v} value={v}>
+                {l}
+              </option>
+            ))}
+          </Select>
+        </div>
       </div>
 
-      <details className="group mt-6 border-t border-line pt-4" open={moreCount > 0}>
-        <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-2 text-ink-2 transition-colors duration-(--dur-ui) hover:text-ink [&::-webkit-details-marker]:hidden">
+      <div className="relative mt-4">
+      <details className="group" open={moreCount > 0}>
+        <summary className="inline-flex min-h-12 cursor-pointer list-none items-center gap-2 text-ink-2 transition-colors duration-(--dur-ui) hover:text-ink [&::-webkit-details-marker]:hidden">
           <SlidersHorizontalIcon className="size-4" aria-hidden="true" />
           עוד סינונים{moreCount > 0 && ` (${moreCount})`}
           <ChevronDownIcon className="size-4 transition-transform duration-(--dur-ui) ease-out group-open:rotate-180" aria-hidden="true" />
@@ -214,20 +225,10 @@ export function FilterForm({ filters: f, options }: { filters: Filters; options:
           </div>
         </fieldset>
       </details>
-
-      <div className="mt-6 flex flex-col-reverse gap-4 border-t border-line pt-6 sm:flex-row sm:items-end sm:justify-between">
-        <div className="sm:w-64">
-          <Select name="sort" label="מיון" value={f.sort}>
-            {Object.entries(SORTS).map(([v, l]) => (
-              <option key={v} value={v}>
-                {l}
-              </option>
-            ))}
-          </Select>
-        </div>
-        <button type="submit" className={buttonClass("red", "sm:min-w-56")}>
-          הצגת נכסים
-        </button>
+      {/* On a computer the button sits on the "more filters" line; the extra filters open under both. */}
+      <button type="submit" className={buttonClass("red", "mt-4 w-full sm:w-auto sm:min-w-56 lg:absolute lg:end-0 lg:top-0 lg:mt-0")}>
+        הצגת נכסים
+      </button>
       </div>
     </form>
     </>

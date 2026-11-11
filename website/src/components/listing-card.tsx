@@ -1,6 +1,6 @@
 import { ViewTransition } from "react";
 import { photoName } from "@/lib/handoff";
-import { formatPrice, formatRooms, type Listing, listingName, listingPlace } from "@/lib/listings";
+import { cardFacts, formatPrice, type Listing, listingName, listingPlace } from "@/lib/listings";
 import { ListingPhoto } from "./listing-photo";
 import { ListingLink } from "./motion/listing-link";
 import { NewTag } from "./ui";
@@ -11,10 +11,7 @@ import { NewTag } from "./ui";
  */
 export function ListingCard({ listing: l, eager, headingLevel = "h3" }: { listing: Listing; eager?: boolean; headingLevel?: "h2" | "h3" }) {
   const Heading = headingLevel;
-  const facts = [
-    l.rooms != null && `${formatRooms(l.rooms)} חדרים`,
-    l.size_sqm != null && `${formatRooms(l.size_sqm)} מ״ר`,
-  ].filter(Boolean);
+  const facts = cardFacts(l);
   return (
     <article className="group">
       <ListingLink id={l.id} className="block">
@@ -32,10 +29,18 @@ export function ListingCard({ listing: l, eager, headingLevel = "h3" }: { listin
         <div className="accent-line mt-6 group-hover:[--accent-w:100%] group-focus-within:[--accent-w:100%]">
           <Heading className="type-subtitle">{listingName(l)}</Heading>
           <p className="mt-1 text-ink-3">{listingPlace(l)}</p>
-          <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-            <p className="type-subtitle">{formatPrice(l.current_price)}</p>
-            {facts.length > 0 && <p className="text-sm text-ink-2">{facts.join(" · ")}</p>}
-          </div>
+          {/* The facts a buyer compares first, each with its own label. */}
+          {facts.length > 0 && (
+            <dl className="mt-5 grid grid-cols-3 gap-4 border-y border-line py-4">
+              {facts.map((f) => (
+                <div key={f.label}>
+                  <dt className="label-caps">{f.label}</dt>
+                  <dd className="mt-1 text-lg text-ink">{f.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          <p className="type-subtitle mt-4">{formatPrice(l.current_price)}</p>
         </div>
       </ListingLink>
     </article>

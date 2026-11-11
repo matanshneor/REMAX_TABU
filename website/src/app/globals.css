@@ -2,17 +2,20 @@
 
 /*
  * The site's palette (night blue with RE/MAX red), from the website spec.
- * Contrast on night / panel: ink 18:1, ink-2 13:1, ink-3 8:1 (all AA for small text).
+ * Contrast on night / panel: ink 17:1 / 13:1, ink-2 13:1 / 10:1, ink-3 10:1 / 7.5:1 (AAA for small text).
+ * Surfaces and lines are told apart, not just text: the panel is a clear step up from the night
+ * (1.3:1), dividers (line) read at 2.3:1, and anything you can act on (fields, outlined buttons:
+ * line-strong) has an edge of at least 3:1 on both the night and the panel.
  * Red is for buttons with white text (5:1), tags, and the 2px accent lines. Never small red text on night.
  */
 @theme {
   --color-night: #0a1a3a;
-  --color-panel: #11264f;
-  --color-line: #1d3566;
-  --color-line-strong: #2a4a84;
+  --color-panel: #15305f;
+  --color-line: #34558f;
+  --color-line-strong: #6887c0;
   --color-ink: #ffffff;
   --color-ink-2: #d6e0f2;
-  --color-ink-3: #9db5df;
+  --color-ink-3: #b3c6e8;
   --color-red: #dc1c2e;
   --color-red-dark: #b81424;
 
@@ -67,7 +70,8 @@
     background: var(--color-night);
     color: var(--color-ink);
     font-family: var(--font-sans);
-    font-weight: 300;
+    /* Regular, not light: thin strokes are the first thing to go on a dark screen. */
+    font-weight: 400;
   }
   /* One visible focus ring everywhere: white, offset from the element. */
   :focus-visible {
@@ -115,18 +119,26 @@
   font-size: clamp(1.75rem, 1.45rem + 1.3vw, 2.25rem);
   line-height: 1.15;
 }
-@utility type-subtitle {
+/* The title of a listing's own page: a step under display, so the price fits beside it. */
+@utility type-headline {
   font-family: var(--font-serif);
   font-weight: 300;
+  font-size: clamp(2rem, 1.5rem + 2.1vw, 2.75rem);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+@utility type-subtitle {
+  font-family: var(--font-serif);
+  font-weight: 400;
   font-size: clamp(1.375rem, 1.3rem + 0.4vw, 1.625rem);
   line-height: 1.3;
 }
 @utility label-caps {
   /* Small labels with wide letter spacing. */
-  font-size: 0.75rem;
-  line-height: 1rem;
+  font-size: 0.8125rem;
+  line-height: 1.125rem;
   font-weight: 500;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   color: var(--color-ink-3);
 }
 

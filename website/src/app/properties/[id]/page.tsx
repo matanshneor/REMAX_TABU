@@ -59,7 +59,7 @@ function keyFacts(l: Listing): { label: string; value: string }[] {
 /** The way back to the list. In the page and in its loading state, so the photo below never shifts. */
 function BackLink() {
   return (
-    <nav aria-label="ניווט" className="py-6">
+    <nav aria-label="ניווט" className="py-3">
       <Link href="/#listings" className="inline-flex min-h-11 items-center gap-2 text-ink-2 transition-colors duration-(--dur-ui) hover:text-ink">
         <ArrowRightIcon className="size-4" aria-hidden="true" />
         לכל הנכסים
@@ -89,15 +89,18 @@ async function ListingDetails({ params }: { params: PageProps<"/properties/[id]"
             the card), so it doesn't animate; everything under it rises in. */}
         <Gallery id={l.id} photos={l.image_paths.map(photoUrl)} title={name} />
 
-        <div className="arrive mt-12 grid gap-16 lg:mt-16 lg:grid-cols-[minmax(0,1fr)_400px]">
+        <div className="arrive mt-10 grid gap-16 lg:grid-cols-[minmax(0,1fr)_400px]">
           <article aria-labelledby="listing-title">
-            <header className="accent-line">
-              {l.is_new && <NewTag className="mb-4" />}
-              <h1 id="listing-title" className="type-display">
-                {name}
-              </h1>
-              <p className="mt-3 text-lg text-ink-3">{listingPlace(l)}</p>
-              <p className="type-title mt-8">{formatPrice(l.current_price)}</p>
+            {/* What it is and what it costs, both in view without scrolling. */}
+            <header className="accent-line flex flex-wrap items-end justify-between gap-x-10 gap-y-5">
+              <div>
+                {l.is_new && <NewTag className="mb-4" />}
+                <h1 id="listing-title" className="type-headline">
+                  {name}
+                </h1>
+                <p className="mt-2 text-lg text-ink-3">{listingPlace(l)}</p>
+              </div>
+              <p className="type-title">{formatPrice(l.current_price)}</p>
             </header>
 
             {facts.length > 0 && (
@@ -188,7 +191,7 @@ function DetailsFallback() {
     <Container aria-busy="true" aria-label="טוען את הנכס">
       <BackLink />
       <PhotoHandoff />
-      <div className="mt-12 h-12 w-1/2 animate-pulse bg-panel lg:mt-16" />
+      <div className="mt-10 h-12 w-1/2 animate-pulse bg-panel" />
     </Container>
   );
 }

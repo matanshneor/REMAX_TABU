@@ -5,7 +5,7 @@ import { photoName, pressedPhoto } from "@/lib/handoff";
 
 /** The slot of a listing page's main photo: the whole width on phones, the leading half on desktop. */
 export const LEAD_FRAME =
-  "relative -mx-4 aspect-[4/5] overflow-hidden bg-panel sm:mx-0 lg:aspect-auto lg:h-[min(72vh,640px)] lg:w-[calc(50%-0.25rem)]";
+  "relative -mx-4 aspect-[4/3] overflow-hidden bg-panel sm:mx-0 sm:aspect-[16/9] lg:aspect-auto lg:h-[min(48vh,460px)] lg:w-[calc(50%-0.25rem)]";
 
 /**
  * Shown while a listing's details are on their way. If the visitor came by pressing a listing, the

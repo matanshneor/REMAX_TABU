@@ -89,7 +89,7 @@ export async function ListingsSection({ searchParams }: { searchParams: Promise<
 export function ListingsFallback() {
   return (
     <div aria-busy="true" aria-label="טוען נכסים">
-      <div className="h-12 border border-line bg-panel/50 sm:h-56" />
+      <div className="h-12 border border-line bg-panel/50 sm:h-64 lg:h-46" />
       <div className="mt-20 grid gap-x-10 gap-y-16 sm:grid-cols-2">
         {[0, 1].map((i) => (
           <div key={i}>

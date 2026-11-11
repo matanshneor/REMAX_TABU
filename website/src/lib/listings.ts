@@ -118,6 +118,25 @@ export function listingFeatures(l: Listing): string[] {
   return out;
 }
 
+/**
+ * The three facts a card shows under the listing's name: rooms, size, and the one thing that says
+ * most about this kind of home (a garden when there is one, otherwise the floor, a balcony,
+ * parking, or the safe room).
+ */
+export function cardFacts(l: Listing): { label: string; value: string }[] {
+  const facts: { label: string; value: string }[] = [];
+  if (l.rooms != null) facts.push({ label: "חדרים", value: formatRooms(l.rooms) });
+  if (l.size_sqm != null) facts.push({ label: "שטח", value: `${formatRooms(l.size_sqm)} מ״ר` });
+  const sized = (sqm: number | null | undefined, count: number | null | undefined) =>
+    sqm ? `${formatRooms(sqm)} מ״ר` : count && count > 1 ? String(count) : "יש";
+  if (l.has_garden) facts.push({ label: "גינה", value: sized(l.garden_sqm, l.garden_count) });
+  else if (hasFloor(l)) facts.push({ label: "קומה", value: l.floor === 0 ? "קרקע" : l.total_floors ? `${l.floor} מתוך ${l.total_floors}` : String(l.floor) });
+  else if (l.has_balcony) facts.push({ label: "מרפסת", value: sized(l.balcony_sqm, l.balcony_count) });
+  else if (l.parking_spots > 0) facts.push({ label: "חניות", value: String(l.parking_spots) });
+  else if (l.has_safe_room) facts.push({ label: "ממ״ד", value: "יש" });
+  return facts;
+}
+
 /** "2 · 30 מ״ר סה״כ" / "1 · 13 מ״ר" / "16 מ״ר" / "יש": how many and how big, from whatever the CRM has. */
 function amount(count: number | null | undefined, sqm: number | null | undefined): string {
   const size = sqm ? `${formatRooms(sqm)} מ״ר${(count ?? 0) > 1 ? " סה״כ" : ""}` : null;
