@@ -1,21 +1,29 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { ListingsFallback, ListingsSection } from "@/components/listings-section";
 import { HeaderMode } from "@/components/motion/header-mode";
 import { PageTransition } from "@/components/motion/page-transition";
-import { type NovaSlide, NovaHero } from "@/components/nova-hero";
+import { HERO_FRAME, type NovaSlide, NovaHero } from "@/components/nova-hero";
 import { buttonClass, Container } from "@/components/ui";
 import { getListings } from "@/lib/data";
 import { formatPrice, formatRooms, listingFeatures, listingName, listingPlace, photoUrl } from "@/lib/listings";
 
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
-/** The opening slider: every listing, newest first (those with photos lead). */
+/** Any one of them. Called once per visit, on the server, after connection(). */
+const anyOf = <T,>(items: T[]): T => items[Math.floor(Math.random() * items.length)];
+
+/** The opening: one listing, a different one on every visit (those with photos, when there are any). */
 async function Hero() {
   const listings = await getListings();
-  const ordered = [...listings.filter((l) => l.image_paths.length), ...listings.filter((l) => !l.image_paths.length)];
-  const slides: NovaSlide[] = ordered.map((l) => ({
+  if (!listings.length) return <EmptyHero />;
+  const withPhotos = listings.filter((l) => l.image_paths.length);
+  const pool = withPhotos.length ? withPhotos : listings;
+  await connection(); // chosen per visit, not once for everyone
+  const l = anyOf(pool);
+  const slide: NovaSlide = {
     id: l.id,
     image: l.image_paths[0] ? photoUrl(l.image_paths[0]) : null,
     name: listingName(l),
@@ -28,8 +36,17 @@ async function Hero() {
     ].filter(Boolean),
     blurb: (l.description ?? "").replace(/\s+/g, " ").trim().slice(0, 220),
     isNew: l.is_new,
-  }));
-  return slides.length ? <NovaHero slides={slides} /> : <EmptyHero />;
+  };
+  return <NovaHero slide={slide} />;
+}
+
+/** The opening's place, held while the listing for this visit is chosen. */
+function HeroFallback() {
+  return (
+    <div aria-hidden="true" className={`${HERO_FRAME} bg-gradient-to-b from-panel to-night`}>
+      <HeaderMode />
+    </div>
+  );
 }
 
 /** No listings on the site right now: the same opening, without a photo, pointing to Moshe. */
@@ -54,7 +71,9 @@ function EmptyHero() {
 export default function HomePage({ searchParams }: PageProps<"/">) {
   return (
     <PageTransition>
-      <Hero />
+      <Suspense fallback={<HeroFallback />}>
+        <Hero />
+      </Suspense>
       <section id="listings" aria-labelledby="listings-title" className="scroll-mt-20 pt-16 sm:pt-24">
         <Container>
           <h2 id="listings-title" className="sr-only">
