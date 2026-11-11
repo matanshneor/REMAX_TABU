@@ -5,7 +5,7 @@ import { PageTransition } from "@/components/motion/page-transition";
 import { Reveal } from "@/components/motion/reveal";
 import { TeamList } from "@/components/team-list";
 import { buttonClass, Container, Fill } from "@/components/ui";
-import { ABOUT, OFFICE } from "@/content/site";
+import { ABOUT, OFFICE, OFFICE_ABOUT } from "@/content/site";
 import { getAgent, getTeam } from "@/lib/data";
 import { agentPhotoUrl } from "@/lib/listings";
 
@@ -24,23 +24,35 @@ export default async function AboutPage() {
   return (
     <PageTransition>
     <Container className="py-16 sm:py-24">
-      <div className="grid items-start gap-12 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-20">
+      {/* The office in its own words, then the manager, then the team. */}
+      <header className="max-w-3xl">
+        <p className="label-caps">{OFFICE.name} · ירושלים</p>
+        <h1 className="accent-line type-display mt-5">{OFFICE_ABOUT.title}</h1>
+        <div className="mt-8 space-y-5 text-lg leading-relaxed text-ink-2">
+          {OFFICE_ABOUT.paragraphs.map((p, i) => (
+            <p key={i}>{p}</p>
+          ))}
+        </div>
+      </header>
+      <section aria-labelledby="manager-title" className="mt-24 grid items-start gap-12 border-t border-line pt-16 sm:mt-32 sm:pt-24 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-20">
         {photo && (
           <div className="relative aspect-[4/5] overflow-hidden border border-line bg-gradient-to-b from-panel to-night">
-            <Image src={photo} alt={agent.full_name} fill loading="eager" sizes="(min-width: 1024px) 40vw, 100vw" className="object-cover object-top" />
+            <Image src={photo} alt={agent.full_name} fill sizes="(min-width: 1024px) 40vw, 100vw" className="object-cover object-top" />
           </div>
         )}
         <div>
           <p className="label-caps">זכיין {OFFICE.name}</p>
-          <h1 className="accent-line type-display mt-5">{ABOUT.title}</h1>
+          <h2 id="manager-title" className="accent-line type-headline mt-5">{ABOUT.title}</h2>
           <p className="mt-8 text-xl leading-relaxed text-ink-2">{ABOUT.lead}</p>
-          <div className="mt-8 space-y-5 text-lg leading-relaxed text-ink-2">
-            {ABOUT.paragraphs.map((p, i) => (
-              <p key={i}>
-                <Fill text={p} />
-              </p>
-            ))}
-          </div>
+          {ABOUT.paragraphs.length > 0 && (
+            <div className="mt-8 space-y-5 text-lg leading-relaxed text-ink-2">
+              {ABOUT.paragraphs.map((p, i) => (
+                <p key={i}>
+                  <Fill text={p} />
+                </p>
+              ))}
+            </div>
+          )}
 
           <dl className="mt-14 grid grid-cols-2 gap-8 sm:max-w-md">
             {ABOUT.facts.map((f, i) => (
@@ -60,7 +72,7 @@ export default async function AboutPage() {
             </Link>
           </Reveal>
         </div>
-      </div>
+      </section>
       {others.length > 0 && <TeamList team={others} />}
     </Container>
     </PageTransition>
