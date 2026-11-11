@@ -1,18 +1,14 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { ListingsFallback, ListingsSection } from "@/components/listings-section";
 import { HeaderMode } from "@/components/motion/header-mode";
 import { PageTransition } from "@/components/motion/page-transition";
-import { Reveal } from "@/components/motion/reveal";
 import { HERO_FRAME, type NovaSlide, NovaHero } from "@/components/nova-hero";
 import { buttonClass, Container } from "@/components/ui";
-import { ABOUT, OFFICE } from "@/content/site";
-import { firstName } from "@/lib/contact";
-import { getAgent, getListings } from "@/lib/data";
-import { agentPhotoUrl, formatPrice, formatRooms, listingFeatures, listingName, listingPlace, photoUrl } from "@/lib/listings";
+import { getListings } from "@/lib/data";
+import { formatPrice, formatRooms, listingFeatures, listingName, listingPlace, photoUrl } from "@/lib/listings";
 
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
@@ -72,35 +68,6 @@ function EmptyHero() {
   );
 }
 
-/** Who is behind the listings: a face and one sentence, with the way to the full page. */
-async function AgentStrip() {
-  const agent = await getAgent();
-  const photo = agentPhotoUrl(agent);
-  return (
-    <section aria-labelledby="agent-title" className="pt-24 sm:pt-32">
-      <Container>
-        <Reveal className="grid items-center gap-8 border border-line bg-panel/50 p-6 sm:grid-cols-[auto_minmax(0,1fr)] sm:gap-12 sm:p-10">
-          {photo && (
-            <div className="relative aspect-[4/5] w-32 overflow-hidden bg-panel sm:w-44">
-              <Image src={photo} alt={agent.full_name} fill sizes="176px" className="object-cover object-top" />
-            </div>
-          )}
-          <div>
-            <p className="label-caps">זכיין {OFFICE.name}</p>
-            <h2 id="agent-title" className="accent-line type-title mt-4">
-              {agent.full_name}
-            </h2>
-            <p className="mt-4 max-w-2xl text-lg leading-relaxed text-ink-2">{ABOUT.lead}</p>
-            <Link href="/about" className={buttonClass("outline", "mt-8")}>
-              אודות {firstName(agent.full_name)}
-            </Link>
-          </div>
-        </Reveal>
-      </Container>
-    </section>
-  );
-}
-
 export default function HomePage({ searchParams }: PageProps<"/">) {
   return (
     <PageTransition>
@@ -117,7 +84,6 @@ export default function HomePage({ searchParams }: PageProps<"/">) {
           </Suspense>
         </Container>
       </section>
-      <AgentStrip />
     </PageTransition>
   );
 }
