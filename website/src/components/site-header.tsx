@@ -1,5 +1,6 @@
+import { PhoneIcon } from "lucide-react";
 import Link from "next/link";
-import { firstName, whatsappToAgent } from "@/lib/contact";
+import { firstName, telHref, whatsappToAgent } from "@/lib/contact";
 import { getAgent } from "@/lib/data";
 import { WhatsAppIcon } from "./icons";
 import { MobileNav } from "./mobile-nav";
@@ -38,6 +39,16 @@ export async function SiteHeader() {
             ))}
           </ul>
         </nav>
+        {/* For those who would rather call: the number itself, on screens with room for it. */}
+        {agent.phone && (
+          <a
+            href={telHref(agent.phone)}
+            className="hidden min-h-11 items-center gap-2 ps-4 text-ink-2 transition-colors duration-(--dur-ui) hover:text-ink lg:inline-flex"
+          >
+            <PhoneIcon className="size-4" aria-hidden="true" />
+            <span dir="ltr">{agent.phone}</span>
+          </a>
+        )}
         {wa && (
           <div className="ms-auto hidden sm:block md:ms-0">
             <a href={wa} target="_blank" rel="noopener" className={buttonClass("red", "px-5")}>

@@ -125,7 +125,7 @@ export function Gallery({ id, photos, title }: { id: string; photos: string[]; t
 
   return (
     <div>
-      {/* Phone: one tall photo with arrows */}
+      {/* Phone: one photo with arrows */}
       <ViewTransition name={isDesktop ? undefined : photoName(id)} share="morph" default="none">
         <div className={cn(LEAD_FRAME, "lg:hidden")} style={posterStyle} {...swipe}>
           <button type="button" onClick={(e) => show(index, e.currentTarget)} className="absolute inset-0" aria-label={`הגדלת ${alt(index)}`}>
@@ -149,7 +149,7 @@ export function Gallery({ id, photos, title }: { id: string; photos: string[]; t
       </ViewTransition>
 
       {/* Desktop: a large photo and four small ones */}
-      <div className="relative hidden h-[min(72vh,640px)] grid-cols-4 grid-rows-2 gap-2 lg:grid">
+      <div className="relative hidden h-[min(48vh,460px)] grid-cols-4 grid-rows-2 gap-2 lg:grid">
         {photos.slice(0, 5).map((src, i) => {
           const tile = (
             <button
