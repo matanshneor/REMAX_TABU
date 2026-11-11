@@ -36,6 +36,11 @@ insert into public.properties (id, city, neighborhood, street, house_number, apa
   ('50000000-0000-0000-0000-000000000005', 'ירושלים', 'גילה', 'ד', '4', null, 'דירה', 3, 1000000, 'active', 'consent',
    '40000000-0000-0000-0000-0000000000e2', null, array['50000000-0000-0000-0000-000000000005/x.jpg']);
 
+-- Extra details of the first listing: the garden count is public on the site, the other two are not.
+update public.properties
+   set garden_count = 2, virtual_tour_url = 'https://tour.test/1', previous_price = 2700000
+ where id = '50000000-0000-0000-0000-000000000001';
+
 insert into public.property_owner_details (property_id, owner_name, owner_phone)
 values ('50000000-0000-0000-0000-000000000001', 'בעלים סודי', '050-9990001');
 
@@ -56,7 +61,8 @@ begin
   assert v_cols = 'id,city,neighborhood,street,property_type,floor,total_floors,rooms,size_sqm,current_price,'
                   'eviction_date,eviction_immediate,has_safe_room,has_balcony,balcony_count,balcony_sqm,'
                   'parking_spots,has_elevator,has_storage,is_renovated,has_garden,garden_sqm,has_rental_unit,'
-                  'description,image_paths,created_at,updated_at,house_number,apartment_number',
+                  'description,image_paths,created_at,updated_at,house_number,apartment_number,'
+                  'garden_count,rental_unit_count,rental_unit_sqm',
     'website_properties has unexpected columns: ' || v_cols;
 
   select string_agg(column_name, ',' order by ordinal_position) into v_cols
@@ -105,6 +111,23 @@ begin
       null;  -- expected
     end;
   end loop;
+
+  -- The listing's own extra details are public (migration website_more_details).
+  assert (select garden_count from public.website_properties where id = '50000000-0000-0000-0000-000000000001') = 2,
+    'site should show the number of gardens';
+  -- The previous price and the virtual tour link stay in the CRM.
+  begin
+    execute 'select previous_price from public.website_properties limit 1';
+    raise exception 'the site view shows the previous price';
+  exception when undefined_column then
+    null;  -- expected
+  end;
+  begin
+    execute 'select virtual_tour_url from public.website_properties limit 1';
+    raise exception 'the site view shows the virtual tour link';
+  exception when undefined_column then
+    null;  -- expected
+  end;
 
   -- The address is public (house and apartment number), the seller is not.
   assert (select house_number from public.website_properties where id = '50000000-0000-0000-0000-000000000001') = '12',
