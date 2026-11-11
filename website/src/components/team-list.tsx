@@ -27,7 +27,7 @@ function TeamMember({ agent }: { agent: Agent }) {
   const photo = agentPhotoUrl(agent);
   return (
     <article>
-      <div className="relative aspect-[4/5] overflow-hidden bg-gradient-to-b from-panel to-night">
+      <div className="relative aspect-[4/5] overflow-hidden">
         {photo && <Image src={photo} alt="" fill sizes="(min-width: 1024px) 290px, 50vw" className="object-cover object-top" />}
       </div>
       <h3 className="type-subtitle mt-5">{agent.full_name}</h3>

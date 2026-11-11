@@ -35,7 +35,7 @@ export default async function AboutPage() {
       {/* The manager: one compact block, since the whole team follows. */}
       <section aria-labelledby="manager-title" className="mt-16 flex flex-col gap-8 border-t border-line pt-12 sm:mt-20 sm:flex-row sm:items-start sm:gap-10 sm:pt-16">
         {photo && (
-          <div className="relative aspect-[4/5] w-40 shrink-0 overflow-hidden bg-gradient-to-b from-panel to-night sm:w-56">
+          <div className="relative aspect-[4/5] w-40 shrink-0 overflow-hidden sm:w-56">
             <Image src={photo} alt={agent.full_name} fill sizes="(min-width: 640px) 224px, 160px" className="object-cover object-top" />
           </div>
         )}
