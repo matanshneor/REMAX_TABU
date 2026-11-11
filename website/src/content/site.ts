@@ -26,11 +26,13 @@ export const OFFICE_ABOUT = {
   ],
 };
 
-/** The manager's own part of the page. His own text goes in `paragraphs` when it arrives. */
+/** The manager's own part of the page (text from the office's printed brochure, 11.11.2026). */
 export const ABOUT = {
   title: "משה שניאור",
   lead: "מלווה אתכם במכירה ובקנייה של בתים בירושלים, מהביקור הראשון ועד החתימה.",
-  paragraphs: [] as Text[],
+  paragraphs: [
+    "מנכ״ל ובעלים. בעל ניסיון רב בתיווך מקרקעין, בעל תואר שני, מוסמך למשפטים, מגשר, מוסמך כבורר ע״י אוניברסיטת בר־אילן. בעל רישיון תיווך. שימש בעבר כסגן מנהל סניף בבנק מזרחי טפחות.",
+  ] as Text[],
   facts: [
     { label: "רישיון תיווך", value: LICENSE as Text },
     { label: "עסקאות", value: "עשרות" as Text },
