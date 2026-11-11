@@ -25,8 +25,8 @@ insert into public.properties (id, city, neighborhood, street, house_number, apa
    '63a51f45-fdef-4797-855d-12d8b9405960', 'יד2',
    array['50000000-0000-0000-0000-000000000001/a.jpg', '50000000-0000-0000-0000-000000000001/b.jpg']),
   ('50000000-0000-0000-0000-000000000006', 'ירושלים', 'הר חומה', 'אבא חושי', '7', null, 'בית פרטי', 6, 4200000, 'active', 'exclusive',
-   '63a51f45-fdef-4797-855d-12d8b9405960', null, '{}'),
-  -- not on the site: sold, frozen, still being recruited, another agent's
+   '63a51f45-fdef-4797-855d-12d8b9405960', null, array['50000000-0000-0000-0000-000000000006/a.jpg']),
+  -- sold, frozen, still being recruited (never put on the site), and another agent's (put on the site below)
   ('50000000-0000-0000-0000-000000000002', 'ירושלים', 'גילה', 'א', '1', null, 'דירה', 3, 1000000, 'sold', 'consent',
    '63a51f45-fdef-4797-855d-12d8b9405960', null, '{}'),
   ('50000000-0000-0000-0000-000000000003', 'ירושלים', 'גילה', 'ב', '2', null, 'דירה', 3, 1000000, 'frozen', 'consent',
@@ -41,6 +41,18 @@ update public.properties
    set garden_count = 2, virtual_tour_url = 'https://tour.test/1', previous_price = 2700000
  where id = '50000000-0000-0000-0000-000000000001';
 
+-- The manager is the office admin.
+update public.profiles set role = 'admin', status = 'active' where id = '00000000-0000-0000-0000-0000000000e1';
+update public.profiles set status = 'active' where id = '00000000-0000-0000-0000-0000000000e2';
+update public.office_agents set license = '1234567', website_bio = 'כמה מילים על הסוכן'
+ where id = '40000000-0000-0000-0000-0000000000e2';
+
+-- On the site: what the manager put there (migration website_publish). Two of the manager's
+-- own and the other agent's. The recruiting-stage one could go up too, but nobody pressed.
+update public.properties set on_website = true
+ where id in ('50000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000006',
+              '50000000-0000-0000-0000-000000000005');
+
 insert into public.property_owner_details (property_id, owner_name, owner_phone)
 values ('50000000-0000-0000-0000-000000000001', 'בעלים סודי', '050-9990001');
 
@@ -48,7 +60,8 @@ insert into storage.objects (bucket_id, name) values
   ('property-media', '50000000-0000-0000-0000-000000000001/a.jpg'),
   ('property-media', '50000000-0000-0000-0000-000000000001/b.jpg'),
   ('property-media', '50000000-0000-0000-0000-000000000001/removed.jpg'),  -- no longer in image_paths
-  ('property-media', '50000000-0000-0000-0000-000000000005/x.jpg');        -- another agent's property
+  ('property-media', '50000000-0000-0000-0000-000000000005/x.jpg'),        -- another agent's property, on the site
+  ('property-media', '50000000-0000-0000-0000-000000000004/y.jpg');        -- a property that is not on the site
 
 do $$
 declare
@@ -62,13 +75,19 @@ begin
                   'eviction_date,eviction_immediate,has_safe_room,has_balcony,balcony_count,balcony_sqm,'
                   'parking_spots,has_elevator,has_storage,is_renovated,has_garden,garden_sqm,has_rental_unit,'
                   'description,image_paths,created_at,updated_at,house_number,apartment_number,'
-                  'garden_count,rental_unit_count,rental_unit_sqm',
+                  'garden_count,rental_unit_count,rental_unit_sqm,'
+                  'agent_name,agent_title,agent_phone,agent_email,agent_photo_url,agent_license',
     'website_properties has unexpected columns: ' || v_cols;
 
   select string_agg(column_name, ',' order by ordinal_position) into v_cols
     from information_schema.columns
    where table_schema = 'public' and table_name = 'website_agent';
   assert v_cols = 'full_name,phone,email,photo_url', 'website_agent has unexpected columns: ' || v_cols;
+
+  select string_agg(column_name, ',' order by ordinal_position) into v_cols
+    from information_schema.columns
+   where table_schema = 'public' and table_name = 'website_agents';
+  assert v_cols = 'full_name,title,phone,email,photo_url,license,bio,is_manager', 'website_agents has unexpected columns: ' || v_cols;
 
   -- The recruiter trigger gave the manager's properties to the manager's account.
   assert (select recruiting_agent_id from public.properties where id = '50000000-0000-0000-0000-000000000001')
@@ -88,8 +107,25 @@ declare
 begin
   select array_agg(id order by id) into v_ids
     from public.website_properties where id::text like '50000000-%';
-  assert v_ids = array['50000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000006']::uuid[],
-    'site should show only the manager''s active listings with an agreement, got ' || coalesce(v_ids::text, 'none');
+  assert v_ids = array['50000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000005',
+                       '50000000-0000-0000-0000-000000000006']::uuid[],
+    'site should show exactly the properties the manager put on it, got ' || coalesce(v_ids::text, 'none');
+
+  -- Each listing carries its own agent.
+  assert (select agent_name = 'סוכן אחר' and agent_phone = '050-111-0002' and agent_email = 'other@test.local'
+                 and agent_license = '1234567' and agent_title = 'סוכן נדל"ן'
+            from public.website_properties where id = '50000000-0000-0000-0000-000000000005'),
+    'the other agent''s listing should carry that agent''s details, got '
+      || (select row(agent_name, agent_phone, agent_email, agent_license, agent_title)::text from public.website_properties where id = '50000000-0000-0000-0000-000000000005');
+  assert (select agent_name = 'מנהל בדיקה' and agent_title = 'זכיין'
+            from public.website_properties where id = '50000000-0000-0000-0000-000000000001'),
+    'the manager''s listing should carry the manager''s details';
+
+  -- The team page: everyone in the team list, the manager first.
+  assert (select count(*) from public.website_agents where full_name in ('מנהל בדיקה', 'סוכן אחר')) = 2,
+    'the team list should include both agents';
+  assert (select is_manager and full_name = 'מנהל בדיקה' from public.website_agents limit 1), 'the manager should come first';
+  assert (select bio = 'כמה מילים על הסוכן' from public.website_agents where full_name = 'סוכן אחר'), 'the agent''s words should show';
 
   assert (select count(*) from public.website_agent) = 1, 'site should see exactly one agent';
   assert (select phone is not null and email is not null from public.website_agent), 'agent phone and email should be set';
@@ -97,7 +133,8 @@ begin
   -- Photos: only those listed on a property that is on the site.
   select array_agg(name order by name) into v_names
     from storage.objects where bucket_id = 'property-media' and name like '50000000-%';
-  assert v_names = array['50000000-0000-0000-0000-000000000001/a.jpg', '50000000-0000-0000-0000-000000000001/b.jpg'],
+  assert v_names = array['50000000-0000-0000-0000-000000000001/a.jpg', '50000000-0000-0000-0000-000000000001/b.jpg',
+                         '50000000-0000-0000-0000-000000000005/x.jpg'],
     'site should open only the listed photos of its own properties, got ' || coalesce(v_names::text, 'none');
 
   -- No table at all, not even with RLS returning nothing.
@@ -161,9 +198,72 @@ reset role;
 set local role service_role;
 do $$
 begin
-  assert (select count(*) from public.website_properties where id::text like '50000000-%') = 2,
+  assert (select count(*) from public.website_properties where id::text like '50000000-%') = 3,
     'the backend should read the site''s listings';
   assert (select count(*) from public.website_agent) = 1, 'the backend should read the site''s agent';
+  assert (select count(*) from public.website_agents) >= 2, 'the backend should read the team';
+end $$;
+
+-- ---- Who may put a property on the site --------------------------------------
+reset role;
+update public.properties set image_paths = array['50000000-0000-0000-0000-000000000004/y.jpg']
+ where id = '50000000-0000-0000-0000-000000000004';
+
+-- The other agent, signed in: not theirs to decide, not even for their own property.
+set local role authenticated;
+select set_config('request.jwt.claims', '{"role": "authenticated", "sub": "00000000-0000-0000-0000-0000000000e2"}', true);
+do $$
+begin
+  begin
+    update public.properties set on_website = false where id = '50000000-0000-0000-0000-000000000005';
+    raise exception 'an agent took a property off the site';
+  exception when insufficient_privilege then
+    null;  -- expected
+  end;
+  begin
+    insert into public.properties (city, status, engagement, on_website, image_paths)
+    values ('ירושלים', 'active', 'consent', true, array['x/y.jpg']);
+    raise exception 'an agent added a property straight onto the site';
+  exception when insufficient_privilege then
+    null;  -- expected
+  end;
+  -- Everything else about their property is still theirs to edit, and it stays on the site.
+  update public.properties set current_price = 1010000 where id = '50000000-0000-0000-0000-000000000005';
+  assert (select on_website and current_price = 1010000 from public.properties where id = '50000000-0000-0000-0000-000000000005'),
+    'an agent''s edit should keep the property on the site';
+end $$;
+
+-- The manager, signed in.
+select set_config('request.jwt.claims', '{"role": "authenticated", "sub": "00000000-0000-0000-0000-0000000000e1"}', true);
+do $$
+begin
+  -- A property at the recruiting stage can go up: the manager's press is the approval.
+  update public.properties set on_website = true where id = '50000000-0000-0000-0000-000000000004';
+  assert (select on_website from public.properties where id = '50000000-0000-0000-0000-000000000004'), 'the manager should put a property on the site';
+  update public.properties set on_website = false where id = '50000000-0000-0000-0000-000000000004';
+
+  -- Not without a photo, and not a sold or frozen one.
+  begin
+    update public.properties set image_paths = '{}', on_website = true where id = '50000000-0000-0000-0000-000000000004';
+    raise exception 'a property without photos went on the site';
+  exception when check_violation then
+    null;  -- expected
+  end;
+  begin
+    update public.properties set on_website = true, image_paths = array['a/b.jpg'] where id = '50000000-0000-0000-0000-000000000003';
+    raise exception 'a frozen property went on the site';
+  exception when check_violation then
+    null;  -- expected
+  end;
+
+  -- Frozen: off the site by itself, and it does not come back by itself.
+  update public.properties set status = 'frozen' where id = '50000000-0000-0000-0000-000000000006';
+  assert (select not on_website from public.properties where id = '50000000-0000-0000-0000-000000000006'), 'a frozen property should leave the site';
+  update public.properties set status = 'active' where id = '50000000-0000-0000-0000-000000000006';
+  assert (select not on_website from public.properties where id = '50000000-0000-0000-0000-000000000006'), 'an unfrozen property should wait for the manager';
+  update public.properties set on_website = true where id = '50000000-0000-0000-0000-000000000006';
+
+  raise notice 'WEBSITE PUBLISH TESTS PASSED';
 end $$;
 
 -- ---- Refresh calls (as postgres again) --------------------------------------
@@ -207,10 +307,16 @@ do $$
 declare
   v jsonb[];
 begin
-  -- Another agent's property: no call.
-  update public.properties set current_price = 990000 where id = '50000000-0000-0000-0000-000000000005';
+  -- A property that is not on the site: no call.
+  update public.properties set current_price = 990000 where id = '50000000-0000-0000-0000-000000000004';
   v := pg_temp.take_calls();
-  assert cardinality(v) = 0, 'another agent''s property should not refresh the site, got ' || v::text;
+  assert cardinality(v) = 0, 'a property that is not on the site should not refresh it, got ' || v::text;
+
+  -- Another agent's property that is on the site: one call.
+  update public.properties set current_price = 995000 where id = '50000000-0000-0000-0000-000000000005';
+  v := pg_temp.take_calls();
+  assert cardinality(v) = 1 and v[1] ->> 'id' = '50000000-0000-0000-0000-000000000005',
+    'another agent''s listing on the site should refresh it, got ' || v::text;
 
   -- The manager's property: one call with its id.
   update public.properties set current_price = 2450000 where id = '50000000-0000-0000-0000-000000000001';
@@ -218,26 +324,34 @@ begin
   assert cardinality(v) = 1 and v[1] ->> 'id' = '50000000-0000-0000-0000-000000000001' and v[1] ->> 'op' = 'UPDATE',
     'price change should refresh the site once, got ' || v::text;
 
-  -- Moved to the manager, then away again: both refresh.
-  update public.properties set recruiter_id = '63a51f45-fdef-4797-855d-12d8b9405960' where id = '50000000-0000-0000-0000-000000000005';
-  update public.properties set recruiter_id = '40000000-0000-0000-0000-0000000000e2' where id = '50000000-0000-0000-0000-000000000005';
+  -- Put on the site, then taken off: both refresh.
+  update public.properties set on_website = true where id = '50000000-0000-0000-0000-000000000004';
+  update public.properties set on_website = false where id = '50000000-0000-0000-0000-000000000004';
   v := pg_temp.take_calls();
-  assert cardinality(v) = 2, 'moving a property to and from the manager should refresh twice, got ' || v::text;
+  assert cardinality(v) = 2, 'putting a property on the site and taking it off should refresh twice, got ' || v::text;
 
-  -- New and deleted.
+  -- Sold: it leaves the site, and the site hears about it.
+  update public.properties set status = 'sold' where id = '50000000-0000-0000-0000-000000000006';
+  v := pg_temp.take_calls();
+  assert cardinality(v) = 1 and (select not on_website from public.properties where id = '50000000-0000-0000-0000-000000000006'),
+    'a sold listing should leave the site and refresh it, got ' || v::text;
+
+  -- New (not on the site) and deleted (was not on the site): no call. Deleting a listing: one call.
   insert into public.properties (id, city, status, engagement, recruiter_id)
   values ('50000000-0000-0000-0000-000000000007', 'ירושלים', 'active', 'consent', '63a51f45-fdef-4797-855d-12d8b9405960');
   delete from public.properties where id = '50000000-0000-0000-0000-000000000002';
   v := pg_temp.take_calls();
-  assert cardinality(v) = 2 and v[1] ->> 'op' = 'INSERT' and v[2] ->> 'op' = 'DELETE'
-         and v[2] ->> 'id' = '50000000-0000-0000-0000-000000000002',
-    'new and deleted properties should refresh, got ' || v::text;
-
-  -- The manager's contact details refresh; another agent's don't.
-  update public.office_agents set phone = '050-1110009' where id = '63a51f45-fdef-4797-855d-12d8b9405960';
-  update public.office_agents set phone = '050-1110008' where id = '40000000-0000-0000-0000-0000000000e2';
+  assert cardinality(v) = 0, 'properties that are not on the site should not refresh it, got ' || v::text;
+  delete from public.properties where id = '50000000-0000-0000-0000-000000000005';
   v := pg_temp.take_calls();
-  assert cardinality(v) = 1 and v[1] ->> 'table' = 'office_agents', 'only the manager''s contact change should refresh, got ' || v::text;
+  assert cardinality(v) = 1 and v[1] ->> 'op' = 'DELETE' and v[1] ->> 'id' = '50000000-0000-0000-0000-000000000005',
+    'deleting a listing should refresh the site, got ' || v::text;
+
+  -- Any agent's details refresh the site (every agent is on the team page).
+  update public.office_agents set phone = '050-1110009' where id = '63a51f45-fdef-4797-855d-12d8b9405960';
+  update public.office_agents set website_bio = 'מילים חדשות' where id = '40000000-0000-0000-0000-0000000000e2';
+  v := pg_temp.take_calls();
+  assert cardinality(v) = 2 and v[1] ->> 'table' = 'office_agents', 'a change in the team list should refresh, got ' || v::text;
 
   -- The secret travels in the header.
   assert (select q.headers ->> 'x-revalidate-secret' from net.http_request_queue q order by q.id desc limit 1)

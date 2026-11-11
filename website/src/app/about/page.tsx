@@ -3,19 +3,22 @@ import Image from "next/image";
 import Link from "next/link";
 import { PageTransition } from "@/components/motion/page-transition";
 import { Reveal } from "@/components/motion/reveal";
+import { TeamList } from "@/components/team-list";
 import { buttonClass, Container, Fill } from "@/components/ui";
 import { ABOUT, OFFICE } from "@/content/site";
-import { getAgent } from "@/lib/data";
+import { getAgent, getTeam } from "@/lib/data";
 import { agentPhotoUrl } from "@/lib/listings";
 
 export const metadata: Metadata = {
-  title: " משה שניאור",
-  description: "משה שניאור, זכיין RE/MAX טאבו נכסים: ליווי אישי במכירה ובקנייה של בתים בירושלים.",
+  title: "המשרד שלנו",
+  description: "RE/MAX טאבו נכסים בירושלים: משה שניאור, זכיין המשרד, וצוות הסוכנים שמלווה אתכם במכירה ובקנייה.",
   alternates: { canonical: "/about" },
 };
 
 export default async function AboutPage() {
-  const agent = await getAgent();
+  const [agent, team] = await Promise.all([getAgent(), getTeam()]);
+  // The manager has the top of the page; the list below is the rest of the team.
+  const others = team.filter((a) => !a.is_manager);
   const photo = agentPhotoUrl(agent);
 
   return (
@@ -58,6 +61,7 @@ export default async function AboutPage() {
           </Reveal>
         </div>
       </div>
+      {others.length > 0 && <TeamList team={others} />}
     </Container>
     </PageTransition>
   );

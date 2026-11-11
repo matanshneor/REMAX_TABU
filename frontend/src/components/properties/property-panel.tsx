@@ -8,7 +8,7 @@ import { EntityForm } from "@/components/form/entity-form";
 import { useFormValues } from "@/components/form/use-form-values";
 import { toPayload } from "@/components/form/values";
 import { LockBanner, Panel, SaveFooter } from "@/components/crm/panel";
-import { StatusBadge } from "@/components/crm/status-badge";
+import { Pill, StatusBadge } from "@/components/crm/status-badge";
 import { BuyerMatches } from "@/components/matching/buyer-matches";
 import { LinkedTasks } from "@/components/tasks/linked-tasks";
 import { ReminderButton } from "@/components/tasks/reminder-button";
@@ -20,6 +20,7 @@ import { PROPERTY_ENGAGEMENT, PROPERTY_STATUS } from "@/lib/labels";
 import { canEditProperty, canManageProperty, isAdmin } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/client";
 import type { Property } from "@/lib/types";
+import { isOnWebsite } from "@/lib/website";
 import { ExclusivityPill } from "./exclusivity-pill";
 import { OwnerDetails } from "./owner-details";
 import {
@@ -33,6 +34,7 @@ import {
   SELLER_CREATE_SECTION,
 } from "./property-fields";
 import { CopyWebsiteLinkButton } from "./copy-website-link-button";
+import { WebsitePublishButton } from "./website-publish-button";
 import { CreateAdButton } from "./create-ad-dialog";
 import { PendingImages, PropertyImages, uploadPropertyImages } from "./property-images";
 import { ShareWhatsAppButton } from "./share-whatsapp-dialog";
@@ -161,6 +163,7 @@ export function PropertyPanel({
         property && (
           <>
             <StatusBadge map={PROPERTY_STATUS} value={property.status} />
+            {isOnWebsite(property) && <Pill tone="blue">באתר</Pill>}
             {property.engagement !== "exclusive" && <StatusBadge map={PROPERTY_ENGAGEMENT} value={property.engagement} />}
             {property.is_exclusive && (
               <ExclusivityPill end={property.exclusivity_end} showDate />
@@ -181,6 +184,7 @@ export function PropertyPanel({
             )}
             <ShareWhatsAppButton property={property} />
             <CopyWebsiteLinkButton property={property} />
+            {isAdmin(profile) && <WebsitePublishButton property={property} />}
             <CreateAdButton property={property} />
             <ReminderButton
               propertyId={property.id}

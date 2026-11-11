@@ -36,11 +36,47 @@ export type Listing = {
   garden_count?: number | null;
   rental_unit_count?: number | null;
   rental_unit_sqm?: number | null;
+  /** The listing's own agent (migration website_publish); absent before it ran. */
+  agent_name?: string | null;
+  agent_title?: string | null;
+  agent_phone?: string | null;
+  agent_email?: string | null;
+  agent_photo_url?: string | null;
+  agent_license?: string | null;
   /** On the market for less than a week ("חדש בשוק"); worked out when the list is fetched. */
   is_new: boolean;
 };
 
-export type Agent = { full_name: string; phone: string | null; email: string | null; photo_url: string | null };
+export type Agent = {
+  full_name: string;
+  phone: string | null;
+  email: string | null;
+  photo_url: string | null;
+  /** "זכיין", "סוכנת נדל"ן"… as on the office's ads. */
+  title?: string | null;
+  license?: string | null;
+  /** A few words about the agent, written in the CRM. */
+  bio?: string | null;
+  is_manager?: boolean;
+};
+
+/** The agent whose listing this is; the office manager when the listing names nobody. */
+export function listingAgent(l: Listing, manager: Agent): Agent {
+  if (!l.agent_name) return manager;
+  return {
+    full_name: l.agent_name,
+    title: l.agent_title,
+    phone: l.agent_phone ?? null,
+    email: l.agent_email ?? null,
+    photo_url: l.agent_photo_url ?? null,
+    license: l.agent_license,
+  };
+}
+
+/** Hebrew verbs follow the agent: "משה יחזור אליכם", "אפרת תחזור אליכם". Read from the title. */
+export function isFemale(agent: Pick<Agent, "title">): boolean {
+  return /סוכנת|זכיינית|מנהלת/.test(agent.title ?? "");
+}
 
 // ---------------------------------------------------------------------------------------------
 // Presentation helpers

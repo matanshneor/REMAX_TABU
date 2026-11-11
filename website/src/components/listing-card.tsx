@@ -41,6 +41,8 @@ export function ListingCard({ listing: l, eager, headingLevel = "h3" }: { listin
             </dl>
           )}
           <p className="type-subtitle mt-4">{formatPrice(l.current_price)}</p>
+          {/* Whose listing it is: the name and title, as on the office's ads. */}
+          {l.agent_name && <p className="mt-2 text-sm text-ink-3">{[l.agent_name, l.agent_title].filter(Boolean).join(" · ")}</p>}
         </div>
       </ListingLink>
     </article>

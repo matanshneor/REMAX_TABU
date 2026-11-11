@@ -13,7 +13,7 @@ import { ListingCard } from "@/components/listing-card";
 import { buttonClass, Container, NewTag, SectionTitle } from "@/components/ui";
 import { whatsappShare } from "@/lib/contact";
 import { getAgent, getListing, getListings } from "@/lib/data";
-import { entryText, formatPrice, formatRooms, fullAddress, hasFloor, type Listing, listingDetails, listingFeatures, listingName, listingPlace, listingPreview, photoUrl, similarListings } from "@/lib/listings";
+import { entryText, formatPrice, formatRooms, fullAddress, hasFloor, type Listing, listingAgent, listingDetails, listingFeatures, listingName, listingPlace, listingPreview, photoUrl, similarListings } from "@/lib/listings";
 
 // Listing pages are built on every visit from the cached list (lib/data.ts), which the CRM's refresh
 // call expires at once. A page-level copy could show a visitor (or WhatsApp's preview) the version
@@ -62,8 +62,10 @@ function BackLink() {
 async function ListingDetails({ params }: { params: PageProps<"/properties/[id]">["params"] }) {
   await connection();
   const { id } = await params;
-  const [l, all, agent] = await Promise.all([getListing(id), getListings(), getAgent()]);
+  const [l, all, manager] = await Promise.all([getListing(id), getListings(), getAgent()]);
   if (!l) return <NotOnSite />;
+  // The contact on a listing's page is the listing's own agent.
+  const agent = listingAgent(l, manager);
 
   const name = listingName(l);
   const details = listingDetails(l);

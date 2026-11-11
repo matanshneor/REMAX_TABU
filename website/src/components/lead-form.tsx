@@ -34,6 +34,7 @@ export function LeadForm({
   defaultMessage = "",
   whatsappHref,
   agentFirstName,
+  agentFemale,
   submitLabel = "שליחה",
   messageLabel = "הודעה (לא חובה)",
 }: {
@@ -41,6 +42,8 @@ export function LeadForm({
   defaultMessage?: string;
   whatsappHref?: string | null;
   agentFirstName: string;
+  /** "תחזור אליכם" instead of "יחזור אליכם". */
+  agentFemale?: boolean;
   submitLabel?: string;
   messageLabel?: string;
 }) {
@@ -95,7 +98,7 @@ export function LeadForm({
           תודה, הפנייה נשלחה
         </p>
         <p className="rise mt-2 text-ink-2" style={{ animationDelay: "80ms" }}>
-          {agentFirstName} יחזור אליכם בהקדם.
+          {agentFirstName} {agentFemale ? "תחזור" : "יחזור"} אליכם בהקדם.
         </p>
         {whatsappHref && (
           <a href={whatsappHref} target="_blank" rel="noopener" className={buttonClass("red", "rise mt-6 w-full")} style={{ animationDelay: "160ms" }}>

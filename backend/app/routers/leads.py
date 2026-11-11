@@ -1,9 +1,10 @@
 """Leads from the public website (website/): a visitor's name, phone and message, optionally
 about one of the listings on the site. No sign-in; called from the visitor's browser.
 
-Each lead becomes a new buyer of the site's agent (status "new", lead source "אתר"). A visitor
-the agent already has as a buyer (same phone) goes into that buyer's call log instead of a
-duplicate. A lead from a property page also opens a task "לחזור ל…" linked to the buyer and the
+Each lead becomes a new buyer (status "new", lead source "אתר"). A lead about a listing goes to
+that listing's agent, and the office manager gets a copy; while the agent has no CRM account
+yet, and for a general enquiry, it goes to the manager. A visitor the agent already has as a
+buyer (same phone) goes into that buyer's call log instead of a duplicate. A lead from a property page also opens a task "לחזור ל…" linked to the buyer and the
 property, so it shows on both cards. The agent gets a bell notification; the email is sent within a minute by the Gmail script in the
 office mailbox, which picks up notifications with emailed_at empty (edge function website-lead-emails),
 because Railway's plan blocks outbound SMTP.
@@ -109,9 +110,21 @@ def lead_text(lead: LeadIn, prop: dict | None) -> str:
     lines = ["פנייה מהאתר", lead.message or "(בלי הודעה)"]
     if prop:
         lines.append(f"נכס: {property_label(prop)}")
+        if prop.get("agent_name"):
+            lines.append(f"הסוכן של הנכס: {prop['agent_name']}")
         if url := property_url(prop):
             lines.append(url)
     return "\n".join(lines)
+
+
+def listing_agent(client, property_id: str) -> str | None:
+    """The CRM account of the agent whose listing this is; None while they have no account."""
+    prop = client.table("properties").select("recruiter_id").eq("id", property_id).maybe_single().execute()
+    recruiter = prop.data.get("recruiter_id") if prop is not None and prop.data else None
+    if not recruiter:
+        return None
+    row = client.table("office_agents").select("profile_id").eq("id", recruiter).maybe_single().execute()
+    return row.data.get("profile_id") if row is not None and row.data else None
 
 
 @router.post("/leads")
@@ -133,8 +146,8 @@ def create_lead(lead: LeadIn, request: Request) -> dict:
         client.table("office_agents").select("profile_id").eq("id", settings.website_agent_id)
         .maybe_single().execute()
     )
-    agent_id = agent.data.get("profile_id") if agent is not None and agent.data else None
-    if not agent_id:
+    manager_id = agent.data.get("profile_id") if agent is not None and agent.data else None
+    if not manager_id:
         log.error("lead not saved: website agent %s has no CRM account", settings.website_agent_id)
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "לא הצלחנו לשמור את הפנייה. אפשר להתקשר או לשלוח וואטסאפ.")
 
@@ -143,10 +156,13 @@ def create_lead(lead: LeadIn, request: Request) -> dict:
     if lead.property_id:
         found = (
             client.table("website_properties")
-            .select("id, property_type, rooms, street, house_number, neighborhood, city, current_price")
+            .select("id, property_type, rooms, street, house_number, neighborhood, city, current_price, agent_name")
             .eq("id", str(lead.property_id)).maybe_single().execute()
         )
         prop = found.data if found is not None and found.data else None
+
+    # The listing's own agent gets the lead, when they have a CRM account; otherwise the manager.
+    agent_id = (listing_agent(client, prop["id"]) if prop else None) or manager_id
 
     text = lead_text(lead, prop)
     existing = (
@@ -187,11 +203,14 @@ def create_lead(lead: LeadIn, request: Request) -> dict:
         }).execute()
 
     body = " · ".join(x for x in (lead.phone, property_label(prop) if prop else None) if x)
-    client.table("notifications").insert({
-        "recipient_id": agent_id,
-        "kind": "website_lead",
-        "title": title,
-        "body": body,
-        "link": f"/buyers?open={buyer_id}",
-    }).execute()
+    note = {"kind": "website_lead", "title": title, "body": body, "link": f"/buyers?open={buyer_id}"}
+    client.table("notifications").insert({**note, "recipient_id": agent_id}).execute()
+    if agent_id != manager_id:
+        # The manager's copy says whose listing it is.
+        name = (prop or {}).get("agent_name")
+        client.table("notifications").insert({
+            **note,
+            "recipient_id": manager_id,
+            "body": " · ".join(x for x in (body, f"הסוכן: {name}" if name else None) if x),
+        }).execute()
     return {"ok": True}

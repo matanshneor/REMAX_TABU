@@ -1,16 +1,17 @@
-import { PhoneIcon } from "lucide-react";
+import { MailIcon, PhoneIcon } from "lucide-react";
 import Image from "next/image";
 import { OFFICE } from "@/content/site";
 import { firstName, telHref, whatsappToAgent } from "@/lib/contact";
-import { type Agent, agentPhotoUrl, type Listing } from "@/lib/listings";
+import { type Agent, agentPhotoUrl, isFemale, type Listing } from "@/lib/listings";
 import { WhatsAppIcon } from "./icons";
 import { LeadForm } from "./lead-form";
 import { buttonClass } from "./ui";
 
-/** The agent's card on a listing: photo, name, phone, WhatsApp / call buttons and the form. */
+/** The card of the listing's own agent: photo, name, title, license, phone, email, WhatsApp / call buttons and the form. */
 export function ContactCard({ agent, listing, title = "לתיאום סיור" }: { agent: Agent; listing?: Listing; title?: string }) {
   const photo = agentPhotoUrl(agent);
   const first = firstName(agent.full_name);
+  const female = isFemale(agent);
   const wa = agent.phone ? whatsappToAgent(agent.phone, listing, first) : null;
   return (
     <section aria-labelledby="contact-card-title" className="border border-line bg-panel p-6 sm:p-8">
@@ -25,7 +26,10 @@ export function ContactCard({ agent, listing, title = "לתיאום סיור" }:
         )}
         <div>
           <p className="type-subtitle">{agent.full_name}</p>
-          <p className="mt-0.5 text-sm text-ink-3">זכיין {OFFICE.name}</p>
+          <p className="mt-0.5 text-sm text-ink-3">
+            {agent.title ?? "זכיין"}, {OFFICE.name}
+          </p>
+          {agent.license && <p className="mt-0.5 text-sm text-ink-3">רישיון תיווך {agent.license}</p>}
           {agent.phone && (
             <a href={telHref(agent.phone)} className="mt-1 inline-flex min-h-11 items-center text-ink-2 transition-colors duration-(--dur-ui) hover:text-ink" dir="ltr">
               {agent.phone}
@@ -33,6 +37,15 @@ export function ContactCard({ agent, listing, title = "לתיאום סיור" }:
           )}
         </div>
       </div>
+      {agent.email && (
+        <a
+          href={`mailto:${agent.email}`}
+          className="mt-2 inline-flex min-h-11 max-w-full items-center gap-2 break-all text-ink-2 transition-colors duration-(--dur-ui) hover:text-ink"
+        >
+          <MailIcon className="size-4 shrink-0" aria-hidden="true" />
+          <span dir="ltr">{agent.email}</span>
+        </a>
+      )}
       {agent.phone && (
         <div className="mt-6 grid gap-3">
           {wa && (
@@ -48,8 +61,10 @@ export function ContactCard({ agent, listing, title = "לתיאום סיור" }:
         </div>
       )}
       <div className="mt-8 border-t border-line pt-8">
-        <p className="mb-5 text-ink-2">או השאירו פרטים, ו{first} יחזור אליכם:</p>
-        <LeadForm propertyId={listing?.id} whatsappHref={wa} agentFirstName={first} />
+        <p className="mb-5 text-ink-2">
+          או השאירו פרטים, ו{first} {female ? "תחזור" : "יחזור"} אליכם:
+        </p>
+        <LeadForm propertyId={listing?.id} whatsappHref={wa} agentFirstName={first} agentFemale={female} />
       </div>
     </section>
   );

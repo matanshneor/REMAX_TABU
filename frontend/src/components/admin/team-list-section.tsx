@@ -23,10 +23,21 @@ const AGENT_SECTIONS: FormSection[] = [
     ],
   },
   {
-    title: "פרטים למודעות",
+    title: "פרטים למודעות ולאתר",
     fields: [
       { name: "gender", label: "מין", type: "select", options: GENDER_OPTIONS, required: true },
       { name: "license", label: "מספר רישיון מתווך", type: "text" },
+    ],
+  },
+  {
+    title: "באתר המשרד",
+    fields: [
+      {
+        name: "website_bio",
+        label: "כמה מילים על הסוכן (מופיע בעמוד ״המשרד שלנו״ באתר)",
+        type: "textarea",
+        span: 6,
+      },
     ],
   },
 ];

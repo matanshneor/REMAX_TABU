@@ -3,7 +3,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { supabaseConfig } from "./env";
 import type { Agent, Listing } from "./listings";
 
-/** Server only: reads the two website views with the publishable key, cached until the CRM changes. */
+/** Server only: reads the website views with the publishable key, cached until the CRM changes. */
 
 /** Tags the database refresh call (POST /api/revalidate) expires. */
 export const TAGS = { listings: "listings", agent: "agent" } as const;
@@ -43,6 +43,18 @@ export async function getListing(id: string): Promise<Listing | null> {
   return (await getListings()).find((l) => l.id === id) ?? null;
 }
 
+/** The office team for "המשרד שלנו": the manager first, then by name. */
+export async function getTeam(): Promise<Agent[]> {
+  "use cache";
+  cacheTag(TAGS.agent);
+  cacheLife(LIFE);
+  const { data, error } = await db().from("website_agents").select("*");
+  if (error) throw new Error(`website_agents: ${error.message}`);
+  const team = (data ?? []) as Agent[];
+  return team.sort((a, b) => Number(!!b.is_manager) - Number(!!a.is_manager) || a.full_name.localeCompare(b.full_name, "he"));
+}
+
+/** The office manager: the contact for everything that isn't one agent's listing. */
 export async function getAgent(): Promise<Agent> {
   "use cache";
   cacheTag(TAGS.agent);

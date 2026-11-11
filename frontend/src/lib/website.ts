@@ -3,21 +3,18 @@ import type { Property } from "./types";
 /** The public listings site (the website/ app). Set NEXT_PUBLIC_WEBSITE_URL if its address changes. */
 export const WEBSITE_URL = (process.env.NEXT_PUBLIC_WEBSITE_URL || "https://remaxtabu.up.railway.app").replace(/\/+$/, "");
 
-/** The agent whose listings the site shows: the manager's row in the team list (office_agents). */
-const WEBSITE_AGENT_ID = process.env.NEXT_PUBLIC_WEBSITE_AGENT_ID || "63a51f45-fdef-4797-855d-12d8b9405960";
-
 /**
- * Is this property on the site right now? The same rule as the database view the site reads
- * (website_properties): the manager's listing, on the market, past the recruiting stage.
+ * Is this property on the site right now? The manager puts a property on the site ("העלאה
+ * לאתר"); the same rule as the database view the site reads (website_properties).
  */
-export function isOnWebsite(p: Pick<Property, "recruiter_id" | "status" | "engagement">): boolean {
-  return p.recruiter_id === WEBSITE_AGENT_ID && p.status === "active" && p.engagement !== "recruiting";
+export function isOnWebsite(p: Pick<Property, "on_website" | "status">): boolean {
+  return p.on_website && p.status === "active";
 }
 
 /**
  * The link to send a buyer: the listing's own page on the site (photos, details, enquiry form).
  * Null when the property isn't on the site.
  */
-export function websiteLink(p: Pick<Property, "id" | "recruiter_id" | "status" | "engagement">): string | null {
+export function websiteLink(p: Pick<Property, "id" | "on_website" | "status">): string | null {
   return isOnWebsite(p) ? `${WEBSITE_URL}/properties/${p.id}` : null;
 }

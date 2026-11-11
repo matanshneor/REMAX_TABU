@@ -21,6 +21,10 @@ AGENT = "07afb519-7e93-4d02-97e7-666fac968316"
 OTHER_AGENT = "00000000-0000-0000-0000-0000000000b1"
 LISTED = "50000000-0000-0000-0000-000000000001"
 NOT_LISTED = "50000000-0000-0000-0000-000000000009"
+OTHER_ROW = "40000000-0000-0000-0000-0000000000b1"
+NO_ACCOUNT_ROW = "40000000-0000-0000-0000-0000000000b2"
+OTHERS_LISTING = "50000000-0000-0000-0000-000000000002"
+NO_ACCOUNT_LISTING = "50000000-0000-0000-0000-000000000003"
 
 
 class Query:
@@ -78,11 +82,26 @@ class Result:
 class FakeDb:
     def __init__(self) -> None:
         self.tables: dict[str, list[dict]] = {
-            "office_agents": [{"id": AGENT_ROW, "profile_id": AGENT}],
+            "office_agents": [
+                {"id": AGENT_ROW, "profile_id": AGENT},
+                {"id": OTHER_ROW, "profile_id": OTHER_AGENT},
+                {"id": NO_ACCOUNT_ROW, "profile_id": None},
+            ],
+            "properties": [
+                {"id": LISTED, "recruiter_id": AGENT_ROW},
+                {"id": OTHERS_LISTING, "recruiter_id": OTHER_ROW},
+                {"id": NO_ACCOUNT_LISTING, "recruiter_id": NO_ACCOUNT_ROW},
+            ],
             "profiles": [{"id": AGENT, "email": "manager@test.local"}],
             "website_properties": [{
                 "id": LISTED, "property_type": "דירת גן", "rooms": 5, "street": "הרב בצלאל", "house_number": "12",
-                "neighborhood": "גילה", "city": "ירושלים", "current_price": 2500000,
+                "neighborhood": "גילה", "city": "ירושלים", "current_price": 2500000, "agent_name": "מנהל בדיקה",
+            }, {
+                "id": OTHERS_LISTING, "property_type": "דירה", "rooms": 3, "street": "הגפן", "house_number": "4",
+                "neighborhood": "גילה", "city": "ירושלים", "current_price": 1900000, "agent_name": "סוכן אחר",
+            }, {
+                "id": NO_ACCOUNT_LISTING, "property_type": "דירה", "rooms": 4, "street": "התאנה", "house_number": "8",
+                "neighborhood": "גילה", "city": "ירושלים", "current_price": 2100000, "agent_name": "סוכנת בלי חשבון",
             }],
             "buyers": [
                 {"id": "b-other", "full_name": "קונה של סוכן אחר", "phone": "052-111-2222", "owner_agent_id": OTHER_AGENT},
@@ -131,6 +150,28 @@ def test_new_lead_from_property_page(db):
     assert note["recipient_id"] == AGENT and note["kind"] == "website_lead"
     assert note["link"] == f"/buyers?open={buyer['id']}"
     assert not note.get("emailed_at")  # the Gmail script emails it within a minute, then marks it
+
+
+def test_lead_on_another_agents_listing_goes_to_that_agent_with_a_copy_to_the_manager(db):
+    assert post(message="מתי אפשר לראות?", property_id=OTHERS_LISTING).status_code == 200
+    [buyer] = [b for b in db.rows("buyers") if b["full_name"] == "ישראל ישראלי"]
+    assert buyer["owner_agent_id"] == OTHER_AGENT
+    assert "הסוכן של הנכס: סוכן אחר" in buyer["notes"]
+    [task] = db.rows("tasks")
+    assert task["assigned_to"] == OTHER_AGENT and task["property_id"] == OTHERS_LISTING
+    notes = db.rows("notifications")
+    assert [n["recipient_id"] for n in notes] == [OTHER_AGENT, AGENT]
+    assert all(n["kind"] == "website_lead" and n["link"] == f"/buyers?open={buyer['id']}" for n in notes)
+    assert "הסוכן: סוכן אחר" in notes[1]["body"]
+
+
+def test_lead_on_a_listing_of_an_agent_without_an_account_goes_to_the_manager(db):
+    assert post(property_id=NO_ACCOUNT_LISTING).status_code == 200
+    [buyer] = [b for b in db.rows("buyers") if b["full_name"] == "ישראל ישראלי"]
+    assert buyer["owner_agent_id"] == AGENT
+    assert "הסוכן של הנכס: סוכנת בלי חשבון" in buyer["notes"]
+    [note] = db.rows("notifications")
+    assert note["recipient_id"] == AGENT
 
 
 def test_general_lead_has_no_task(db):

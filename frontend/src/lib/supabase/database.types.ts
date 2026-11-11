@@ -640,6 +640,7 @@ export type Database = {
           profile_id: string | null
           role: string | null
           updated_at: string
+          website_bio: string | null
         }
         Insert: {
           created_at?: string
@@ -653,6 +654,7 @@ export type Database = {
           profile_id?: string | null
           role?: string | null
           updated_at?: string
+          website_bio?: string | null
         }
         Update: {
           created_at?: string
@@ -666,6 +668,7 @@ export type Database = {
           profile_id?: string | null
           role?: string | null
           updated_at?: string
+          website_bio?: string | null
         }
         Relationships: [
           {
@@ -755,6 +758,7 @@ export type Database = {
           property_type: string | null
           rental_unit_count: number | null
           rental_unit_sqm: number | null
+          on_website: boolean
           recruiting_agent_id: string | null
           recruiter_id: string | null
           rooms: number | null
@@ -800,6 +804,7 @@ export type Database = {
           property_type?: string | null
           rental_unit_count?: number | null
           rental_unit_sqm?: number | null
+          on_website?: boolean
           recruiting_agent_id?: string | null
           recruiter_id?: string | null
           rooms?: number | null
@@ -845,6 +850,7 @@ export type Database = {
           property_type?: string | null
           rental_unit_count?: number | null
           rental_unit_sqm?: number | null
+          on_website?: boolean
           recruiting_agent_id?: string | null
           recruiter_id?: string | null
           rooms?: number | null
