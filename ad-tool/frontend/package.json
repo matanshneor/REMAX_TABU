@@ -1,0 +1,11 @@
+{
+  "name": "remax-tabu-ad-tool",
+  "private": true,
+  "description": "The office's ad-making tool: one static page, no sign-in.",
+  "scripts": {
+    "start": "serve -l tcp://0.0.0.0:${PORT:-3002} -c serve.json"
+  },
+  "dependencies": {
+    "serve": "14.2.4"
+  }
+}

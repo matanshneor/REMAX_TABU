@@ -1,0 +1,12 @@
+{
+  "public": "public",
+  "rewrites": [
+    { "source": "/ad-tool", "destination": "/index.html" },
+    { "source": "/ad-tool/", "destination": "/index.html" },
+    { "source": "/ad-tool/images/:name", "destination": "/images/:name" }
+  ],
+  "headers": [
+    { "source": "/index.html", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
+    { "source": "/images/**", "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400" }] }
+  ]
+}
