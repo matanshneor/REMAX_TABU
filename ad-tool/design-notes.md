@@ -52,12 +52,10 @@ Copied from the old `Remax-Template` project (now archived). The tool itself liv
 | שם | רישיון | טלפון | קובץ תמונה |
 |----|---------|--------|------------|
 | משה שניאור | 3181402 | 052-8110611 | Moshe_Shneor_image.png |
-| ליאור ישראלי | 3224854 | 052-3892647 | Lior_Israeli_image.png |
 | לימור מרקו | 312109174 | 053-3453961 | Limor_Marco_image.png |
 | מרים שפנגנטל | 31034580 | 054-8366822 | Miriam_Shpangental_image.png |
 | הדס אהרון | 3166785 | 050-7690054 | Hadas_Aharon_image.png |
 | יהודית זקן | 311106208 | 052-8249515 | Yehudit_Zaken_image.png |
-| הדס יחזקאל | 3244972 | 053-8243590 | Hadas_Yechezkel_image.png |
 | אפרת לוי | 3151288 | 050-4443830 | Efrat_Levi_image.png |
 | מאיר מאור אקריש | 31927075 | 050-6999596 | Meir_Maor_Akrish_image.png |
 | אברהם קטרי | 3204910 | 058-7551878 | Avraham_Katri_image.png |
