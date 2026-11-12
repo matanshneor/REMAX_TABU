@@ -90,7 +90,7 @@
   }
   .ad-logo-box {
     position: absolute; top: 0; left: 0; width: 340px; height: 124px; z-index: 1;
-    padding: 12px 84px 44px 22px;
+    padding: 12px 70px 44px 36px;
   }
   /* רקע לבן עם קצה תחתון אלכסוני ופס אדום — SVG */
   .ad-logo-bg {
@@ -98,6 +98,9 @@
     background: url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22340%22%20height%3D%22124%22%20viewBox%3D%220%200%20340%20124%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22w%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23f1f4fa%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cpath%20d%3D%22M0%2C0%20L340%2C0%20L340%2C80%20L0%2C118%20Z%22%20fill%3D%22%23CC0000%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20L340%2C0%20L340%2C74%20L0%2C112%20Z%22%20fill%3D%22%23fff%22%2F%3E%3C%2Fsvg%3E") center / 100% 100% no-repeat;
   }
   .ad-logo-box img { position: relative; width: 100%; height: 100%; object-fit: contain; object-position: left center; display: block; }
+  /* בקובץ שיורד: html2canvas לא מכיר object-fit, ולכן מתח את הלוגו לכל רוחב התיבה (רחב ב-35% מהלוגו האמיתי).
+     בייצוא הלוגו מקבל את הרוחב האמיתי שלו לפי הגובה, צמוד לשמאל — בדיוק כמו שהוא נראה בתצוגה. */
+  .exporting .ad-logo-box img { width: auto; margin-right: auto; }
   .ad-panel { position: relative; z-index: 2; width: 205px; padding: 16px 16px 22px 4px; color: #fff; }
   .ad-panel-bg {
     position: absolute; top: 0; bottom: 0; left: 5px; right: 0;
