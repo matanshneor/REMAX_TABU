@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<!-- The artwork of the ad designs "גל" and "שמיים": curves, ribbons, the price seal, the cloud line.
+     Each [data-art] box is drawn by render_art.py at 3x into ../frontend/public/images/design-<name>.webp.
+     Sizes are in the ad's own pixels (the ad is 540 wide). A box that is larger than its shape leaves room for the shadow. -->
+<html>
+<head>
+<meta charset="UTF-8"/>
+<style>
+  html, body { margin: 0; background: transparent; }
+  [data-art] { position: relative; display: block; margin: 0 0 24px; overflow: hidden; }
+  [data-art] > svg, [data-art] > img { position: absolute; display: block; }
+</style>
+</head>
+<body>
+
+<!-- ══ גל ══ -->
+
+<!-- The curve over the main photo: soft shade, white line, red band, blue field (540×404) -->
+<div data-art="gal-arc" style="width:540px;height:404px">
+  <svg width="540" height="404" viewBox="0 0 540 404">
+    <defs>
+      <linearGradient id="galBlue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A5CC0"/><stop offset="1" stop-color="#1A3E86"/></linearGradient>
+      <linearGradient id="galRed" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#F0283C"/><stop offset="1" stop-color="#B90618"/></linearGradient>
+      <linearGradient id="galShade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.28"/></linearGradient>
+    </defs>
+    <path d="M0,150 C 200,150 340,372 540,338 L540,404 L0,404 Z" fill="url(#galShade)" opacity="0.9" transform="translate(0,-34)"/>
+    <path d="M0,204 C 200,204 340,412 540,368 L540,404 L0,404 Z" fill="#fff"/>
+    <path d="M0,211 C 200,211 340,418 540,375 L540,404 L0,404 Z" fill="url(#galRed)"/>
+    <path d="M0,228 C 200,228 340,432 540,391 L540,405 L0,405 Z" fill="url(#galBlue)"/>
+  </svg>
+</div>
+
+<!-- Light streaks on the blue field; stretched to the field's height in the ad (540×300) -->
+<div data-art="gal-streaks" style="width:540px;height:300px">
+  <svg width="540" height="300" viewBox="0 0 540 300">
+    <polygon points="330,300 540,60 540,150 410,300" fill="#fff" opacity="0.045"/>
+    <polygon points="450,300 540,196 540,236 486,300" fill="#fff" opacity="0.05"/>
+  </svg>
+</div>
+
+<!-- Dot grid in the lower left of the blue field (150×110) -->
+<div data-art="gal-dots" style="width:150px;height:110px">
+  <svg width="150" height="110" viewBox="0 0 150 110" opacity="0.22">
+    <defs><pattern id="galDot" width="15" height="15" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="2.2" fill="#fff"/></pattern></defs>
+    <rect width="150" height="110" fill="url(#galDot)"/>
+  </svg>
+</div>
+
+<!-- Price ribbon: comes in from the right edge, swallow tail on the left (418×64, its shadow inside) -->
+<div data-art="gal-ribbon" style="width:418px;height:64px">
+  <svg width="418" height="64" viewBox="0 0 418 64">
+    <defs><linearGradient id="galRib" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F3303F"/><stop offset="1" stop-color="#BE0719"/></linearGradient></defs>
+    <polygon points="0,4 418,4 418,64 0,64 22,34" fill="#000" opacity="0.25" transform="translate(-3,5)"/>
+    <polygon points="0,0 418,0 418,60 0,60 22,30" fill="url(#galRib)"/>
+    <line x1="26" y1="6" x2="418" y2="6" stroke="#fff" stroke-opacity="0.55" stroke-width="1.5" stroke-dasharray="5 4"/>
+    <line x1="26" y1="54" x2="418" y2="54" stroke="#fff" stroke-opacity="0.55" stroke-width="1.5" stroke-dasharray="5 4"/>
+  </svg>
+</div>
+
+<!-- Bottom: white field with an arched top and a red line along it (540×134) -->
+<div data-art="gal-foot" style="width:540px;height:134px">
+  <svg width="540" height="134" viewBox="0 0 540 142" preserveAspectRatio="none">
+    <rect width="540" height="142" fill="#0C1D45"/>
+    <path d="M0,74 C 160,22 380,22 540,60 L540,142 L0,142 Z" fill="#D8142A"/>
+    <path d="M0,82 C 160,30 380,30 540,68 L540,142 L0,142 Z" fill="#fff"/>
+  </svg>
+</div>
+
+<!-- ══ שמיים ══ -->
+
+<!-- Clouds, from the website's sky photo (600×195) -->
+<div data-art="sky-clouds" data-lossy="86" style="width:600px;height:195px">
+  <img src="../../website/frontend/public/hero/sky.webp" alt="" style="left:-112.5px;top:0;width:837.75px;height:336px"/>
+</div>
+
+<!-- The cloud line between the sky and the white part (540×70) -->
+<div data-art="sky-edge" style="width:540px;height:70px">
+  <svg width="540" height="70" viewBox="0 0 540 70">
+    <g fill="#fff">
+      <circle cx="20" cy="62" r="34"/><circle cx="74" cy="56" r="30"/><circle cx="128" cy="64" r="36"/><circle cx="186" cy="58" r="28"/>
+      <circle cx="240" cy="66" r="34"/><circle cx="298" cy="57" r="31"/><circle cx="352" cy="64" r="34"/><circle cx="410" cy="56" r="30"/>
+      <circle cx="464" cy="63" r="35"/><circle cx="522" cy="57" r="31"/>
+      <rect x="0" y="60" width="540" height="12"/>
+    </g>
+  </svg>
+</div>
+
+<!-- The RE/MAX balloon, tilted, with its shadow (box 180×220; the balloon itself is 132 wide, at 24,14) -->
+<div data-art="sky-balloon" data-lossy="90" style="width:180px;height:220px">
+  <img src="../../website/frontend/public/hero/balloon.webp" alt="" style="left:24px;top:14px;width:132px;height:auto;transform:rotate(5deg);filter:drop-shadow(0 14px 16px rgba(8,40,110,0.35))"/>
+</div>
+
+<!-- Banner ribbon with folded ends (box 324×90; the ribbon is 300×62, at 12,6) -->
+<div data-art="sky-ribbon" style="width:324px;height:90px">
+  <svg width="300" height="62" viewBox="0 0 300 62" style="left:12px;top:6px;filter:drop-shadow(0 8px 10px rgba(8,40,110,0.35));overflow:visible">
+    <defs><linearGradient id="skyRib" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F3303F"/><stop offset="1" stop-color="#BE0719"/></linearGradient></defs>
+    <polygon points="0,14 33,14 33,62 0,62 11,38" fill="#A00716"/>
+    <polygon points="300,14 267,14 267,62 300,62 289,38" fill="#A00716"/>
+    <polygon points="22,50 33,50 33,62" fill="#5F030C"/>
+    <polygon points="278,50 267,50 267,62" fill="#5F030C"/>
+    <rect x="22" y="0" width="256" height="50" fill="url(#skyRib)"/>
+    <line x1="28" y1="5.5" x2="272" y2="5.5" stroke="#fff" stroke-opacity="0.5" stroke-width="1.4" stroke-dasharray="5 4"/>
+    <line x1="28" y1="44.5" x2="272" y2="44.5" stroke="#fff" stroke-opacity="0.5" stroke-width="1.4" stroke-dasharray="5 4"/>
+  </svg>
+</div>
+
+<!-- Price seal (box 190×194; the seal is 158×158, at 16,12) -->
+<div data-art="sky-seal" style="width:190px;height:194px">
+  <svg width="158" height="158" viewBox="-80 -80 160 160" style="left:16px;top:12px;filter:drop-shadow(0 10px 14px rgba(196,8,28,0.38));overflow:visible">
+    <defs><radialGradient id="skySeal" cx="40%" cy="32%" r="80%"><stop offset="0" stop-color="#F6394A"/><stop offset="1" stop-color="#B90618"/></radialGradient></defs>
+    <polygon fill="url(#skySeal)" points="0.0,-78.0 9.3,-70.4 20.2,-75.3 27.2,-65.6 39.0,-67.5 43.2,-56.4 55.2,-55.2 56.4,-43.2 67.5,-39.0 65.6,-27.2 75.3,-20.2 70.4,-9.3 78.0,0.0 70.4,9.3 75.3,20.2 65.6,27.2 67.5,39.0 56.4,43.2 55.2,55.2 43.2,56.4 39.0,67.5 27.2,65.6 20.2,75.3 9.3,70.4 0.0,78.0 -9.3,70.4 -20.2,75.3 -27.2,65.6 -39.0,67.5 -43.2,56.4 -55.2,55.2 -56.4,43.2 -67.5,39.0 -65.6,27.2 -75.3,20.2 -70.4,9.3 -78.0,0.0 -70.4,-9.3 -75.3,-20.2 -65.6,-27.2 -67.5,-39.0 -56.4,-43.2 -55.2,-55.2 -43.2,-56.4 -39.0,-67.5 -27.2,-65.6 -20.2,-75.3 -9.3,-70.4"/>
+    <circle r="61" fill="none" stroke="#fff" stroke-opacity="0.75" stroke-width="1.6" stroke-dasharray="4 4"/>
+  </svg>
+</div>
+
+<!-- ══ שני העיצובים ══ -->
+
+<!-- The phone sign beside the number, drawn (the icon font is not painted into the saved file on iPhone) (17×17) -->
+<div data-art="call-red" style="width:17px;height:17px">
+  <svg width="17" height="17" viewBox="0 0 24 24"><path fill="#C4081C" d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+</div>
+<div data-art="call-white" style="width:17px;height:17px">
+  <svg width="17" height="17" viewBox="0 0 24 24"><path fill="#fff" d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+</div>
+
+</body>
+</html>
