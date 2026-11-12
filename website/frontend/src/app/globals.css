@@ -231,6 +231,125 @@ html:not([data-js]) .phone-more {
 }
 
 /* ---------------------------------------------------------------------------------------------
+ * The living photo of the home opening (components/motion/living-hero.tsx): the balloon photo cut
+ * into layers that sit exactly over it. The balloon leans from side to side around its mouth (the
+ * basket never moves) and the clouds drift. Shown only once every layer has loaded.
+ * ------------------------------------------------------------------------------------------- */
+.living {
+  container-type: size;
+  opacity: 0;
+  transition: opacity var(--dur-enter) var(--ease-out);
+}
+.living[data-live] {
+  opacity: 1;
+}
+/* The stage is the photo (2240 x 1493), laid out the way "object-cover" lays out the photo under
+   it in the same frame; on a phone its left part, like that photo. --lean scales the balloon's
+   angles: on a phone the balloon nearly fills the width, so it leans a little less. */
+.living-stage {
+  --lean: 1;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100cqw, calc(100cqh * 2240 / 1493));
+  aspect-ratio: 2240 / 1493;
+  translate: -50% -50%;
+}
+@media (width < 48rem) {
+  .living-stage {
+    --lean: 0.8;
+    left: 14%;
+    translate: -14% -50%;
+  }
+}
+.living-lean,
+.living-sway,
+.living-cloud {
+  will-change: transform;
+}
+
+/* The balloon: a long lean and a shorter, smaller one on top of it. Each starts from the photo's
+   own pose. A swing, not an arrival, so the curve is a sine: slowest at each end. */
+@keyframes balloon-lean-in {
+  from {
+    rotate: 0deg;
+  }
+  to {
+    rotate: calc(var(--lean) * 2.6deg);
+  }
+}
+@keyframes balloon-lean {
+  from {
+    rotate: calc(var(--lean) * 2.6deg);
+  }
+  to {
+    rotate: calc(var(--lean) * -2.2deg);
+  }
+}
+@keyframes balloon-sway-in {
+  from {
+    rotate: 0deg;
+  }
+  to {
+    rotate: calc(var(--lean) * -0.44deg);
+  }
+}
+@keyframes balloon-sway {
+  from {
+    rotate: calc(var(--lean) * -0.44deg);
+  }
+  to {
+    rotate: calc(var(--lean) * 0.44deg);
+  }
+}
+.living[data-live] .living-lean {
+  animation:
+    balloon-lean-in 1.45s cubic-bezier(0.37, 0, 0.63, 1) both,
+    balloon-lean 2.8s cubic-bezier(0.37, 0, 0.63, 1) 1.45s infinite alternate;
+}
+.living[data-live] .living-sway {
+  animation:
+    balloon-sway-in 0.97s cubic-bezier(0.37, 0, 0.63, 1) both,
+    balloon-sway 1.75s cubic-bezier(0.37, 0, 0.63, 1) 0.97s infinite alternate;
+}
+
+/* The clouds: two copies of the sky, each sliding a little to the right while it fades in and out,
+   half a turn apart. The sky keeps moving one way and never jumps back, and it starts as the photo
+   is (the leading copy in the middle, fully there; the other one not yet seen). */
+@keyframes cloud-pass {
+  0% {
+    transform: translateX(-0.8%);
+    opacity: 0;
+  }
+  40%,
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0.8%);
+    opacity: 0;
+  }
+}
+.living[data-live] .living-cloud {
+  animation: cloud-pass 14s linear infinite;
+}
+.living[data-live] .living-cloud-lead {
+  animation-delay: -7s;
+}
+
+/* Off screen, nothing moves. */
+.living[data-live][data-paused] .living-stage * {
+  animation-play-state: paused;
+}
+/* Less motion: the still photo. (The layers are not fetched at all; this covers a change of the
+   setting while the page is open.) */
+@media (prefers-reduced-motion: reduce) {
+  .living {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------------------------
  * The header: solid everywhere; over the home page's opening photo it is clear until you scroll.
  * components/motion/header-mode.tsx sets data-header on <html>.
  * ------------------------------------------------------------------------------------------- */

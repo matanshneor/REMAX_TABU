@@ -6,7 +6,7 @@ The office's public listings site (https://remaxtabu.up.railway.app until a doma
 |---|---|
 | `frontend/` | The site: Next.js 16, Tailwind, Hebrew RTL |
 | `backend/` | FastAPI with one open endpoint, `POST /public/leads` (the enquiry forms) |
-| `docs/` | The site's specification (PDF) |
+| `docs/` | The site's specification (PDF), and how the home photo was cut into moving layers (`living-photo/`) |
 
 The home page opens with the office (the balloon photo, the name and the line), then the list. A listing's page opens with its first photo on the whole screen, then the details, the contact card of **its own agent** and similar listings. "המשרד שלנו" shows the office in its own words, the manager, and the team (photo and name only).
 
@@ -23,6 +23,7 @@ Only the ones the manager put there. In the CRM, the manager alone has **העל�
 - **Agents' few words:** each agent writes theirs on **החשבון שלי** in the CRM (`set_my_website_bio`), the manager can edit any in the team panel. They are not shown on the site today (the owner asked for photo and name only), but the data is kept.
 - **Link from the CRM:** a listing that is on the site has "העתקת קישור לאתר" in its panel, and its WhatsApp message carries the same link (`crm/frontend/src/lib/website.ts`: the rule mirrors the view). The link is `/properties/<listing id>`. `/p/<listing id>` (the home page opening with that listing) still works.
 - **Motion:** one system, described at the top of `frontend/src/app/globals.css` (five durations, one easing family, only opacity and transform). The photo of a listing travels from its card into its page (`frontend/src/lib/handoff.ts`, `components/motion/`); content rises in on scroll (`Reveal`); everything is off for visitors who ask for reduced motion. The `::view-transition { left: 0; right: auto }` rule there is required: without it React's view transitions draw off screen in a right-to-left page.
+- **The living photo on the home page:** the balloon leans in the wind and the clouds drift (`frontend/src/components/motion/living-hero.tsx`, styles under `.living` in `globals.css`). It is the home photo cut into three layers in `frontend/public/hero/` (what is behind the balloon, the sky, the balloon), laid exactly over `home-hero.jpg`. The layers load after the page, and not at all for visitors who ask for reduced motion or to save data: they keep the still photo. If the photo is ever replaced, the layers no longer match it: cut them again from the new photo (`docs/living-photo/`) and update the boxes at the top of the component, or take `<LivingHero />` out of `home-content.tsx` and the photo is simply still.
 
 ## Running locally
 
