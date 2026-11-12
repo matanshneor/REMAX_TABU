@@ -1,11 +1,10 @@
 import { ArrowDownIcon } from "lucide-react";
-import Image from "next/image";
 import { Suspense } from "react";
 import { getListings } from "@/lib/data";
 import { formatPrice, formatRooms, listingFeatures, listingName, listingPlace, photoUrl } from "@/lib/listings";
 import { ListingsFallback, ListingsSection } from "./listings-section";
 import { HeaderMode } from "./motion/header-mode";
-import { LivingHero } from "./motion/living-hero";
+import { LivingPhoto } from "./motion/living-hero";
 import { PageTransition } from "./motion/page-transition";
 import { HERO_FRAME, type NovaSlide, NovaHero } from "./nova-hero";
 import { buttonClass, Container } from "./ui";
@@ -42,12 +41,10 @@ function OfficeHero() {
   return (
     <section aria-labelledby="hero-title" className={`${HERO_FRAME} bg-night`}>
       <HeaderMode />
-      {/* A wide screen shows the whole photo. A phone shows its left part at three quarters of the
-          screen's height, which is where the whole balloon fits; the text sits under it.
-          Over the photo, once the page has loaded: the same photo in layers, the balloon leaning in the wind. */}
+      {/* The photo, alive: it appears once it has loaded with its layers, the balloon already leaning
+          in the wind. On a phone it takes three quarters of the screen's height; the text sits under it. */}
       <div aria-hidden="true" className="drift absolute inset-x-0 top-0 h-[72svh] md:inset-0 md:h-auto">
-        <Image src="/home-hero.jpg" alt="" fill preload sizes="(min-width: 768px) 100vw, 110svh" className="object-cover object-[14%_center] md:object-center" />
-        <LivingHero />
+        <LivingPhoto />
       </div>
       {/* Shade: dark behind the header and on the text side; on a phone the photo fades into the page under the balloon. */}
       <div

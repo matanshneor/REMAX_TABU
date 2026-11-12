@@ -231,17 +231,43 @@ html:not([data-js]) .phone-more {
 }
 
 /* ---------------------------------------------------------------------------------------------
- * The living photo of the home opening (components/motion/living-hero.tsx): the balloon photo cut
- * into layers that sit exactly over it. The balloon leans from side to side around its mouth (the
- * basket never moves) and the clouds drift. Shown only once every layer has loaded.
+ * The living photo of the home opening (components/motion/living-hero.tsx): the balloon photo with
+ * layers cut from it laid exactly over it. The balloon leans from side to side around its mouth
+ * (the basket never moves) and the clouds drift.
  * ------------------------------------------------------------------------------------------- */
+
+/* The scene is the photo and its layers together. It stays out of sight until every part has
+   loaded and then fades in already moving: a visitor never sees a still photo that starts to move.
+   The script at the top of the layout says when (data-live="on"). If a part has still not arrived
+   after three seconds, the photo is shown as it is and stays still for this visit
+   (data-live="still"); the same three seconds work with no JavaScript at all. */
+.living-scene {
+  opacity: 0;
+  transition: opacity var(--dur-open) var(--ease-out);
+  animation: scene-late var(--dur-open) var(--ease-out) 3s both;
+}
+@keyframes scene-late {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.living-scene[data-live] {
+  opacity: 1;
+  animation: none;
+}
+/* The layers: seen only when all of them are there. */
 .living {
   container-type: size;
   opacity: 0;
-  transition: opacity var(--dur-enter) var(--ease-out);
 }
-.living[data-live] {
+.living-scene[data-live="on"] .living {
   opacity: 1;
+}
+.living-scene[data-live="still"] .living {
+  display: none;
 }
 /* The stage is the photo (2240 x 1493), laid out the way "object-cover" lays out the photo under
    it in the same frame; on a phone its left part, like that photo. --lean scales the balloon's
@@ -268,30 +294,15 @@ html:not([data-js]) .phone-more {
   will-change: transform;
 }
 
-/* The balloon: a long lean and a shorter, smaller one on top of it. Each starts from the photo's
-   own pose. A swing, not an arrival, so the curve is a sine: slowest at each end. */
-@keyframes balloon-lean-in {
-  from {
-    rotate: 0deg;
-  }
-  to {
-    rotate: calc(var(--lean) * 2.6deg);
-  }
-}
+/* The balloon: a long lean and a shorter, smaller one on top of it. A swing, not an arrival, so
+   the curve is a sine: slowest at each end. Both run from the moment the page is read and begin
+   part-way through a swing, so the balloon is in full movement when the scene appears. */
 @keyframes balloon-lean {
   from {
     rotate: calc(var(--lean) * 2.6deg);
   }
   to {
     rotate: calc(var(--lean) * -2.2deg);
-  }
-}
-@keyframes balloon-sway-in {
-  from {
-    rotate: 0deg;
-  }
-  to {
-    rotate: calc(var(--lean) * -0.44deg);
   }
 }
 @keyframes balloon-sway {
@@ -302,20 +313,15 @@ html:not([data-js]) .phone-more {
     rotate: calc(var(--lean) * 0.44deg);
   }
 }
-.living[data-live] .living-lean {
-  animation:
-    balloon-lean-in 1.45s cubic-bezier(0.37, 0, 0.63, 1) both,
-    balloon-lean 2.8s cubic-bezier(0.37, 0, 0.63, 1) 1.45s infinite alternate;
+.living-lean {
+  animation: balloon-lean 2.8s cubic-bezier(0.37, 0, 0.63, 1) -0.9s infinite alternate;
 }
-.living[data-live] .living-sway {
-  animation:
-    balloon-sway-in 0.97s cubic-bezier(0.37, 0, 0.63, 1) both,
-    balloon-sway 1.75s cubic-bezier(0.37, 0, 0.63, 1) 0.97s infinite alternate;
+.living-sway {
+  animation: balloon-sway 1.75s cubic-bezier(0.37, 0, 0.63, 1) -0.5s infinite alternate;
 }
 
 /* The clouds: two copies of the sky, each sliding a little to the right while it fades in and out,
-   half a turn apart. The sky keeps moving one way and never jumps back, and it starts as the photo
-   is (the leading copy in the middle, fully there; the other one not yet seen). */
+   half a turn apart. The sky keeps moving one way and never jumps back. */
 @keyframes cloud-pass {
   0% {
     transform: translateX(-0.8%);
@@ -330,20 +336,24 @@ html:not([data-js]) .phone-more {
     opacity: 0;
   }
 }
-.living[data-live] .living-cloud {
+.living-cloud {
   animation: cloud-pass 14s linear infinite;
 }
-.living[data-live] .living-cloud-lead {
+.living-cloud-lead {
   animation-delay: -7s;
 }
 
 /* Off screen, nothing moves. */
-.living[data-live][data-paused] .living-stage * {
+.living-scene[data-paused] .living-stage * {
   animation-play-state: paused;
 }
-/* Less motion: the still photo. (The layers are not fetched at all; this covers a change of the
-   setting while the page is open.) */
+/* Less motion: the still photo, at once. */
 @media (prefers-reduced-motion: reduce) {
+  .living-scene {
+    opacity: 1;
+    animation: none;
+    transition: none;
+  }
   .living {
     display: none;
   }

@@ -39,12 +39,20 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     // the page transition). suppressHydrationWarning: the script below sets data-js and data-header before React starts.
     <html lang="he" dir="rtl" data-scroll-behavior="smooth" suppressHydrationWarning className={`${heading.variable} ${heebo.variable} antialiased`}>
       <body className="flex min-h-dvh flex-col">
-        {/* Before the first paint: JavaScript is running (data-js: phones may fold the list), and the
-            home page (also at /p/<listing>) opens with a photo under a clear header. */}
+        {/* Before the first paint: JavaScript is running (data-js: phones may fold the list), the home page's
+            photo is watched until it is ready to be shown, and the home page (also at /p/<listing>) opens
+            with a photo under a clear header. */}
         <script
           dangerouslySetInnerHTML={{
             __html:
               'document.documentElement.dataset.js="1";' +
+              // The home page's photo (components/motion/living-hero.tsx) is shown when all its parts have loaded: "on" and it
+              // appears already moving. If the styles have shown it by then (three seconds passed, or the visitor asked for
+              // less motion), it stays as it is: "still". Image loads do not bubble, hence the capture; this runs on every
+              // page because the home page can also be reached without a full load.
+              'document.addEventListener("load",function(e){var t=e.target,s=t&&t.closest&&t.closest("[data-parts]");if(!s||s.dataset.live)return;' +
+              'if(getComputedStyle(s).opacity!=="0"){s.dataset.live="still";return}' +
+              'var m=s.querySelectorAll("img");if(m.length<+s.dataset.parts)return;for(var i=0;i<m.length;i++)if(!m[i].complete||!m[i].naturalWidth)return;s.dataset.live="on"},true);' +
               'if(location.pathname==="/"||location.pathname.indexOf("/p/")===0){document.documentElement.dataset.header="overlay";' +
               // A refresh of the home page opens it from the top. The browser's "stay where you were" is switched off for a
               // reload (not for back and forward), a #listings from the menu is dropped, and for the first moments any scroll

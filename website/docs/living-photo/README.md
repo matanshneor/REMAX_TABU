@@ -4,7 +4,7 @@ On the home page the balloon leans in the wind and the clouds drift. It is not a
 home photo (`brand/source/Homepage_Remax.jpg`, the same picture as `frontend/public/home-hero.jpg`)
 cut into three layers that sit exactly over it and move apart from one another. The layers are in
 `frontend/public/hero/`; the component is `frontend/src/components/motion/living-hero.tsx` and its
-styles are under `.living` in `frontend/src/app/globals.css`.
+styles are under `.living-scene` in `frontend/src/app/globals.css`.
 
 These three scripts made the layers. Run them again only if the photo is replaced. Everything runs
 on your own computer; the photo is not sent anywhere.
@@ -38,7 +38,7 @@ top of `living-hero.tsx`.
   leans. The angles were chosen so that the balloon never shows more than the filled-in strip
   behind its edge, and stays inside a phone's screen.
 - The photo is laid out on a phone from its left part (`14%`); the same number is in
-  `home-content.tsx` (the photo) and in `.living-stage` (the layers). Change one, change both.
+  `living-hero.tsx` (the photo) and in `.living-stage` (the layers). Change one, change both.
 
 Only the balloon above its mouth moves. The basket, the people and the land are the photo itself,
 so nothing has to be invented there.
