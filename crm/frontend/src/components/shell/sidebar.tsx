@@ -4,6 +4,7 @@ import {
   Building2Icon,
   ExternalLinkIcon,
   HandshakeIcon,
+  ImagesIcon,
   ListChecksIcon,
   LogOutIcon,
   MegaphoneIcon,
@@ -45,6 +46,7 @@ const MAIN: NavItem[] = [
   { href: "/tasks", label: "משימות", icon: ListChecksIcon },
   { href: "/team", label: "צוות המשרד", icon: UsersRoundIcon },
   { href: AD_TOOL_URL, label: "יצירת מודעת פרסום", icon: MegaphoneIcon, external: true },
+  { href: "/ads", label: "מודעות המשרד", agentLabel: "המודעות שלי", icon: ImagesIcon },
   {
     href: "/market",
     label: "מאגר יד 2",

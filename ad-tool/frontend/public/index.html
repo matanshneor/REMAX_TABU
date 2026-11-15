@@ -1262,6 +1262,8 @@
 
   const SUPABASE_URL = 'https://ydelaanmjjxpvlplrsmm.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_Cy7FM6VT5onUyCJ50AXSFQ_D1x0n9Ar';
+  let currentPropertyId = null;   // הנכס ב-CRM שממנו נפתח הכלי, אם יש (נשמר עם המודעה)
+  let _sb = null;                 // החיבור ל-CRM לשמירת מודעות (נטען רק כשצריך)
 
   async function loadAgents() {
     // The office team list, straight from the database: a public function that returns only what every
@@ -1898,6 +1900,10 @@
     // רענון הדף ימשיך מהטיוטה השמורה, לא יטען שוב את הקישור
     history.replaceState(null, '', location.pathname + location.search);
 
+    // "עריכה" מתיקיית המודעות ב-CRM: #saved=<מזהה המודעה>
+    if (p.get('saved')) { loadSavedAd(p.get('saved')); return; }
+    currentPropertyId = p.get('pid') || null;
+
     const FIELDS = { type: 'propType', location: 'propLocation', sub: 'propSub', info: 'propInfo', price: 'propPrice' };
     for (const [key, id] of Object.entries(FIELDS)) document.getElementById(id).value = p.get(key) || '';
     addPriceCommas(document.getElementById('propPrice'));
@@ -1926,6 +1932,7 @@
     SLOT_IDS.forEach(i => clearSlot(null, i));
     setBanner('');
     try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
+    currentPropertyId = null;
     if (document.body.classList.contains('show-preview')) switchTab('edit');
     window.scrollTo(0, 0);
     markChanged();
@@ -1956,7 +1963,7 @@
     input.value = '';
   }
 
-  function loadImageFromFile(idx, file) {
+  function loadImageFromFile(idx, file, pos) {
     if (!file || !file.type.startsWith('image/')) return;
     const MAX_DIM = 4320;
     const reader = new FileReader();
@@ -1985,6 +1992,12 @@
         img.style.objectPosition = 'center';
         delete img.dataset.posX;
         delete img.dataset.posY;
+        // מודעה שמורה שנפתחה שוב: אותו חיתוך של התמונה כמו במקור
+        if (pos && pos.x != null && pos.y != null) {
+          img.dataset.posX = pos.x;
+          img.dataset.posY = pos.y;
+          img.style.objectPosition = `${pos.x}% ${pos.y}%`;
+        }
         document.getElementById('slot' + idx).classList.add('has-image');
         updateTile(idx);
         markChanged();
@@ -2348,6 +2361,8 @@
       final.toBlob(blob => {
         const file = new File([blob], fileName, { type: 'image/png' });
         openActionSheet(dataURL, fileName, file, isMobile);
+        // ברקע: שמירה בתיקיית "המודעות שלי" ב-CRM. לא מעכבת ולא עוצרת את ההורדה.
+        saveAdToFolder(blob, final);
       }, 'image/png');
 
     } catch (err) {
@@ -2475,6 +2490,144 @@
       if (e.name !== 'AbortError') { /* share not supported */ }
     }
   }
+  // ══════════ תיקיית "המודעות שלי" ב-CRM ══════════
+  // הכלי יושב באותה כתובת כמו ה-CRM (/ad-tool), ולכן רואה את ההתחברות של הסוכן ל-CRM.
+  // מי שמחובר: כל מודעה שנוצרת נשמרת אצל הסוכן שמופיע עליה (ואם אין לו חשבון, אצל מי שיצר אותה),
+  // יחד עם הפרטים והתמונות, כדי שאפשר יהיה לפתוח אותה שוב לעריכה. מי שלא מחובר: הכל כמו קודם.
+  // קבצים: <מזהה>/ad.png, <מזהה>/thumb.jpg, <מזהה>/photo-<משבצת>.jpg
+  const SAVED_BUCKET = 'saved-ads';
+
+  function supabaseClient() {
+    // אותה ספרייה כמו ב-CRM, כדי לקרוא (ולרענן) את אותה עוגיית התחברות
+    _sb ??= import('https://cdn.jsdelivr.net/npm/@supabase/ssr@0.12.7/+esm')
+      .then(m => m.createBrowserClient(SUPABASE_URL, SUPABASE_KEY));
+    return _sb;
+  }
+
+  async function signedInClient() {
+    try {
+      const sb = await supabaseClient();
+      const { data } = await sb.auth.getSession();
+      return data.session ? sb : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function canvasToBlob(canvas, type, quality) {
+    return new Promise((resolve, reject) =>
+      canvas.toBlob(b => (b ? resolve(b) : reject(new Error('toBlob'))), type, quality));
+  }
+
+  // תמונה (img או canvas) מוקטנת ל-JPEG — לתמונות המקור ולתמונה הקטנה של התיקייה
+  function shrinkToJpeg(source, maxDim, quality) {
+    const w0 = source.naturalWidth || source.width;
+    const h0 = source.naturalHeight || source.height;
+    const scale = Math.min(1, maxDim / Math.max(w0, h0));
+    const c = document.createElement('canvas');
+    c.width = Math.round(w0 * scale);
+    c.height = Math.round(h0 * scale);
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, c.width, c.height);
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(source, 0, 0, c.width, c.height);
+    return canvasToBlob(c, 'image/jpeg', quality);
+  }
+
+  function currentForm() {
+    const photos = SLOT_IDS.map(i => document.getElementById('img' + i))
+      .map((img, n) => ({ img, slot: SLOT_IDS[n] }))
+      .filter(({ img }) => img.style.display !== 'none' && img.src.startsWith('data:'));
+    return {
+      propType:     document.getElementById('propType').value,
+      propLocation: document.getElementById('propLocation').value,
+      propSub:      document.getElementById('propSub').value,
+      propInfo:     document.getElementById('propInfo').value,
+      propPrice:    document.getElementById('propPrice').value,
+      bannerValue:  document.getElementById('bannerCustom').value.trim() || document.querySelector('.banner-btn.active')?.dataset.value || '',
+      agentPhone:   AGENTS[currentAgentIdx] ? AGENTS[currentAgentIdx].phone : '',
+      design:       currentDesign,
+      photos:       photos.map(({ img, slot }) => ({
+        slot,
+        x: img.dataset.posX != null ? parseFloat(img.dataset.posX) : null,
+        y: img.dataset.posY != null ? parseFloat(img.dataset.posY) : null,
+        el: img,
+      })),
+    };
+  }
+
+  async function saveAdToFolder(pngBlob, finalCanvas) {
+    const sb = await signedInClient();
+    if (!sb) return;
+    const form = currentForm();
+    const agent = AGENTS[currentAgentIdx];
+    const id = crypto.randomUUID();
+    try {
+      // קודם השורה (היא קובעת של מי המודעה ומי רשאי להעלות אליה), אחר כך הקבצים
+      const { error } = await sb.from('saved_ads').insert({
+        id,
+        title: form.propType.trim().replace(/\s+/g, ' ') || 'מודעה',
+        price: form.propPrice.trim() || null,
+        design: form.design,
+        agent_name: agent ? agent.name : null,
+        agent_phone: form.agentPhone || null,
+        property_id: currentPropertyId,
+        photo_count: form.photos.length,
+        form: { ...form, photos: form.photos.map(({ slot, x, y }) => ({ slot, x, y })) },
+      });
+      if (error) throw error;
+      const up = (name, blob, type) =>
+        sb.storage.from(SAVED_BUCKET).upload(`${id}/${name}`, blob, { contentType: type }).then(r => {
+          if (r.error) throw r.error;
+        });
+      await up('ad.png', pngBlob, 'image/png');
+      await up('thumb.jpg', await shrinkToJpeg(finalCanvas, 480, 0.82), 'image/jpeg');
+      for (const ph of form.photos) {
+        await up(`photo-${ph.slot}.jpg`, await shrinkToJpeg(ph.el, 2400, 0.88), 'image/jpeg');
+      }
+      showStatus('✓ המודעה נשמרה גם בתיקיית "המודעות שלי"');
+    } catch (e) {
+      console.error('saving the ad to the folder failed', e);
+      // השורה בלי הקבצים לא שווה כלום — מוחקים (אם אפשר) כדי שלא תופיע מודעה ריקה
+      try { await sb.storage.from(SAVED_BUCKET).remove(['ad.png', 'thumb.jpg', ...SLOT_IDS.map(i => `photo-${i}.jpg`)].map(n => `${id}/${n}`)); } catch (_) {}
+      try { await sb.from('saved_ads').delete().eq('id', id); } catch (_) {}
+      showStatus('המודעה ירדה, אבל לא נשמרה בתיקיית המודעות. אפשר ליצור אותה שוב כדי לשמור', true);
+    }
+  }
+
+  // פתיחה מחדש של מודעה שמורה: הפרטים, העיצוב, הסוכן והתמונות (עם אותו חיתוך)
+  async function loadSavedAd(id) {
+    const sb = await signedInClient();
+    if (!sb) { showStatus('כדי לפתוח מודעה שמורה צריך להיות מחוברים ל-CRM', true); return; }
+    const { data: row, error } = await sb.from('saved_ads').select('*').eq('id', id).maybeSingle();
+    if (error || !row) { showStatus('המודעה השמורה לא נמצאה', true); return; }
+    const f = row.form || {};
+    currentPropertyId = row.property_id || null;
+    if (f.design && DESIGNS[f.design]) setDesign(f.design, true);
+    ['propType', 'propLocation', 'propSub', 'propInfo', 'propPrice'].forEach(k => {
+      document.getElementById(k).value = typeof f[k] === 'string' ? f[k] : '';
+    });
+    addPriceCommas(document.getElementById('propPrice'));
+    if (f.bannerValue !== undefined) {
+      const isCustom = f.bannerValue && !document.querySelector(`.banner-btn[data-value="${CSS.escape(f.bannerValue)}"]`);
+      document.getElementById('bannerCustom').value = isCustom ? f.bannerValue : '';
+      setBanner(f.bannerValue, isCustom);
+    }
+    const wanted = phoneKey(f.agentPhone || row.agent_phone);
+    const agentIdx = wanted ? AGENTS.findIndex(a => phoneKey(a.phone) === wanted) : -1;
+    if (agentIdx >= 0) selectAgent(agentIdx);
+    renderAll();
+    SLOT_IDS.forEach(i => clearSlot(null, i));
+    for (const ph of f.photos || []) {
+      if (!SLOT_IDS.includes(ph.slot)) continue;
+      const { data: blob } = await sb.storage.from(SAVED_BUCKET).download(`${id}/photo-${ph.slot}.jpg`);
+      if (blob) loadImageFromFile(ph.slot, new File([blob], `photo-${ph.slot}.jpg`, { type: 'image/jpeg' }), ph);
+    }
+    saveToStorage();
+    showStatus('המודעה השמורה נפתחה. אפשר לשנות וליצור מודעה חדשה (הישנה נשארת בתיקייה)');
+  }
+
 </script>
 </body>
 </html>

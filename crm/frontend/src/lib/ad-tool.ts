@@ -19,5 +19,7 @@ export function adToolUrl(p: Property, agentPhone: string | null | undefined, im
   if (p.current_price) params.set("price", String(p.current_price));
   if (agentPhone) params.set("agent", agentPhone);
   for (const url of imageUrls) params.append("img", url);
+  // So the ad saved in "המודעות שלי" knows which seller it was made for.
+  params.set("pid", p.id);
   return `${AD_TOOL_URL}#${params}`;
 }

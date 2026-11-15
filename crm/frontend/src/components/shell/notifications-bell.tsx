@@ -50,6 +50,8 @@ export function NotificationsBell() {
           qc.invalidateQueries({ queryKey: KEY });
           // A new sign-up changes the agents screen and its sidebar counter.
           if (n.kind === "signup_request") qc.invalidateQueries({ queryKey: ["profiles"] });
+          // A seller broadcast to the office now shows up in the sellers list.
+          if (n.kind === "property_broadcast") qc.invalidateQueries({ queryKey: ["properties"] });
           toast(n.title);
         },
       )

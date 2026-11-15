@@ -35,6 +35,7 @@ import {
 } from "./property-fields";
 import { CopyWebsiteLinkButton } from "./copy-website-link-button";
 import { WebsitePublishButton } from "./website-publish-button";
+import { BroadcastButton } from "./broadcast-button";
 import { CreateAdButton } from "./create-ad-dialog";
 import { PendingImages, PropertyImages, uploadPropertyImages } from "./property-images";
 import { ShareWhatsAppButton } from "./share-whatsapp-dialog";
@@ -184,6 +185,7 @@ export function PropertyPanel({
             )}
             <ShareWhatsAppButton property={property} />
             <CopyWebsiteLinkButton property={property} />
+            {isAdmin(profile) && <BroadcastButton property={property} />}
             {isAdmin(profile) && <WebsitePublishButton property={property} />}
             <CreateAdButton property={property} />
             <ReminderButton

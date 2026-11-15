@@ -19,3 +19,4 @@ export type Notification = Row<"notifications">;
 export type Transaction = Row<"financial_transactions">;
 export type Candidate = Row<"candidates">;
 export type Deal = Row<"deals">;
+export type SavedAd = Row<"saved_ads">;

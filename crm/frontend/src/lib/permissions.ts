@@ -9,8 +9,12 @@ export function canEditBuyer(me: Profile | null, buyer: Pick<Buyer, "owner_agent
   return isAdmin(me) || buyer.owner_agent_id === me?.id;
 }
 
-export function canEditProperty(me: Profile | null, p: Pick<Property, "is_exclusive" | "recruiting_agent_id">) {
-  return isAdmin(me) || !p.is_exclusive || p.recruiting_agent_id === me?.id;
+/** A seller the manager broadcast to the office ("שדר לכולם") is editable by every agent. */
+export function canEditProperty(
+  me: Profile | null,
+  p: Pick<Property, "is_exclusive" | "recruiting_agent_id"> & { broadcast?: boolean },
+) {
+  return isAdmin(me) || !p.is_exclusive || !!p.broadcast || p.recruiting_agent_id === me?.id;
 }
 
 /** Owner details, exclusivity and the recruiting agent are reserved for the recruiter + admin. */

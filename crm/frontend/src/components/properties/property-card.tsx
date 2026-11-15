@@ -1,7 +1,7 @@
-import { ArrowDownIcon, ImageOffIcon, PhoneIcon, UserRoundIcon } from "lucide-react";
+import { ArrowDownIcon, ImageOffIcon, MegaphoneIcon, PhoneIcon, UserRoundIcon } from "lucide-react";
 import { WhatsAppButton } from "@/components/crm/whatsapp-button";
 import { Button } from "@/components/ui/button";
-import { StatusBadge } from "@/components/crm/status-badge";
+import { Pill, StatusBadge } from "@/components/crm/status-badge";
 import { formatAddress, formatILS } from "@/lib/format";
 import { PROPERTY_ENGAGEMENT, PROPERTY_STATUS } from "@/lib/labels";
 import type { Property } from "@/lib/types";
@@ -52,6 +52,13 @@ export function PropertyCard({
     <StatusBadge map={PROPERTY_ENGAGEMENT} value={p.engagement} className="bg-white" />
   );
   if (p.parking_spots) features.push(p.parking_spots > 1 ? `${p.parking_spots} חניות` : "חניה");
+  // Shared with the whole office by the manager ("שדר לכולם"): say who recruited it.
+  const broadcast = p.broadcast && (
+    <Pill tone="purple" className={cn("max-w-full", hasImages && "bg-violet-600 text-white shadow-sm ring-0")}>
+      <MegaphoneIcon />
+      <span className="truncate">גויס ע״י {agentName}</span>
+    </Pill>
+  );
 
   return (
     // A card with its own buttons can't itself be a <button>: a full-size button under the content
@@ -74,8 +81,11 @@ export function PropertyCard({
             // eslint-disable-next-line @next/next/no-img-element
             <img src={imageUrl} alt="" className="absolute inset-0 size-full object-cover" />
           )}
-          <div className="absolute inset-x-2 top-2 flex justify-between gap-1">
-            {p.is_exclusive ? <ExclusivityPill end={p.exclusivity_end} onImage /> : <span />}
+          <div className="absolute inset-x-2 top-2 flex flex-wrap justify-between gap-1">
+            <span className="flex min-w-0 flex-wrap gap-1">
+              {broadcast}
+              {p.is_exclusive && <ExclusivityPill end={p.exclusivity_end} onImage />}
+            </span>
             <span className="flex gap-1">
               {recruiting}
               {p.status !== "active" && <StatusBadge map={PROPERTY_STATUS} value={p.status} className="bg-white" />}
@@ -89,7 +99,8 @@ export function PropertyCard({
             <ImageOffIcon className="size-3.5" />
             אין תמונות
           </span>
-          <span className="flex gap-1">
+          <span className="flex min-w-0 flex-wrap justify-end gap-1">
+            {broadcast}
             {p.is_exclusive && <ExclusivityPill end={p.exclusivity_end} />}
             {recruiting}
             {p.status !== "active" && <StatusBadge map={PROPERTY_STATUS} value={p.status} className="bg-white" />}

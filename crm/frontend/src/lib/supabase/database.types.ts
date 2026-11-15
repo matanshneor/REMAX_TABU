@@ -759,6 +759,8 @@ export type Database = {
           rental_unit_count: number | null
           rental_unit_sqm: number | null
           on_website: boolean
+          broadcast: boolean
+          broadcast_at: string | null
           recruiting_agent_id: string | null
           recruiter_id: string | null
           rooms: number | null
@@ -805,6 +807,8 @@ export type Database = {
           rental_unit_count?: number | null
           rental_unit_sqm?: number | null
           on_website?: boolean
+          broadcast?: boolean
+          broadcast_at?: string | null
           recruiting_agent_id?: string | null
           recruiter_id?: string | null
           rooms?: number | null
@@ -851,6 +855,8 @@ export type Database = {
           rental_unit_count?: number | null
           rental_unit_sqm?: number | null
           on_website?: boolean
+          broadcast?: boolean
+          broadcast_at?: string | null
           recruiting_agent_id?: string | null
           recruiter_id?: string | null
           rooms?: number | null
@@ -912,6 +918,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      saved_ads: {
+        Row: {
+          agent_name: string | null
+          agent_phone: string | null
+          agent_profile_id: string | null
+          created_at: string
+          created_by: string | null
+          design: string | null
+          form: Json
+          id: string
+          photo_count: number
+          price: string | null
+          property_id: string | null
+          title: string
+        }
+        Insert: {
+          agent_name?: string | null
+          agent_phone?: string | null
+          agent_profile_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          design?: string | null
+          form?: Json
+          id?: string
+          photo_count?: number
+          price?: string | null
+          property_id?: string | null
+          title: string
+        }
+        Update: {
+          agent_name?: string | null
+          agent_phone?: string | null
+          agent_profile_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          design?: string | null
+          form?: Json
+          id?: string
+          photo_count?: number
+          price?: string | null
+          property_id?: string | null
+          title?: string
+        }
+        Relationships: []
       }
       tasks: {
         Row: {
