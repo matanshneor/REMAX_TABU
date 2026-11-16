@@ -136,12 +136,15 @@ export function PropertyCard({
             ))}
           </div>
         )}
-        {/* The agent on a line of its own, so the seller's name below has the room to show in full. */}
-        <p className="mt-auto flex items-center gap-1 pt-1 text-xs text-muted-foreground">
-          <UserRoundIcon className="size-3.5 shrink-0" />
-          <span className="truncate">סוכן: {agentName}</span>
-        </p>
-        <div className="flex items-center gap-2 border-t pt-2 text-sm">
+        {/* The agent on a line of its own, so the seller's name below has the room to show in full.
+            A broadcast card already says who recruited it at the top, so it isn't repeated here. */}
+        {!p.broadcast && (
+          <p className="mt-auto flex items-center gap-1 pt-1 text-xs text-muted-foreground">
+            <UserRoundIcon className="size-3.5 shrink-0" />
+            <span className="truncate">סוכן: {agentName}</span>
+          </p>
+        )}
+        <div className={cn("flex items-center gap-2 border-t pt-2 text-sm", p.broadcast && "mt-auto")}>
           {sellerName ? (
             <span className="min-w-0 flex-1 leading-snug">
               <span className="text-xs text-muted-foreground">מוכר: </span>
