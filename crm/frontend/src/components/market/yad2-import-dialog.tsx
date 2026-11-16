@@ -85,11 +85,10 @@ function ImportForm({ listings, onDone }: { listings: MarketListing[]; onDone: (
       const atAddress = byKey.get(p.key) ?? [];
       const existing = findExisting(p, atAddress);
       if (existing) {
-        // A listing already moved to the sellers isn't touched; an open one takes the new price, and
-        // Yad2 Plus's phone (the owner's real number) over the one saved from the ad (often Yad2's virtual one).
-        const open = existing.status !== "added";
-        const newPrice = open && p.price != null && existing.price !== p.price;
-        const newPhone = open && !!p.phone && digits(existing.phone) !== digits(p.phone);
+        // The pool's listing takes the new price, and Yad2 Plus's phone (the owner's real number) over
+        // the one saved from the ad (often Yad2's virtual one). Sellers already copied from it keep theirs.
+        const newPrice = p.price != null && existing.price !== p.price;
+        const newPhone = !!p.phone && digits(existing.phone) !== digits(p.phone);
         return { ...p, id, kind: newPrice || newPhone ? "update" : "exists", existing, newPrice, newPhone };
       }
       // Another flat at an address already in the pool is new, but say so.

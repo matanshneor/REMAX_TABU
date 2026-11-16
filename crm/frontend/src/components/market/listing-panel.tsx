@@ -1,6 +1,7 @@
 "use client";
 
-import { Building2Icon, ExternalLinkIcon, PencilIcon, PhoneIcon, PlusIcon, RotateCcwIcon } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Building2Icon, CopyPlusIcon, ExternalLinkIcon, PencilIcon, PhoneIcon, RotateCcwIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -8,19 +9,19 @@ import { useAuth } from "@/components/auth-provider";
 import { Money } from "@/components/crm/money";
 import { WhatsAppButton } from "@/components/crm/whatsapp-button";
 import { ConfirmDelete, Panel, SaveFooter } from "@/components/crm/panel";
-import { StatusBadge } from "@/components/crm/status-badge";
 import { EntityForm } from "@/components/form/entity-form";
 import { useFormValues } from "@/components/form/use-form-values";
 import { toPayload } from "@/components/form/values";
 import { PendingImages, PropertyImages, uploadPropertyImages } from "@/components/properties/property-images";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { errorMessage, useAgentName, useDeleteRecord, useRecord, useSaveRecord } from "@/lib/data";
+import { errorMessage, useDeleteRecord, useRecord, useSaveRecord } from "@/lib/data";
 import { formatDate, formatRelative } from "@/lib/format";
-import { LISTING_STATUS } from "@/lib/labels";
 import { isAdmin } from "@/lib/permissions";
+import { createClient } from "@/lib/supabase/client";
 import type { MarketListing } from "@/lib/types";
 import { DismissDialog } from "./dismiss-dialog";
+import { myDismissalsKey } from "./use-market";
 import { LISTING_SECTIONS, NEW_LISTING, NEW_LISTING_SECTIONS } from "./listing-fields";
 import { listingPlace, listingTitle } from "./market-list";
 
@@ -28,8 +29,9 @@ import { listingPlace, listingTitle } from "./market-list";
 const photoFolder = (id: string) => `listings/${id}`;
 
 /**
- * A listing's card: photo, facts, the ad's link and notes, and the two outcomes —
- * "העבר למוכרים שלי" or "לא רלוונטי" (with a reason; "החזר לחדשים" undoes it).
+ * A listing's card: photo, facts, the ad's link and notes, and the user's own outcomes —
+ * "העתק למוכרים שלי" (once; then a link to their seller) and "לא רלוונטי" (with a reason, for
+ * them only; "החזר למאגר" undoes it). Neither changes the listing for anyone else.
  * With `creating`, the same card adds a listing by hand, photo included.
  */
 export function ListingPanel({
@@ -37,18 +39,34 @@ export function ListingPanel({
   creating = false,
   onClose,
   onCreated,
-  onAddToSellers,
-  canOpenSeller,
+  onCopyToSellers,
+  copiedSellerId,
+  dismissal,
 }: {
   id: string | null;
   creating?: boolean;
   onClose: () => void;
   onCreated: (id: string) => void;
-  onAddToSellers: (l: MarketListing) => void;
-  canOpenSeller: (l: MarketListing) => boolean;
+  onCopyToSellers: (l: MarketListing) => void;
+  /** This user's seller copied from the listing, if they copied it. */
+  copiedSellerId?: string;
+  /** This user marked it "לא רלוונטי". */
+  dismissal?: { reason: string; dismissed_at: string };
 }) {
   const { profile } = useAuth();
-  const agentName = useAgentName();
+  const qc = useQueryClient();
+  // "לא רלוונטי" is personal: marking and undoing it touch only this user's row.
+  const dismiss = useMutation({
+    mutationFn: async ({ listingId, reason }: { listingId: string; reason: string | null }) => {
+      const table = createClient().from("market_listing_dismissals");
+      const { error } = reason
+        ? await table.insert({ listing_id: listingId, reason })
+        : await table.delete().eq("listing_id", listingId).eq("user_id", profile!.id);
+      if (error) throw error;
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: myDismissalsKey(profile?.id) }),
+    onError: (e) => toast.error(errorMessage(e)),
+  });
   const { data: listing, isLoading } = useRecord<MarketListing>("market_listings", creating ? null : id);
   const form = useFormValues(LISTING_SECTIONS, creating ? NEW_LISTING : listing, creating ? "new" : `${listing?.id}:${listing?.updated_at}`);
   const save = useSaveRecord<MarketListing>("market_listings");
@@ -106,7 +124,6 @@ export function ListingPanel({
     );
   }
 
-  const open = listing?.status === "new" || listing?.status === "contacted";
   const facts = listing
     ? ([
         ["חדרים", listing.rooms],
@@ -152,7 +169,6 @@ export function ListingPanel({
           </>
         )
       }
-      badges={listing && !open && <StatusBadge map={LISTING_STATUS} value={listing.status} />}
       footer={
         listing &&
         (form.dirty ? (
@@ -164,28 +180,31 @@ export function ListingPanel({
           />
         ) : (
           <>
-            {open ? (
-              <>
-                <Button onClick={() => onAddToSellers(listing)}>
-                  <PlusIcon />
-                  העבר למוכרים שלי
-                </Button>
-                <Button variant="outline" onClick={() => setDismissing(true)}>
-                  לא רלוונטי
-                </Button>
-              </>
-            ) : listing.status === "not_interested" ? (
+            {copiedSellerId ? (
+              <Button render={<Link href={`/properties?open=${copiedSellerId}`} />} nativeButton={false}>
+                <Building2Icon />
+                למוכר שלי
+              </Button>
+            ) : (
+              <Button onClick={() => onCopyToSellers(listing)}>
+                <CopyPlusIcon />
+                העתק למוכרים שלי
+              </Button>
+            )}
+            {dismissal ? (
               <Button
                 variant="outline"
-                disabled={save.isPending}
-                onClick={() =>
-                  save.mutate({ id: listing.id, values: { status: "new", dismissed_reason: null, dismissed_by: null, dismissed_at: null } })
-                }
+                disabled={dismiss.isPending}
+                onClick={() => dismiss.mutate({ listingId: listing.id, reason: null })}
               >
                 <RotateCcwIcon />
-                החזר לחדשים
+                החזר למאגר
               </Button>
-            ) : null}
+            ) : (
+              <Button variant="outline" onClick={() => setDismissing(true)}>
+                לא רלוונטי
+              </Button>
+            )}
             {isAdmin(profile) && <ConfirmDelete onConfirm={() => remove.mutate(listing.id, { onSuccess: onClose })} />}
           </>
         ))
@@ -193,28 +212,17 @@ export function ListingPanel({
     >
       {listing && (
         <>
-          {listing.status === "not_interested" && (
+          {dismissal && (
             <p className="mb-4 rounded-lg border bg-secondary/40 px-3 py-2 text-sm">
-              סומן <b>לא רלוונטי</b> ע״י {agentName(listing.dismissed_by)}
-              {listing.dismissed_at && ` · ${formatDate(listing.dismissed_at)}`}
-              {listing.dismissed_reason && (
-                <>
-                  {" "}
-                  · <span className="text-muted-foreground">{listing.dismissed_reason}</span>
-                </>
-              )}
+              סימנת <b>לא רלוונטי</b> · {formatDate(dismissal.dismissed_at)} ·{" "}
+              <span className="text-muted-foreground">{dismissal.reason}</span>
+              <span className="block text-xs text-muted-foreground">זה מוסתר רק אצלך. שאר הסוכנים עדיין רואים את המודעה.</span>
             </p>
           )}
-          {listing.status === "added" && (
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
-              <span>הועבר למוכרים של {agentName(listing.assigned_to)}</span>
-              {listing.property_id && canOpenSeller(listing) && (
-                <Button variant="outline" size="sm" render={<Link href={`/properties?open=${listing.property_id}`} />} nativeButton={false}>
-                  <Building2Icon />
-                  לכרטיס המוכר
-                </Button>
-              )}
-            </div>
+          {copiedSellerId && (
+            <p className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+              המודעה כבר אצלך במוכרים. ההערות והמשימות שלך נמצאות בכרטיס המוכר שלך.
+            </p>
           )}
 
           {/* A photo from Yad2's e-mail (not stored here) shows until photos are added. */}
@@ -222,7 +230,7 @@ export function ListingPanel({
             // eslint-disable-next-line @next/next/no-img-element
             <img src={listing.image_url} alt="" className="mb-2 aspect-[16/10] w-full rounded-xl object-cover" />
           )}
-          {/* All of them move to the seller on "העבר למוכרים שלי". */}
+          {/* They are copied to the seller on "העתק למוכרים שלי" (and stay here too). */}
           <PropertyImages property={listing} editable table="market_listings" folder={photoFolder(listing.id)} />
 
           <div className="mb-4 grid grid-cols-4 gap-2 text-sm">
@@ -294,16 +302,8 @@ export function ListingPanel({
           <DismissDialog
             open={dismissing}
             onOpenChange={setDismissing}
-            busy={save.isPending}
-            onConfirm={(reason) =>
-              save.mutate(
-                {
-                  id: listing.id,
-                  values: { status: "not_interested", dismissed_reason: reason, dismissed_by: profile?.id, dismissed_at: new Date().toISOString() },
-                },
-                { onSuccess: () => setDismissing(false) },
-              )
-            }
+            busy={dismiss.isPending}
+            onConfirm={(reason) => dismiss.mutate({ listingId: listing.id, reason }, { onSuccess: () => setDismissing(false) })}
           />
         </>
       )}

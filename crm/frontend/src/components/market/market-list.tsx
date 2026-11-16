@@ -1,6 +1,6 @@
 "use client";
 
-import { PhoneIcon } from "lucide-react";
+import { CheckIcon, PhoneIcon } from "lucide-react";
 import { Money } from "@/components/crm/money";
 import { Button } from "@/components/ui/button";
 import type { MarketListing } from "@/lib/types";
@@ -30,23 +30,36 @@ function NewTag() {
   );
 }
 
+/** On a listing this user already copied to their sellers (only they see it). */
+function CopiedTag() {
+  return (
+    <span className="flex items-center gap-1 rounded-full bg-emerald-600 px-2.5 py-0.5 text-[11.5px] font-semibold text-white shadow-sm">
+      <CheckIcon className="size-3" />
+      כבר אצלך
+    </span>
+  );
+}
+
 function Yad2Tag() {
   return <span className="rounded-md bg-yad2 px-1.5 py-0.5 text-[11px] font-bold text-foreground">יד2</span>;
 }
 
 /**
  * Open listings as cards, like the sellers page; a click opens the listing's card.
- * "חדשה" marks the ones this user hasn't opened yet (`seen` holds the ones they have).
+ * "חדשה" marks the ones this user hasn't opened yet (`seen` holds the ones they have), and
+ * "כבר אצלך" the ones they copied to their sellers (`copied`).
  */
 export function MarketGrid({
   rows,
   photos,
   seen,
+  copied,
   onOpen,
 }: {
   rows: MarketListing[];
   photos: Record<string, string>;
   seen: Set<string> | null;
+  copied?: Map<string, string>;
   onOpen: (id: string) => void;
 }) {
   return (
@@ -54,7 +67,7 @@ export function MarketGrid({
       {rows.map((l) => {
         const photo = listingPhoto(l, photos);
         // Until the views load, nothing is marked (rather than everything flashing "חדשה").
-        const fresh = seen && !seen.has(l.id) && <NewTag />;
+        const fresh = copied?.has(l.id) ? <CopiedTag /> : seen && !seen.has(l.id) && <NewTag />;
         const specs = [l.size_sqm && `${l.size_sqm} מ״ר`, l.floor != null && (l.floor === 0 ? "קומת קרקע" : `קומה ${l.floor}`)].filter(Boolean);
         return (
           // A card with its own buttons can't itself be a <button>: a full-size button sits under

@@ -5,9 +5,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { PanelSection } from "@/components/crm/panel";
 import { Money } from "@/components/crm/money";
-import { StatusBadge } from "@/components/crm/status-badge";
 import { useMarketListings } from "@/components/market/use-market";
-import { LISTING_STATUS } from "@/lib/labels";
 import { matchBuyerToListing } from "@/lib/matching";
 import type { Buyer } from "@/lib/types";
 import { MatchReasons } from "./match-reasons";
@@ -16,8 +14,7 @@ const MAX_MATCHES = 10;
 
 /**
  * In a buyer's card: listings from the Yad2 pool that fit what the buyer is looking for.
- * Shows the whole pool, including listings marked "not relevant" or already added to sellers
- * (marked as such), newest first among equal fits.
+ * Shows the whole pool (it's the whole office's), best fits first.
  */
 export function ListingMatches({ buyer }: { buyer: Buyer }) {
   const { data: listings = [], isLoading } = useMarketListings();
@@ -47,11 +44,6 @@ export function ListingMatches({ buyer }: { buyer: Buyer }) {
                 <Link href={`/market?open=${l.id}`} className="font-medium hover:underline">
                   {[l.street ?? l.title ?? l.property_type ?? "מודעה", l.rooms && `${l.rooms} חד׳`].filter(Boolean).join(" · ")}
                 </Link>
-                {(l.status === "not_interested" || l.status === "added") && (
-                  <span className="ms-1.5 align-middle">
-                    <StatusBadge map={LISTING_STATUS} value={l.status} />
-                  </span>
-                )}
                 <p className="text-xs text-muted-foreground">
                   {[l.neighborhood, l.size_sqm && `${l.size_sqm} מ״ר`, l.floor != null && `קומה ${l.floor}`].filter(Boolean).join(" · ")}
                 </p>

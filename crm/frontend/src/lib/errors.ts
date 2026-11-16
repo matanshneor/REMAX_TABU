@@ -10,6 +10,7 @@ export function errorMessage(error: unknown): string {
     return /[֐-׿]/.test(e.message) ? e.message : NO_PERMISSION;
   }
   if (e?.code === "PGRST116") return NO_PERMISSION;
+  if (e?.code === "23505" && e.message.includes("properties_one_copy_per_agent")) return "המודעה הזו כבר אצלך במוכרים";
   if (e?.code === "23505") return "הרשומה כבר קיימת";
   if (e?.code === "23514") return "אחד הערכים אינו תקין (למשל קומה גבוהה ממספר הקומות, או תאריך סיום לפני תאריך ההתחלה)";
   if (e?.code === "23502") return "חסר שדה חובה";

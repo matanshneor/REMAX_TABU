@@ -43,7 +43,7 @@ function DismissForm({ onCancel, onConfirm, busy }: { onCancel: () => void; onCo
     >
       <DialogHeader>
         <DialogTitle className="text-xl font-normal">למה לא רלוונטי?</DialogTitle>
-        <DialogDescription>יירשם שאתה סימנת, ומתי. אפשר להחזיר את המודעה לחדשות בכל זמן.</DialogDescription>
+        <DialogDescription>המודעה תוסתר רק אצלך. שאר הסוכנים ימשיכו לראות אותה. אפשר להחזיר אותה בכל זמן.</DialogDescription>
       </DialogHeader>
       <div className="flex flex-wrap gap-1.5" role="group" aria-label="סיבה">
         {[...DISMISS_REASONS, OTHER].map((r) => (

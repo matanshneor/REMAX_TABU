@@ -61,6 +61,7 @@ export function PropertyPanel({
   id,
   creating = false,
   prefill,
+  extraValues,
   onClose,
   onCreated,
 }: {
@@ -68,6 +69,8 @@ export function PropertyPanel({
   creating?: boolean;
   /** New seller only: values to start from (e.g. a listing from "מאגר יד2"). */
   prefill?: Record<string, unknown>;
+  /** New seller only: saved with it but not shown in the form (e.g. the listing it's copied from). */
+  extraValues?: Record<string, unknown>;
   onClose: () => void;
   onCreated?: (id: string) => void;
 }) {
@@ -99,7 +102,7 @@ export function PropertyPanel({
     const payload = toPayload(createForm, form.values);
     const values = Object.fromEntries(Object.entries(payload).filter(([k]) => !SELLER_CREATE_FIELDS.includes(k)));
     save.mutate(
-      { values: { ...values, recruiting_agent_id: profile?.id } },
+      { values: { ...values, ...extraValues, recruiting_agent_id: profile?.id } },
       {
         onSuccess: async (row) => {
           setFinishing(true);
@@ -107,7 +110,7 @@ export function PropertyPanel({
             await saveSeller(row.id, payload);
             if (photos.length) {
               const { paths, failed } = await uploadPropertyImages(row.id, photos);
-              if (paths.length) await saveQuiet.mutateAsync({ id: row.id, values: { image_paths: paths } });
+              if (paths.length) await saveQuiet.mutateAsync({ id: row.id, values: { image_paths: [...(row.image_paths ?? []), ...paths] } });
               if (failed) toast.error(failed > 1 ? `${failed} תמונות לא הועלו — אפשר להוסיף אותן שוב` : "תמונה אחת לא הועלתה — אפשר להוסיף אותה שוב");
             }
           } catch (e) {

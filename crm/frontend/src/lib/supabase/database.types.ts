@@ -445,6 +445,42 @@ export type Database = {
           },
         ]
       }
+      market_listing_dismissals: {
+        Row: {
+          dismissed_at: string
+          listing_id: string
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          dismissed_at?: string
+          listing_id: string
+          reason: string
+          user_id?: string
+        }
+        Update: {
+          dismissed_at?: string
+          listing_id?: string
+          reason?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_listing_dismissals_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "market_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "market_listing_dismissals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       market_listing_views: {
         Row: {
           listing_id: string
@@ -765,6 +801,7 @@ export type Database = {
           recruiter_id: string | null
           rooms: number | null
           size_sqm: number | null
+          source_listing_id: string | null
           status: Database["public"]["Enums"]["property_status"]
           street: string | null
           total_floors: number | null
@@ -813,6 +850,7 @@ export type Database = {
           recruiter_id?: string | null
           rooms?: number | null
           size_sqm?: number | null
+          source_listing_id?: string | null
           status?: Database["public"]["Enums"]["property_status"]
           street?: string | null
           total_floors?: number | null
@@ -861,6 +899,7 @@ export type Database = {
           recruiter_id?: string | null
           rooms?: number | null
           size_sqm?: number | null
+          source_listing_id?: string | null
           status?: Database["public"]["Enums"]["property_status"]
           street?: string | null
           total_floors?: number | null

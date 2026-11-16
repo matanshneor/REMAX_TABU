@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ChevronDownIcon, ClipboardPasteIcon, InboxIcon, PlusIcon, SearchIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { useAuth } from "@/components/auth-provider";
 import { EmptyState, ErrorState, PageHeader } from "@/components/crm/page-header";
 import { MEDIA_BUCKET } from "@/components/properties/property-images";
@@ -15,8 +16,7 @@ import { Label } from "@/components/ui/label";
 import { FilterBar } from "@/components/crm/filter-bar";
 import { CurrencyInput } from "@/components/form/currency-input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { errorMessage, useAgentName, useSaveRecord, useSignedUrls } from "@/lib/data";
-import { toast } from "sonner";
+import { useSignedUrls } from "@/lib/data";
 import { formatDate } from "@/lib/format";
 import { DISMISS_REASONS, PROPERTY_TYPES } from "@/lib/labels";
 import { isAdmin } from "@/lib/permissions";
@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
 import { ListingPanel } from "./listing-panel";
 import { HandledList, MarketGrid } from "./market-list";
 import { Yad2ImportDialog } from "./yad2-import-dialog";
-import { isOpenListing as isOpen, seenListingsKey, useMarketListings, useSeenListings } from "./use-market";
+import { seenListingsKey, useMarketListings, useMyDismissals, useMyListingCopies, useSeenListings } from "./use-market";
 
 /** Filters behind "עוד סינונים", like the sellers page. */
 type PoolFilters = { city: string; neighborhood: string; type: string; priceMin: string; priceMax: string; roomsMin: string; sizeMin: string };
@@ -58,8 +58,7 @@ function sellerFromListing(l: MarketListing): Record<string, unknown> {
     owner_name: l.advertiser ?? "",
     owner_phone: l.phone ?? "",
     lead_source: l.source,
-    // The owner wants the office's service: an agreement, not "still recruiting".
-    engagement: "consent",
+    // Not signed with the owner yet: "בתהליך גיוס" (the new-seller default), so it isn't offered to buyers.
     description: l.url ? `פורסם ב${l.source}: ${l.url}` : "",
   };
 }
@@ -67,13 +66,13 @@ function sellerFromListing(l: MarketListing): Record<string, unknown> {
 /**
  * "מאגר יד2": private listings, as cards, for anyone to call, newest in the pool first. Those the
  * user hasn't opened yet ("חדשות") come first; those they opened follow in their own section.
- * In a listing's card, whoever called marks the outcome: "העבר למוכרים שלי" (it becomes their
- * seller) or "לא רלוונטי" (with a reason). Handled listings fold away under the cards.
+ * The pool is the whole office's: in a listing's card, "העתק למוכרים שלי" makes it the agent's own
+ * seller (any number of agents can, each once; the listing stays in the pool, marked "כבר אצלך"
+ * for them), and "לא רלוונטי" (with a reason) hides it for that agent only, under the cards.
  */
 export function MarketView() {
   const { profile } = useAuth();
   const router = useRouter();
-  const agentName = useAgentName();
   const [openId, setOpenId] = usePanelParam();
   const [creating, setCreating] = useNewParam();
   const [text, setText] = useState("");
@@ -82,14 +81,15 @@ export function MarketView() {
   const setMoreFilter = <K extends keyof PoolFilters>(k: K, v: PoolFilters[K]) => setMore((m) => ({ ...m, [k]: v }));
   const moreCount = (Object.keys(NO_POOL_FILTERS) as (keyof PoolFilters)[]).filter((k) => more[k] !== NO_POOL_FILTERS[k]).length;
   const filtering = text !== "" || moreCount > 0;
-  const [shown, setShown] = useState({ added: false, dismissed: false });
+  const [shown, setShown] = useState({ dismissed: false });
   // The listing being turned into a seller (opens the "new seller" card, filled in).
   const [toSeller, setToSeller] = useState<MarketListing | null>(null);
   const [importing, setImporting] = useState(false);
-  const saveListing = useSaveRecord<MarketListing>("market_listings", { silent: true });
-  const saveProperty = useSaveRecord("properties", { silent: true });
 
   const { data: listings = [], isLoading, error } = useMarketListings();
+  // Personal: what this user marked "לא רלוונטי", and what they already copied to their sellers.
+  const { data: myDismissals } = useMyDismissals();
+  const { data: myCopies } = useMyListingCopies();
 
   const matches = useMemo(() => {
     const t = text.trim().toLowerCase();
@@ -113,24 +113,23 @@ export function MarketView() {
     );
     return sort === "entered" ? found : [...found].sort(POOL_SORTERS[sort]);
   }, [listings, text, more, sort]);
-  const open = useMemo(() => matches.filter(isOpen), [matches]);
-  const added = matches.filter((l) => l.status === "added");
-  const dismissed = matches.filter((l) => l.status === "not_interested");
+  const open = useMemo(() => matches.filter((l) => !myDismissals?.has(l.id)), [matches, myDismissals]);
+  const dismissed = matches.filter((l) => myDismissals?.has(l.id));
+  const reasonOf = (l: MarketListing) => myDismissals?.get(l.id)?.reason ?? "";
 
-  // Filters inside "לא רלוונטיים": why, who marked it, and when.
-  const [dismissFilter, setDismissFilter] = useState({ reason: "", by: "", days: "" });
+  // Filters inside "לא רלוונטיים": why, and when.
+  const [dismissFilter, setDismissFilter] = useState({ reason: "", days: "" });
   const [now] = useState(() => Date.now());
-  const isListedReason = (r: string | null) => !!r && DISMISS_REASONS.includes(r);
-  const dismissedShown = dismissed.filter(
-    (l) =>
+  const isListedReason = (r: string) => DISMISS_REASONS.includes(r);
+  const dismissedShown = dismissed.filter((l) => {
+    const d = myDismissals?.get(l.id);
+    return (
       (!dismissFilter.reason ||
-        (dismissFilter.reason === OTHER_REASON ? !isListedReason(l.dismissed_reason) : l.dismissed_reason === dismissFilter.reason)) &&
-      (!dismissFilter.by || l.dismissed_by === dismissFilter.by) &&
-      (!dismissFilter.days ||
-        (!!l.dismissed_at && now - new Date(l.dismissed_at).getTime() <= Number(dismissFilter.days) * 86_400_000)),
-  );
-  const dismissers = [...new Set(dismissed.map((l) => l.dismissed_by).filter((id): id is string => !!id))];
-  const filteringDismissed = !!(dismissFilter.reason || dismissFilter.by || dismissFilter.days);
+        (dismissFilter.reason === OTHER_REASON ? !isListedReason(reasonOf(l)) : reasonOf(l) === dismissFilter.reason)) &&
+      (!dismissFilter.days || (!!d && now - new Date(d.dismissed_at).getTime() <= Number(dismissFilter.days) * 86_400_000))
+    );
+  });
+  const filteringDismissed = !!(dismissFilter.reason || dismissFilter.days);
 
   // Listings this user has opened; the rest are "חדשות" (until the views load, all show as one list).
   const qc = useQueryClient();
@@ -152,9 +151,6 @@ export function MarketView() {
 
   const photoPaths = useMemo(() => open.flatMap((l) => l.image_paths.slice(0, 1)), [open]);
   const { data: photos = {} } = useSignedUrls(MEDIA_BUCKET, photoPaths);
-
-  // Sellers are private to their agent: the link shows for whoever moved it (and the admin).
-  const canOpenSeller = (l: MarketListing) => l.assigned_to === profile?.id || isAdmin(profile);
 
   const section = (
     key: keyof typeof shown,
@@ -190,7 +186,7 @@ export function MarketView() {
       <PageHeader
         title="מאגר יד 2"
         // Same number as the menu: open listings this user hasn't opened yet.
-        count={seen ? listings.filter((l) => isOpen(l) && !seen.has(l.id)).length : undefined}
+        count={seen && myDismissals ? listings.filter((l) => !myDismissals.has(l.id) && !seen.has(l.id)).length : undefined}
         actions={
           <>
             {/* The office's Yad2 Plus account is the manager's: only they import from it. */}
@@ -295,7 +291,7 @@ export function MarketView() {
           {fresh.length > 0 ? (
             <section>
               {opened.length > 0 && <GridTitle title="מודעות חדשות" hint="עוד לא נפתחו" count={fresh.length} />}
-              <MarketGrid rows={fresh} photos={photos} seen={seen} onOpen={setOpenId} />
+              <MarketGrid rows={fresh} photos={photos} seen={seen} copied={myCopies} onOpen={setOpenId} />
             </section>
           ) : (
             <p className="rounded-xl border border-dashed px-4 py-3 text-sm text-muted-foreground">
@@ -304,8 +300,8 @@ export function MarketView() {
           )}
           {opened.length > 0 && (
             <section>
-              <GridTitle title="מודעות שנפתחו" hint="עדיין לא הועברו למוכרים ולא סומנו לא רלוונטיות" count={opened.length} />
-              <MarketGrid rows={opened} photos={photos} seen={seen} onOpen={setOpenId} />
+              <GridTitle title="מודעות שנפתחו" hint="כבר פתחת אותן" count={opened.length} />
+              <MarketGrid rows={opened} photos={photos} seen={seen} copied={myCopies} onOpen={setOpenId} />
             </section>
           )}
         </div>
@@ -313,19 +309,13 @@ export function MarketView() {
 
       {!isLoading && !error && (
         <div className="mt-8 flex flex-col gap-3">
-          {section("added", "הועברו למוכרים", added, (l) => (
-            <>
-              ע״י <b className="font-medium text-foreground">{agentName(l.assigned_to)}</b> · {formatDate(l.updated_at)}
-            </>
-          ))}
           {section(
             "dismissed",
             "לא רלוונטיים",
             dismissed,
             (l) => (
               <>
-                {l.dismissed_reason} · סומן ע״י <b className="font-medium text-foreground">{agentName(l.dismissed_by)}</b>
-                {l.dismissed_at && ` · ${formatDate(l.dismissed_at)}`}
+                {reasonOf(l)} · {formatDate(myDismissals?.get(l.id)?.dismissed_at)}
               </>
             ),
             {
@@ -341,23 +331,10 @@ export function MarketView() {
                     <option value="">כל הסיבות</option>
                     {DISMISS_REASONS.map((r) => (
                       <option key={r} value={r}>
-                        {r} ({dismissed.filter((l) => l.dismissed_reason === r).length})
+                        {r} ({dismissed.filter((l) => reasonOf(l) === r).length})
                       </option>
                     ))}
-                    <option value={OTHER_REASON}>אחר ({dismissed.filter((l) => !isListedReason(l.dismissed_reason)).length})</option>
-                  </NativeSelect>
-                  <NativeSelect
-                    value={dismissFilter.by}
-                    onChange={(e) => setDismissFilter((f) => ({ ...f, by: e.target.value }))}
-                    aria-label="מי סימן"
-                    className="w-full sm:w-40"
-                  >
-                    <option value="">כל הסוכנים</option>
-                    {dismissers.map((id) => (
-                      <option key={id} value={id}>
-                        {agentName(id)} ({dismissed.filter((l) => l.dismissed_by === id).length})
-                      </option>
-                    ))}
+                    <option value={OTHER_REASON}>אחר ({dismissed.filter((l) => !isListedReason(reasonOf(l))).length})</option>
                   </NativeSelect>
                   <NativeSelect
                     value={dismissFilter.days}
@@ -375,7 +352,7 @@ export function MarketView() {
                       <span className="text-xs text-muted-foreground tabular-nums">
                         {dismissedShown.length} מתוך {dismissed.length}
                       </span>
-                      <Button variant="ghost" size="sm" onClick={() => setDismissFilter({ reason: "", by: "", days: "" })}>
+                      <Button variant="ghost" size="sm" onClick={() => setDismissFilter({ reason: "", days: "" })}>
                         נקה סינון
                       </Button>
                     </>
@@ -399,42 +376,26 @@ export function MarketView() {
           setCreating(false);
           setOpenId(id);
         }}
-        onAddToSellers={(l) => {
+        onCopyToSellers={(l) => {
           setOpenId(null);
           setToSeller(l);
         }}
-        canOpenSeller={canOpenSeller}
+        copiedSellerId={openId ? myCopies?.get(openId) : undefined}
+        dismissal={openId ? myDismissals?.get(openId) : undefined}
       />
       <PropertyPanel
         id={null}
         creating={!!toSeller}
         prefill={toSeller ? sellerFromListing(toSeller) : undefined}
+        // Saved with the new seller: the listing it came from (one copy per agent) and its photos
+        // (the same files; the listing keeps them too).
+        extraValues={toSeller ? { source_listing_id: toSeller.id, image_paths: toSeller.image_paths } : undefined}
         onClose={() => setToSeller(null)}
-        onCreated={async (propertyId) => {
-          const listing = toSeller!;
+        onCreated={(propertyId) => {
           setToSeller(null);
-          // The listing's photos carry over to the seller (same bucket), first, next to any added in the card.
-          if (listing.image_paths.length) {
-            const { data } = await createClient().from("properties").select("image_paths").eq("id", propertyId).single();
-            await saveProperty
-              .mutateAsync({ id: propertyId, values: { image_paths: [...listing.image_paths, ...(data?.image_paths ?? [])] } })
-              .catch(() => toast.error("המוכר נשמר, אבל התמונות מהמודעה לא הועתקו. אפשר להוסיף אותן בכרטיס המוכר."));
-          }
-          // Mark the listing moved and linked; who moved it is kept (assigned_to). Then show the seller.
-          saveListing.mutate(
-            { id: listing.id, values: { status: "added", property_id: propertyId, assigned_to: profile?.id } },
-            {
-              onSuccess: () => {
-                toast.success("הועבר למוכרים שלך");
-                router.push(`/properties?open=${propertyId}`);
-              },
-              // The seller exists, but the listing would stay open in the pool: say so and stay here.
-              onError: (e) =>
-                toast.error(`המוכר נשמר, אבל המודעה לא סומנה כ״הועברה״ (${errorMessage(e)}). כדאי לסמן אותה שוב, או לפנות למנהל.`, {
-                  duration: 10000,
-                }),
-            },
-          );
+          qc.invalidateQueries({ queryKey: ["properties"] });
+          toast.success("הועתק למוכרים שלך. המודעה נשארת במאגר גם לשאר הסוכנים.");
+          router.push(`/properties?open=${propertyId}`);
         }}
       />
     </>

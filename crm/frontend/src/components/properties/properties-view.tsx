@@ -6,12 +6,15 @@ import { useMemo, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { ExportButton } from "@/components/crm/export-button";
 import { EmptyState, ErrorState, PageHeader } from "@/components/crm/page-header";
+import { StatusBadge } from "@/components/crm/status-badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRecruiterName, useSignedUrls } from "@/lib/data";
-import { sourceOptions } from "@/lib/labels";
+import { formatAddress, formatDate } from "@/lib/format";
+import { PROPERTY_ENGAGEMENT, sourceOptions } from "@/lib/labels";
 import { isAdmin } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/client";
 import type { Property } from "@/lib/types";
@@ -69,6 +72,16 @@ export function PropertiesView() {
     [properties],
   );
   const sources = useMemo(() => sourceOptions(properties.map((p) => p.lead_source)), [properties]);
+  // A Yad2 listing copied by several agents (only the manager sees them all) shows as one card,
+  // in the place of its first copy; a click asks whose copy to open.
+  const cards = useMemo(() => {
+    const copies = new Map<string, typeof rows>();
+    for (const p of rows) if (p.source_listing_id) copies.set(p.source_listing_id, [...(copies.get(p.source_listing_id) ?? []), p]);
+    return rows
+      .filter((p) => !p.source_listing_id || copies.get(p.source_listing_id)![0] === p)
+      .map((p) => ({ property: p, copies: p.source_listing_id ? copies.get(p.source_listing_id)! : [p] }));
+  }, [rows]);
+  const [picking, setPicking] = useState<typeof rows | null>(null);
   const coverPaths = useMemo(() => rows.flatMap((p) => p.image_paths.slice(0, 1)), [rows]);
   const { data: urls = {} } = useSignedUrls(MEDIA_BUCKET, coverPaths);
 
@@ -142,21 +155,53 @@ export function PropertiesView() {
           />
         ) : (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
-            {rows.map((p) => (
+            {cards.map(({ property: p, copies }) => (
               <PropertyCard
                 key={p.id}
                 property={p}
                 imageUrl={p.image_paths[0] ? urls[p.image_paths[0]] : undefined}
                 agentName={recruiterName(p.recruiter_id, p.recruiting_agent_id)}
+                agentLine={
+                  copies.length > 1
+                    ? `${copies.length} סוכנים: ${copies.map((c) => recruiterName(c.recruiter_id, c.recruiting_agent_id)).join(", ")}`
+                    : undefined
+                }
                 sellerName={p.property_owner_details?.owner_name}
                 sellerPhone={p.property_owner_details?.owner_phone}
-                selected={openId === p.id}
-                onClick={() => setOpenId(p.id)}
+                selected={copies.some((c) => c.id === openId)}
+                onClick={() => (copies.length > 1 ? setPicking(copies) : setOpenId(p.id))}
               />
             ))}
           </div>
         )}
       </div>
+
+      <Dialog open={!!picking} onOpenChange={(o) => !o && setPicking(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-normal">{picking && formatAddress(picking[0])}</DialogTitle>
+            <DialogDescription>כמה סוכנים העתיקו את המודעה הזו מיד 2. לכל אחד יש כרטיס משלו, עם ההערות והמשימות שלו.</DialogDescription>
+          </DialogHeader>
+          <ul className="divide-y overflow-hidden rounded-xl border text-sm">
+            {picking?.map((c) => (
+              <li key={c.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPicking(null);
+                    setOpenId(c.id);
+                  }}
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-start hover:bg-muted/50"
+                >
+                  <span className="min-w-0 flex-1 truncate font-medium">{recruiterName(c.recruiter_id, c.recruiting_agent_id)}</span>
+                  <StatusBadge map={PROPERTY_ENGAGEMENT} value={c.engagement} />
+                  <span className="text-xs text-muted-foreground">עודכן {formatDate(c.updated_at)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </DialogContent>
+      </Dialog>
 
       <PropertyPanel
         id={openId}

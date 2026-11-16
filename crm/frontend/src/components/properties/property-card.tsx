@@ -25,6 +25,7 @@ export function PropertyCard({
   property: p,
   imageUrl,
   agentName,
+  agentLine,
   sellerName,
   sellerPhone,
   selected,
@@ -33,6 +34,8 @@ export function PropertyCard({
   property: Property;
   imageUrl?: string;
   agentName: string;
+  /** Replaces "סוכן: …" (e.g. "3 סוכנים: …" on a listing several agents copied). */
+  agentLine?: string;
   sellerName?: string | null;
   /** Shown as call and WhatsApp buttons at the bottom of the card. */
   sellerPhone?: string | null;
@@ -141,7 +144,7 @@ export function PropertyCard({
         {!p.broadcast && (
           <p className="mt-auto flex items-center gap-1 pt-1 text-xs text-muted-foreground">
             <UserRoundIcon className="size-3.5 shrink-0" />
-            <span className="truncate">סוכן: {agentName}</span>
+            <span className="truncate">{agentLine ?? `סוכן: ${agentName}`}</span>
           </p>
         )}
         <div className={cn("flex items-center gap-2 border-t pt-2 text-sm", p.broadcast && "mt-auto")}>
