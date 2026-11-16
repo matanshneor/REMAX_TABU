@@ -551,6 +551,12 @@
     display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;
   }
   .btn-share:hover { background: #18653F; }
+  /* במחשב: העתקת התמונה ופתיחת וואטסאפ (חלון השיתוף של המחשב לא תמיד כולל את וואטסאפ) */
+  #actionWaBox { display: none; flex-direction: column; gap: 10px; }
+  .done-wa-steps { margin: 0; font-size: 14px; color: #5B6678; line-height: 1.5; }
+  .done-wa-msg { margin: 0; font-size: 14px; font-weight: 700; color: var(--ui-green); min-height: 0; }
+  .done-wa-msg.error { color: #B42318; }
+  .done-wa-msg:empty { display: none; }
   .done-thumb { flex: 0 0 240px; background: var(--ui-bg); border-radius: 14px; padding: 14px; display: flex; align-items: center; justify-content: center; }
   .done-thumb img { width: 100%; height: auto; display: block; box-shadow: 0 8px 20px rgba(15,35,71,0.2); }
   .save-title { font-size: 17px; font-weight: 800; color: var(--ui-navy); text-align: center; margin-bottom: 6px; }
@@ -1057,6 +1063,18 @@
           <h2 id="doneTitle">המודעה מוכנה!</h2>
           <p id="doneText"></p>
           <div class="done-actions">
+            <div id="actionWaBox">
+              <button type="button" id="actionWaBtn" class="btn-share" onclick="actionShareWhatsApp()">
+                <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.4A8.4 8.4 0 1 1 21 11.5z"/></svg>
+                שתף בוואטסאפ
+              </button>
+              <p class="done-wa-steps">הלחיצה מעתיקה את התמונה ופותחת את וואטסאפ ווב. בוואטסאפ פותחים שיחה ולוחצים Ctrl+V.</p>
+              <p id="actionWaMsg" class="done-wa-msg" role="status"></p>
+              <button type="button" class="btn-ghost" onclick="actionCopyImage()">
+                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>
+                העתק תמונה
+              </button>
+            </div>
             <button type="button" id="actionShareBtn" class="btn-share" onclick="actionShare()">
               <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.4A8.4 8.4 0 1 1 21 11.5z"/></svg>
               שיתוף (וואטסאפ, גלריה…)
@@ -2431,7 +2449,10 @@
     document.getElementById('doneThumb').src = dataURL;
     _sheetButtons.style.display = 'block';
     _sheetSaveImg.style.display = 'none';
-    _shareBtn.style.display = navigator.share ? '' : 'none';
+    _shareBtn.style.display = navigator.share && _isIOS ? '' : 'none'; // במחשב: ״שתף בוואטסאפ״ במקום חלון השיתוף של המחשב
+    // במחשב (לא iOS): העתקת התמונה ופתיחת וואטסאפ. חלון השיתוף של המחשב לא תמיד כולל את וואטסאפ.
+    document.getElementById('actionWaBox').style.display = _isIOS ? 'none' : 'flex';
+    _waMsg('');
     _showSheet();
   }
 
@@ -2482,12 +2503,49 @@
     }
   }
 
+  function _waMsg(text, isError) {
+    const el = document.getElementById('actionWaMsg');
+    el.textContent = text;
+    el.classList.toggle('error', !!isError);
+  }
+
   async function actionShare() {
     if (!_actionFile) return;
     try {
       await navigator.share({ files: [_actionFile], title: 'מודעה RE/MAX' });
     } catch (e) {
-      if (e.name !== 'AbortError') { /* share not supported */ }
+      if (e.name === 'AbortError') return;
+      // הדפדפן לא מצליח לשתף קובץ: אומרים את זה במקום לשתוק, ומפנים להעתקה
+      _waMsg('השיתוף לא עבד בדפדפן הזה. לוחצים ״הורד שוב״ ושולחים את הקובץ בוואטסאפ.', true);
+    }
+  }
+
+  // במחשב: מעתיקים את התמונה ללוח ופותחים את וואטסאפ ווב; בשיחה מדביקים (Ctrl+V).
+  // (אי אפשר לפתוח וואטסאפ עם תמונה מצורפת דרך קישור, ולכן מדביקים.)
+  async function _copyImage() {
+    try {
+      if (!_actionFile || !navigator.clipboard || !window.ClipboardItem) return false;
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': _actionFile })]);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // ״העתק תמונה״: רק מעתיקים, כדי להדביק איפה שרוצים (וואטסאפ, מייל, מסמך)
+  async function actionCopyImage() {
+    if (await _copyImage()) _waMsg('התמונה הועתקה. אפשר להדביק אותה עם Ctrl+V.');
+    else _waMsg('ההעתקה לא עבדה. לוחצים ״הורד שוב״ ומשתמשים בקובץ שהורד.', true);
+  }
+
+  async function actionShareWhatsApp() {
+    if (!_actionFile) return;
+    const copied = await _copyImage();
+    const w = window.open('https://web.whatsapp.com/', '_blank', 'noopener');
+    if (copied) {
+      _waMsg(w ? 'התמונה הועתקה. בוואטסאפ ווב פותחים שיחה ולוחצים Ctrl+V.' : 'התמונה הועתקה, אבל וואטסאפ ווב לא נפתח. פותחים אותו בלשונית חדשה ולוחצים Ctrl+V בשיחה.', !w);
+    } else {
+      _waMsg('לא הצלחנו להעתיק את התמונה. לוחצים ״הורד שוב״ וגוררים את הקובץ לשיחה בוואטסאפ ווב.', true);
     }
   }
   // ══════════ תיקיית "המודעות שלי" ב-CRM ══════════
