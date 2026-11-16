@@ -104,7 +104,8 @@ export const SELLER_CREATE_SECTION: FormSection = {
   fields: [
     { name: "owner_name", label: "שם המוכר", type: "text" },
     { name: "owner_phone", label: "טלפון", type: "tel" },
-    { name: "owner_notes", label: "הערות על המוכר", type: "textarea", span: 6 },
+    // Saved to the user's own personal notes on the seller, not to the seller.
+    { name: "owner_notes", label: "הערות אישיות (רק אני רואה)", type: "textarea", span: 6 },
   ],
 };
 
@@ -137,7 +138,6 @@ export const OWNER_SECTIONS: FormSection[] = [
     fields: [
       { name: "owner_name", label: "שם המוכר", type: "text" },
       { name: "owner_phone", label: "טלפון", type: "tel" },
-      { name: "notes", label: "הערות", type: "textarea", span: 6 },
     ],
   },
 ];

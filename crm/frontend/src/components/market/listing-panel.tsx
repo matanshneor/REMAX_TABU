@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Building2Icon, CopyPlusIcon, ExternalLinkIcon, PencilIcon, PhoneIcon, RotateCcwIcon } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth-provider";
 import { Money } from "@/components/crm/money";
@@ -21,12 +21,17 @@ import { isAdmin } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/client";
 import type { MarketListing } from "@/lib/types";
 import { DismissDialog } from "./dismiss-dialog";
-import { myDismissalsKey } from "./use-market";
-import { LISTING_SECTIONS, NEW_LISTING, NEW_LISTING_SECTIONS } from "./listing-fields";
+import { myDismissalsKey, myListingNotesKey, useMyListingNotes } from "./use-market";
+import { LISTING_SECTIONS, MY_NOTES_FIELD, NEW_LISTING, NEW_LISTING_SECTIONS } from "./listing-fields";
 import { listingPlace, listingTitle } from "./market-list";
 
 /** A hand-uploaded listing photo lives in the property photos bucket, under listings/<id>. */
 const photoFolder = (id: string) => `listings/${id}`;
+
+/** The listing's own columns: the personal note isn't one. */
+function listingFields(payload: Record<string, unknown>) {
+  return Object.fromEntries(Object.entries(payload).filter(([k]) => k !== MY_NOTES_FIELD));
+}
 
 /**
  * A listing's card: photo, facts, the ad's link and notes, and the user's own outcomes —
@@ -68,8 +73,40 @@ export function ListingPanel({
     onError: (e) => toast.error(errorMessage(e)),
   });
   const { data: listing, isLoading } = useRecord<MarketListing>("market_listings", creating ? null : id);
-  const form = useFormValues(LISTING_SECTIONS, creating ? NEW_LISTING : listing, creating ? "new" : `${listing?.id}:${listing?.updated_at}`);
+  // The user's own note on this listing (nobody else's is readable) sits in the form beside the listing's fields.
+  const { data: myNotes } = useMyListingNotes();
+  const myNote = listing ? myNotes?.get(listing.id) : undefined;
+  const seed = useMemo(() => (listing ? { ...listing, [MY_NOTES_FIELD]: myNote?.notes ?? "" } : listing), [listing, myNote]);
+  const form = useFormValues(
+    LISTING_SECTIONS,
+    creating ? NEW_LISTING : seed,
+    creating ? "new" : `${listing?.id}:${listing?.updated_at}:${myNote?.updated_at}`,
+  );
   const save = useSaveRecord<MarketListing>("market_listings");
+  const saveNote = useMutation({
+    mutationFn: async ({ listingId, notes }: { listingId: string; notes: string | null }) => {
+      const table = createClient().from("market_listing_notes");
+      const { error } = notes
+        ? await table.upsert({ listing_id: listingId, notes }, { onConflict: "user_id,listing_id" })
+        : await table.delete().eq("listing_id", listingId).eq("user_id", profile!.id);
+      if (error) throw error;
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: myListingNotesKey(profile?.id) }),
+  });
+
+  /** Saves the form's changes: the listing's own fields to the listing, the note to the user's notes. */
+  async function saveChanges(listingId: string, changes: Record<string, unknown>) {
+    const { [MY_NOTES_FIELD]: note, ...fields } = changes;
+    try {
+      if (Object.keys(fields).length) await save.mutateAsync({ id: listingId, values: fields });
+      if (MY_NOTES_FIELD in changes) {
+        await saveNote.mutateAsync({ listingId, notes: (note as string | null) || null });
+        if (!Object.keys(fields).length) toast.success("ההערה נשמרה");
+      }
+    } catch (e) {
+      toast.error(errorMessage(e));
+    }
+  }
   const saveQuiet = useSaveRecord<MarketListing>("market_listings", { silent: true });
   const remove = useDeleteRecord("market_listings");
   const [photos, setPhotos] = useState<File[]>([]);
@@ -92,9 +129,11 @@ export function ListingPanel({
             onClick={() => {
               if (!form.validate()) return;
               save.mutate(
-                { values: { ...toPayload(LISTING_SECTIONS, form.values), source: "יד2" } },
+                { values: { ...listingFields(toPayload(LISTING_SECTIONS, form.values)), source: "יד2" } },
                 {
                   onSuccess: async (row) => {
+                    const note = toPayload(LISTING_SECTIONS, form.values)[MY_NOTES_FIELD] as string | null;
+                    if (note) await saveNote.mutateAsync({ listingId: row.id, notes: note }).catch((e) => toast.error(`המודעה נשמרה, אבל ההערה לא: ${errorMessage(e)}`));
                     if (photos.length) {
                       setBusy(true);
                       try {
@@ -138,7 +177,7 @@ export function ListingPanel({
       dirty={form.dirty}
       open={!!id}
       onClose={onClose}
-      loading={isLoading || !listing}
+      loading={isLoading || !listing || !myNotes}
       missing={!!id && !isLoading && !listing}
       title={
         listing && (
@@ -174,8 +213,8 @@ export function ListingPanel({
         (form.dirty ? (
           <SaveFooter
             dirty
-            saving={save.isPending}
-            onSave={() => form.validate() && save.mutate({ id: listing.id, values: form.changes })}
+            saving={save.isPending || saveNote.isPending}
+            onSave={() => form.validate() && saveChanges(listing.id, form.changes)}
             onReset={form.reset}
           />
         ) : (

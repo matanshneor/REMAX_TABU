@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
 import { ListingPanel } from "./listing-panel";
 import { HandledList, MarketGrid } from "./market-list";
 import { Yad2ImportDialog } from "./yad2-import-dialog";
-import { seenListingsKey, useMarketListings, useMyDismissals, useMyListingCopies, useSeenListings } from "./use-market";
+import { seenListingsKey, useMarketListings, useMyDismissals, useMyListingCopies, useMyListingNotes, useSeenListings } from "./use-market";
 
 /** Filters behind "עוד סינונים", like the sellers page. */
 type PoolFilters = { city: string; neighborhood: string; type: string; priceMin: string; priceMax: string; roomsMin: string; sizeMin: string };
@@ -45,7 +45,7 @@ const POOL_SORTERS: Record<Exclude<PoolSort, "entered">, (a: MarketListing, b: M
 const OTHER_REASON = "__other__";
 
 /** A listing's details as a new seller's starting values. */
-function sellerFromListing(l: MarketListing): Record<string, unknown> {
+function sellerFromListing(l: MarketListing, myNote?: string): Record<string, unknown> {
   return {
     property_type: l.property_type ?? "",
     city: l.city ?? "",
@@ -57,6 +57,8 @@ function sellerFromListing(l: MarketListing): Record<string, unknown> {
     current_price: l.price ?? "",
     owner_name: l.advertiser ?? "",
     owner_phone: l.phone ?? "",
+    // The user's own note on the listing carries over to the seller's notes.
+    owner_notes: myNote ?? "",
     lead_source: l.source,
     // Not signed with the owner yet: "בתהליך גיוס" (the new-seller default), so it isn't offered to buyers.
     description: l.url ? `פורסם ב${l.source}: ${l.url}` : "",
@@ -90,6 +92,7 @@ export function MarketView() {
   // Personal: what this user marked "לא רלוונטי", and what they already copied to their sellers.
   const { data: myDismissals } = useMyDismissals();
   const { data: myCopies } = useMyListingCopies();
+  const { data: myNotes } = useMyListingNotes();
 
   const matches = useMemo(() => {
     const t = text.trim().toLowerCase();
@@ -386,7 +389,7 @@ export function MarketView() {
       <PropertyPanel
         id={null}
         creating={!!toSeller}
-        prefill={toSeller ? sellerFromListing(toSeller) : undefined}
+        prefill={toSeller ? sellerFromListing(toSeller, myNotes?.get(toSeller.id)?.notes) : undefined}
         // Saved with the new seller: the listing it came from (one copy per agent) and its photos
         // (the same files; the listing keeps them too).
         extraValues={toSeller ? { source_listing_id: toSeller.id, image_paths: toSeller.image_paths } : undefined}

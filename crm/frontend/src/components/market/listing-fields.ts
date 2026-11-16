@@ -3,14 +3,16 @@ import { PROPERTY_TYPES } from "@/lib/labels";
 
 export const LISTING_SECTIONS: FormSection[] = [
   {
-    title: "הערות",
+    title: "ההערות שלי",
     fields: [
-      { name: "notes", label: "הערות", type: "textarea", span: 6, placeholder: "לדוגמה: דיברתי עם הבעלים, יחזור אליי ביום ראשון" },
+      // Not a column of the listing: saved to the user's own notes (only they see them).
+      { name: "my_notes", label: "ההערות שלי (רק אני רואה)", type: "textarea", span: 6, placeholder: "לדוגמה: דיברתי עם הבעלים, יחזור אליי ביום ראשון" },
     ],
   },
   {
     title: "המודעה",
     fields: [
+      { name: "notes", label: "תיאור המודעה", type: "textarea", span: 6 },
       { name: "url", label: "קישור למודעה", type: "url", span: 6, placeholder: "https://www.yad2.co.il/..." },
       { name: "title", label: "כותרת", type: "text", span: 6 },
       { name: "property_type", label: "סוג נכס", type: "select", options: PROPERTY_TYPES, span: 2 },
@@ -31,6 +33,9 @@ export const LISTING_SECTIONS: FormSection[] = [
 export const NEW_LISTING = { status: "new", source: "יד2" };
 
 /** Adding a listing by hand: no contact box yet, so the phone is in the form. */
+/** The personal note's form field (it's saved apart from the listing). */
+export const MY_NOTES_FIELD = "my_notes";
+
 export const NEW_LISTING_SECTIONS: FormSection[] = LISTING_SECTIONS.map((sec) => ({
   ...sec,
   fields: sec.fields.map((f) => (f.name === "phone" ? { ...f, hidden: false } : f)),

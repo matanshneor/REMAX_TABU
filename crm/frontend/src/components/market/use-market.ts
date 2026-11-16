@@ -73,3 +73,19 @@ export function useMyListingCopies() {
     },
   });
 }
+
+export const myListingNotesKey = (userId: string | undefined) => ["market_listing_notes", userId];
+
+/** This user's own notes on listings: listing id → the note. (Nobody else's are readable.) */
+export function useMyListingNotes() {
+  const { profile } = useAuth();
+  return useQuery({
+    queryKey: myListingNotesKey(profile?.id),
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await createClient().from("market_listing_notes").select("listing_id, notes, updated_at");
+      if (error) throw error;
+      return new Map(data.map((n) => [n.listing_id, n]));
+    },
+  });
+}

@@ -481,6 +481,42 @@ export type Database = {
           },
         ]
       }
+      market_listing_notes: {
+        Row: {
+          listing_id: string
+          notes: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          listing_id: string
+          notes: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          listing_id?: string
+          notes?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_listing_notes_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "market_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "market_listing_notes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       market_listing_views: {
         Row: {
           listing_id: string
@@ -917,6 +953,42 @@ export type Database = {
           {
             foreignKeyName: "properties_recruiting_agent_id_fkey"
             columns: ["recruiting_agent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_personal_notes: {
+        Row: {
+          notes: string
+          property_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          notes: string
+          property_id: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          notes?: string
+          property_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_personal_notes_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_personal_notes_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]

@@ -1,7 +1,7 @@
-import { ArrowDownIcon, ImageOffIcon, MegaphoneIcon, PhoneIcon, UserRoundIcon } from "lucide-react";
+import { ArrowDownIcon, ImageOffIcon, PhoneIcon } from "lucide-react";
 import { WhatsAppButton } from "@/components/crm/whatsapp-button";
 import { Button } from "@/components/ui/button";
-import { Pill, StatusBadge } from "@/components/crm/status-badge";
+import { StatusBadge } from "@/components/crm/status-badge";
 import { formatAddress, formatILS } from "@/lib/format";
 import { PROPERTY_ENGAGEMENT, PROPERTY_STATUS } from "@/lib/labels";
 import type { Property } from "@/lib/types";
@@ -24,8 +24,7 @@ const FEATURES: [keyof Property, string][] = [
 export function PropertyCard({
   property: p,
   imageUrl,
-  agentName,
-  agentLine,
+  mark,
   sellerName,
   sellerPhone,
   selected,
@@ -33,9 +32,8 @@ export function PropertyCard({
 }: {
   property: Property;
   imageUrl?: string;
-  agentName: string;
-  /** Replaces "סוכן: …" (e.g. "3 סוכנים: …" on a listing several agents copied). */
-  agentLine?: string;
+  /** The strip at the bottom of the card: "נכס שלי", or "גויס ע״י …" (several names on a listing many agents copied). */
+  mark?: { text: string; mine: boolean };
   sellerName?: string | null;
   /** Shown as call and WhatsApp buttons at the bottom of the card. */
   sellerPhone?: string | null;
@@ -55,13 +53,6 @@ export function PropertyCard({
     <StatusBadge map={PROPERTY_ENGAGEMENT} value={p.engagement} className="bg-white" />
   );
   if (p.parking_spots) features.push(p.parking_spots > 1 ? `${p.parking_spots} חניות` : "חניה");
-  // Shared with the whole office by the manager ("שדר לכולם"): say who recruited it.
-  const broadcast = p.broadcast && (
-    <Pill tone="purple" className={cn("max-w-full", hasImages && "bg-violet-600 text-white shadow-sm ring-0")}>
-      <MegaphoneIcon />
-      <span className="truncate">גויס ע״י {agentName}</span>
-    </Pill>
-  );
 
   return (
     // A card with its own buttons can't itself be a <button>: a full-size button under the content
@@ -86,7 +77,6 @@ export function PropertyCard({
           )}
           <div className="absolute inset-x-2 top-2 flex flex-wrap justify-between gap-1">
             <span className="flex min-w-0 flex-wrap gap-1">
-              {broadcast}
               {p.is_exclusive && <ExclusivityPill end={p.exclusivity_end} onImage />}
             </span>
             <span className="flex gap-1">
@@ -103,7 +93,6 @@ export function PropertyCard({
             אין תמונות
           </span>
           <span className="flex min-w-0 flex-wrap justify-end gap-1">
-            {broadcast}
             {p.is_exclusive && <ExclusivityPill end={p.exclusivity_end} />}
             {recruiting}
             {p.status !== "active" && <StatusBadge map={PROPERTY_STATUS} value={p.status} className="bg-white" />}
@@ -139,15 +128,7 @@ export function PropertyCard({
             ))}
           </div>
         )}
-        {/* The agent on a line of its own, so the seller's name below has the room to show in full.
-            A broadcast card already says who recruited it at the top, so it isn't repeated here. */}
-        {!p.broadcast && (
-          <p className="mt-auto flex items-center gap-1 pt-1 text-xs text-muted-foreground">
-            <UserRoundIcon className="size-3.5 shrink-0" />
-            <span className="truncate">{agentLine ?? `סוכן: ${agentName}`}</span>
-          </p>
-        )}
-        <div className={cn("flex items-center gap-2 border-t pt-2 text-sm", p.broadcast && "mt-auto")}>
+        <div className="mt-auto flex items-center gap-2 border-t pt-2 text-sm">
           {sellerName ? (
             <span className="min-w-0 flex-1 leading-snug">
               <span className="text-xs text-muted-foreground">מוכר: </span>
@@ -173,6 +154,9 @@ export function PropertyCard({
           )}
         </div>
       </div>
+      {mark && (
+        <p className={cn("truncate px-3.5 py-2 text-sm font-semibold text-white", mark.mine ? "bg-emerald-600" : "bg-slate-700")}>{mark.text}</p>
+      )}
       </div>
     </div>
   );

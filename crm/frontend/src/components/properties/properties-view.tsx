@@ -8,6 +8,7 @@ import { ExportButton } from "@/components/crm/export-button";
 import { EmptyState, ErrorState, PageHeader } from "@/components/crm/page-header";
 import { StatusBadge } from "@/components/crm/status-badge";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,16 @@ import { PropertyPanel } from "./property-panel";
 
 /** Saves the seller typed into the "new seller" form, once the property row exists. */
 type Sort = "updated" | "price_asc" | "price_desc" | "rooms";
+
+type TabId = "official" | "mine" | "agents";
+const TABS: { id: TabId; label: string; hint: string }[] = [
+  { id: "official", label: "נכסים בבלעדיות המשרד", hint: "הנכסים הרשמיים של המשרד, שמופיעים לכל הסוכנים: שלך ושל סוכנים אחרים." },
+  { id: "mine", label: "הנכסים שלי", hint: "הסקיצות שלך: נכסים שעוד לא שודרו. אפשר לכתוב עליהם מה שרוצים ולהוסיף נכסים חדשים. רק אתה והמנהל רואים אותם." },
+  { id: "agents", label: "בגיוס אצל הסוכנים", hint: "הסקיצות של הסוכנים: נכסים שעוד לא שודרו. רק הסוכן ואתה רואים אותם." },
+];
+
+/** Broadcast sellers are the office's official ones; the rest are sketches, the user's own or (manager) an agent's. */
+const tabOf = (p: Property, myId: string | undefined): TabId => (p.broadcast ? "official" : p.recruiting_agent_id === myId ? "mine" : "agents");
 
 const SORTERS: Record<Sort, (a: Property, b: Property) => number> = {
   updated: (a, b) => b.updated_at.localeCompare(a.updated_at),
@@ -72,15 +83,37 @@ export function PropertiesView() {
     [properties],
   );
   const sources = useMemo(() => sourceOptions(properties.map((p) => p.lead_source)), [properties]);
+  // Tabs: the office's official sellers (shared with every agent), the user's own sketches (no
+  // exclusivity yet, theirs alone) and, for the manager, the agents' sketches.
+  const admin = isAdmin(profile);
+  const myId = profile?.id;
+  const [tab, setTab] = useState<TabId>("official");
+  const byTab = useMemo(() => {
+    const out: Record<TabId, typeof rows> = { official: [], mine: [], agents: [] };
+    for (const p of rows) out[tabOf(p, myId)].push(p);
+    return out;
+  }, [rows, myId]);
+  const tabs = TABS.filter((t) => admin || t.id !== "agents");
+  // Opening a seller from a link (a bell notification, a copied listing) shows the tab it's in.
+  const [syncedOpen, setSyncedOpen] = useState<string | null>(null);
+  if (openId !== syncedOpen) {
+    const p = openId ? properties.find((x) => x.id === openId) : undefined;
+    if (!openId || p) {
+      setSyncedOpen(openId);
+      if (p) setTab(tabOf(p, myId));
+    }
+  }
+
   // A Yad2 listing copied by several agents (only the manager sees them all) shows as one card,
   // in the place of its first copy; a click asks whose copy to open.
   const cards = useMemo(() => {
+    const list = byTab[tab];
     const copies = new Map<string, typeof rows>();
-    for (const p of rows) if (p.source_listing_id) copies.set(p.source_listing_id, [...(copies.get(p.source_listing_id) ?? []), p]);
-    return rows
+    for (const p of list) if (p.source_listing_id) copies.set(p.source_listing_id, [...(copies.get(p.source_listing_id) ?? []), p]);
+    return list
       .filter((p) => !p.source_listing_id || copies.get(p.source_listing_id)![0] === p)
       .map((p) => ({ property: p, copies: p.source_listing_id ? copies.get(p.source_listing_id)! : [p] }));
-  }, [rows]);
+  }, [byTab, tab]);
   const [picking, setPicking] = useState<typeof rows | null>(null);
   const coverPaths = useMemo(() => rows.flatMap((p) => p.image_paths.slice(0, 1)), [rows]);
   const { data: urls = {} } = useSignedUrls(MEDIA_BUCKET, coverPaths);
@@ -138,6 +171,28 @@ export function PropertiesView() {
         </NativeSelect>
       </PropertyFiltersBar>
 
+      <div role="tablist" aria-label="סוגי נכסים" className="-mb-2 flex flex-wrap gap-1.5 border-b">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            aria-selected={tab === t.id}
+            onClick={() => setTab(t.id)}
+            className={cn(
+              "-mb-px flex items-center gap-2 border-b-[3px] px-3.5 py-2.5 text-sm font-semibold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring rounded-t-md",
+              tab === t.id ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {t.label}
+            <span className={cn("rounded-full border px-2 text-xs font-semibold tabular-nums", tab === t.id ? "border-transparent bg-primary/10" : "bg-card")}>
+              {byTab[t.id].length}
+            </span>
+          </button>
+        ))}
+      </div>
+      <p className="text-sm text-muted-foreground">{TABS.find((t) => t.id === tab)?.hint}</p>
+
       <div>
         {error ? (
           <ErrorState error={error} />
@@ -147,11 +202,27 @@ export function PropertiesView() {
               <Skeleton key={i} className="h-80 rounded-xl" />
             ))}
           </div>
-        ) : rows.length === 0 ? (
+        ) : cards.length === 0 ? (
           <EmptyState
             icon={<Building2Icon />}
-            title={properties.length ? "אין מוכרים שמתאימים לסינון" : "עדיין אין מוכרים במאגר"}
-            hint={properties.length ? "אפשר להרחיב את הסינון." : "לוחצים על ״מוכר חדש״ כדי להוסיף את הראשון."}
+            title={
+              properties.length
+                ? rows.length
+                  ? "אין כאן נכסים"
+                  : "אין מוכרים שמתאימים לסינון"
+                : "עדיין אין מוכרים במאגר"
+            }
+            hint={
+              rows.length && !filtering
+                ? tab === "official"
+                  ? "נכסים שהמנהל משדר לכולם יופיעו כאן."
+                  : tab === "mine"
+                    ? "לוחצים על ״מוכר חדש״ כדי להוסיף נכס."
+                    : "נכסים שהסוכנים מגייסים ועוד לא שודרו יופיעו כאן."
+                : properties.length
+                  ? "אפשר להרחיב את הסינון, או לבדוק בלשוניות האחרות."
+                  : "לוחצים על ״מוכר חדש״ כדי להוסיף את הראשון."
+            }
           />
         ) : (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
@@ -160,11 +231,19 @@ export function PropertiesView() {
                 key={p.id}
                 property={p}
                 imageUrl={p.image_paths[0] ? urls[p.image_paths[0]] : undefined}
-                agentName={recruiterName(p.recruiter_id, p.recruiting_agent_id)}
-                agentLine={
-                  copies.length > 1
-                    ? `${copies.length} סוכנים: ${copies.map((c) => recruiterName(c.recruiter_id, c.recruiting_agent_id)).join(", ")}`
-                    : undefined
+                mark={
+                  // Who it belongs to, in the official and the agents' lists (in the user's own list it's all theirs).
+                  tab === "mine"
+                    ? undefined
+                    : p.recruiting_agent_id === myId && copies.length === 1
+                      ? { text: "נכס שלי", mine: true }
+                      : {
+                          text:
+                            copies.length > 1
+                              ? `${copies.length} סוכנים: ${copies.map((c) => recruiterName(c.recruiter_id, c.recruiting_agent_id)).join(", ")}`
+                              : `גויס ע״י ${recruiterName(p.recruiter_id, p.recruiting_agent_id)}`,
+                          mine: false,
+                        }
                 }
                 sellerName={p.property_owner_details?.owner_name}
                 sellerPhone={p.property_owner_details?.owner_phone}

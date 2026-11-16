@@ -23,6 +23,7 @@ import type { Property } from "@/lib/types";
 import { isOnWebsite } from "@/lib/website";
 import { ExclusivityPill } from "./exclusivity-pill";
 import { OwnerDetails } from "./owner-details";
+import { PersonalNotes } from "./personal-notes";
 import {
   MANAGER_ONLY_FIELDS,
   NEW_PROPERTY,
@@ -35,7 +36,7 @@ import {
 } from "./property-fields";
 import { CopyWebsiteLinkButton } from "./copy-website-link-button";
 import { WebsitePublishButton } from "./website-publish-button";
-import { BroadcastButton } from "./broadcast-button";
+import { BroadcastButton, ShareAfterExclusiveDialog } from "./broadcast-button";
 import { CreateAdButton } from "./create-ad-dialog";
 import { PendingImages, PropertyImages, uploadPropertyImages } from "./property-images";
 import { ShareWhatsAppButton } from "./share-whatsapp-dialog";
@@ -46,11 +47,16 @@ const DETAIL_SECTIONS = PROPERTY_SECTIONS.filter((s) => s !== PROPERTY_DESCRIPTI
 /** Owner details of a new seller go to their own table once the property exists. */
 async function saveSeller(propertyId: string, payload: Record<string, unknown>) {
   const { owner_name, owner_phone, owner_notes } = payload as Record<string, string | null>;
-  if (!owner_name && !owner_phone && !owner_notes) return;
-  const { error } = await createClient()
-    .from("property_owner_details")
-    .insert({ property_id: propertyId, owner_name, owner_phone, notes: owner_notes });
-  if (error) throw error;
+  const supabase = createClient();
+  if (owner_name || owner_phone) {
+    const { error } = await supabase.from("property_owner_details").insert({ property_id: propertyId, owner_name, owner_phone });
+    if (error) throw error;
+  }
+  // "הערות אישיות": the creator's own note, seen only by them (and the manager).
+  if (owner_notes) {
+    const { error } = await supabase.from("property_personal_notes").insert({ property_id: propertyId, notes: owner_notes });
+    if (error) throw error;
+  }
 }
 
 /**
@@ -93,6 +99,9 @@ export function PropertyPanel({
   const [finishing, setFinishing] = useState(false);
   // Unsaved edits in "פרטי המוכר" (saved by its own button) also guard closing the card.
   const [ownerDirty, setOwnerDirty] = useState(false);
+  const [notesDirty, setNotesDirty] = useState(false);
+  // The manager just marked a seller exclusive: asks whether to share it with every agent.
+  const [askShare, setAskShare] = useState<string | null>(null);
 
   const editable = property ? canEditProperty(profile, property) : false;
   const manager = property ? canManageProperty(profile, property) : false;
@@ -118,6 +127,7 @@ export function PropertyPanel({
           } finally {
             setFinishing(false);
             setPhotos([]);
+            if (isAdmin(profile) && row.is_exclusive && !row.broadcast) setAskShare(row.id);
             onCreated?.(row.id);
           }
         },
@@ -130,6 +140,8 @@ export function PropertyPanel({
     const description = createSections.filter((s) => s === PROPERTY_DESCRIPTION_SECTION);
     const details = createSections.filter((s) => s !== PROPERTY_DESCRIPTION_SECTION);
     return (
+      <>
+      <ShareAfterExclusiveDialog propertyId={askShare} onClose={() => setAskShare(null)} />
       <Panel
         dirty={form.dirty || photos.length > 0}
         open
@@ -151,12 +163,15 @@ export function PropertyPanel({
         <EntityForm sections={description} values={form.values} onChange={setField} idPrefix="new-property" />
         <EntityForm sections={details} values={form.values} onChange={setField} idPrefix="new-property" />
       </Panel>
+      </>
     );
   }
 
   return (
+    <>
+    <ShareAfterExclusiveDialog propertyId={askShare} onClose={() => setAskShare(null)} />
     <Panel
-      dirty={form.dirty || ownerDirty}
+      dirty={form.dirty || ownerDirty || notesDirty}
       open={!!id}
       onClose={onClose}
       loading={isLoading || !property}
@@ -206,7 +221,18 @@ export function PropertyPanel({
             dirty={form.dirty}
             saving={save.isPending}
             disabled={!editable}
-            onSave={() => form.validate() && save.mutate({ id: property.id, values: form.changes })}
+            onSave={() =>
+              form.validate() &&
+              save.mutate(
+                { id: property.id, values: form.changes },
+                {
+                  // The manager made it exclusive: ask whether to share it with every agent.
+                  onSuccess: (row) => {
+                    if (isAdmin(profile) && row.is_exclusive && !property.is_exclusive && !row.broadcast) setAskShare(row.id);
+                  },
+                },
+              )
+            }
             onReset={form.reset}
             onDelete={isAdmin(profile) ? () => remove.mutate(property.id, { onSuccess: onClose }) : undefined}
           />
@@ -222,6 +248,8 @@ export function PropertyPanel({
           )}
           {/* Who to call comes first — it's what people open a property for. */}
           <OwnerDetails key={property.id} propertyId={property.id} editable={editable} first onDirtyChange={setOwnerDirty} />
+          {/* Personal to each agent, so it's writable whatever the seller's edit rule. */}
+          <PersonalNotes key={`notes:${property.id}`} propertyId={property.id} onDirtyChange={setNotesDirty} />
           <PropertyImages property={property} editable={editable} />
           <EntityForm
             sections={[PROPERTY_DESCRIPTION_SECTION]}
@@ -251,5 +279,6 @@ export function PropertyPanel({
         </>
       )}
     </Panel>
+    </>
   );
 }
