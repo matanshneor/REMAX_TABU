@@ -35,6 +35,8 @@ export function AdsView() {
   const admin = isAdmin(profile);
   const [agent, setAgent] = useState("");
   const [deleting, setDeleting] = useState<SavedAd | null>(null);
+  // The ad opened in the preview (a click on its picture).
+  const [previewing, setPreviewing] = useState<SavedAd | null>(null);
 
   const { data: ads = [], isLoading, error } = useQuery({
     queryKey: ["saved_ads"],
@@ -97,17 +99,35 @@ export function AdsView() {
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4">
           {rows.map((ad) => (
-            <AdCard key={ad.id} ad={ad} thumb={thumbs[`${ad.id}/thumb.jpg`]} showAgent={admin} onDelete={() => setDeleting(ad)} />
+            <AdCard
+              key={ad.id}
+              ad={ad}
+              thumb={thumbs[`${ad.id}/thumb.jpg`]}
+              showAgent={admin}
+              onOpen={() => setPreviewing(ad)}
+              onDelete={() => setDeleting(ad)}
+            />
           ))}
         </div>
       )}
 
+      <AdPreviewDialog
+        ad={previewing}
+        thumb={previewing ? thumbs[`${previewing.id}/thumb.jpg`] : undefined}
+        showAgent={admin}
+        onClose={() => setPreviewing(null)}
+        onDelete={() => {
+          setDeleting(previewing);
+          setPreviewing(null);
+        }}
+      />
       <DeleteAdDialog ad={deleting} onClose={() => setDeleting(null)} />
     </>
   );
 }
 
-function AdCard({ ad, thumb, showAgent, onDelete }: { ad: SavedAd; thumb?: string; showAgent: boolean; onDelete: () => void }) {
+/** Download and share of a saved ad, for its card and for its preview. */
+function useAdActions(ad: SavedAd) {
   const [busy, setBusy] = useState(false);
 
   async function download() {
@@ -138,9 +158,28 @@ function AdCard({ ad, thumb, showAgent, onDelete }: { ad: SavedAd; thumb?: strin
     }
   }
 
+  return { busy, download, share };
+}
+
+function AdCard({
+  ad,
+  thumb,
+  showAgent,
+  onOpen,
+  onDelete,
+}: {
+  ad: SavedAd;
+  thumb?: string;
+  showAgent: boolean;
+  onOpen: () => void;
+  onDelete: () => void;
+}) {
+  const { busy, download, share } = useAdActions(ad);
+
   return (
     <div className="flex flex-col overflow-hidden rounded-xl border bg-card shadow-card">
-      <button type="button" onClick={download} disabled={busy} className="relative aspect-square bg-muted" aria-label={`הורדת ${ad.title}`}>
+      {/* A click on the picture opens the preview (it doesn't download). */}
+      <button type="button" onClick={onOpen} className="relative aspect-square bg-muted" aria-label={`תצוגה מקדימה של ${ad.title}`}>
         {thumb ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={thumb} alt="" className="absolute inset-0 size-full object-contain" />
@@ -171,6 +210,74 @@ function AdCard({ ad, thumb, showAgent, onDelete }: { ad: SavedAd; thumb?: strin
         </AdAction>
       </div>
     </div>
+  );
+}
+
+/** The ad at full size, with the same actions as its card. */
+function AdPreviewDialog({
+  ad,
+  thumb,
+  showAgent,
+  onClose,
+  onDelete,
+}: {
+  ad: SavedAd | null;
+  thumb?: string;
+  showAgent: boolean;
+  onClose: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <Dialog open={!!ad} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-h-[94vh] overflow-y-auto sm:max-w-3xl">{ad && <AdPreview ad={ad} thumb={thumb} showAgent={showAgent} onDelete={onDelete} />}</DialogContent>
+    </Dialog>
+  );
+}
+
+function AdPreview({ ad, thumb, showAgent, onDelete }: { ad: SavedAd; thumb?: string; showAgent: boolean; onDelete: () => void }) {
+  const { busy, download, share } = useAdActions(ad);
+  const path = `${ad.id}/ad.png`;
+  const full = useSignedUrls(BUCKET, [path]).data?.[path];
+  // The small picture shows at once, until the full one has come.
+  const src = full ?? thumb;
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle className="text-xl font-normal">{ad.title}</DialogTitle>
+        <DialogDescription>
+          {ad.price ? `${ad.price} ₪ · ` : ""}
+          {showAgent && ad.agent_name ? `${ad.agent_name} · ` : ""}
+          {formatDate(ad.created_at)}
+        </DialogDescription>
+      </DialogHeader>
+      <div className="flex min-h-48 items-center justify-center rounded-lg bg-muted p-2">
+        {src ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={src} alt={ad.title} className="max-h-[62vh] w-auto max-w-full rounded object-contain" />
+        ) : (
+          <Skeleton className="h-64 w-full" />
+        )}
+      </div>
+      <DialogFooter className="sm:justify-start">
+        <Button onClick={download} disabled={busy}>
+          <DownloadIcon />
+          הורדה
+        </Button>
+        <Button variant="outline" onClick={share} disabled={busy}>
+          <Share2Icon />
+          שיתוף
+        </Button>
+        <Button variant="outline" render={<a href={`${AD_TOOL_URL}#saved=${ad.id}`} target="_blank" rel="noopener" />} nativeButton={false}>
+          <PencilIcon />
+          עריכה
+        </Button>
+        <Button variant="outline" onClick={onDelete} className="text-destructive hover:text-destructive sm:ms-auto">
+          <Trash2Icon />
+          מחיקה
+        </Button>
+      </DialogFooter>
+    </>
   );
 }
 
