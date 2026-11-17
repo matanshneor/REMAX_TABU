@@ -194,7 +194,7 @@ export function PropertiesView() {
         ))}
       </div>
 
-      <div>
+      <div className="pt-3">
         {error ? (
           <ErrorState error={error} />
         ) : isLoading ? (
