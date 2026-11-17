@@ -160,10 +160,10 @@ function useAdActions(ad: SavedAd) {
     setBusy(true);
     const ok = await copyImage();
     setBusy(false);
-    if (ok) toast.success("התמונה הועתקה. אפשר להדביק אותה עם Ctrl+V.");
+    if (ok) toast.success("התמונה הועתקה. אפשר להדביק אותה בשיחה (הדבק).");
   }
 
-  /** On a computer: copy the picture and open WhatsApp Web; in a chat the agent presses Ctrl+V. */
+  /** On a computer: copy the picture and open WhatsApp Web; in a chat the agent chooses "paste". */
   async function whatsapp() {
     setBusy(true);
     const ok = await copyImage();
@@ -171,7 +171,7 @@ function useAdActions(ad: SavedAd) {
     if (!ok) return;
     const w = window.open("https://web.whatsapp.com/", "_blank", "noopener");
     toast.success(
-      w ? "התמונה הועתקה. בוואטסאפ ווב פותחים שיחה ולוחצים Ctrl+V." : "התמונה הועתקה, אבל וואטסאפ ווב לא נפתח. פותחים אותו בלשונית חדשה ולוחצים Ctrl+V בשיחה.",
+      w ? "התמונה הועתקה. בוואטסאפ פותחים שיחה, לוחצים בתיבת ההודעה ובוחרים ״הדבק״." : "התמונה הועתקה, אבל וואטסאפ ווב לא נפתח. פותחים אותו בלשונית חדשה ובשיחה בוחרים ״הדבק״.",
     );
   }
 
@@ -244,7 +244,7 @@ function AdCard({
         <AdAction label="הורדה" onClick={download} disabled={busy}>
           <DownloadIcon />
         </AdAction>
-        <AdAction label={isPhone ? "שיתוף" : "וואטסאפ"} onClick={isPhone ? share : whatsapp} disabled={busy}>
+        <AdAction label={isPhone ? "שיתוף" : "שלח בוואטסאפ"} onClick={isPhone ? share : whatsapp} disabled={busy}>
           <Share2Icon />
         </AdAction>
         <AdAction label="עריכה" href={`${AD_TOOL_URL}#saved=${ad.id}`}>
@@ -309,9 +309,15 @@ function AdPreview({ ad, thumb, showAgent, onDelete }: { ad: SavedAd; thumb?: st
           <DownloadIcon />
           הורדה
         </Button>
-        <Button variant="outline" onClick={isPhone ? share : whatsapp} disabled={busy}>
+        {!isPhone && (
+          <Button variant="outline" onClick={whatsapp} disabled={busy} className="border-green-600 font-semibold text-green-700 hover:text-green-700 dark:text-green-500">
+            <Share2Icon />
+            שלח בוואטסאפ
+          </Button>
+        )}
+        <Button variant="outline" onClick={share} disabled={busy}>
           <Share2Icon />
-          {isPhone ? "שיתוף" : "שתף בוואטסאפ"}
+          שיתוף
         </Button>
         {!isPhone && (
           <Button variant="outline" onClick={copy} disabled={busy}>

@@ -1066,7 +1066,7 @@
             <div id="actionWaBox">
               <button type="button" id="actionWaBtn" class="btn-share" onclick="actionShareWhatsApp()">
                 <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.4A8.4 8.4 0 1 1 21 11.5z"/></svg>
-                שתף בוואטסאפ
+                שלח בוואטסאפ
               </button>
               <p id="actionWaMsg" class="done-wa-msg" role="status"></p>
               <button type="button" class="btn-ghost" onclick="actionCopyImage()">
@@ -2448,7 +2448,7 @@
     document.getElementById('doneThumb').src = dataURL;
     _sheetButtons.style.display = 'block';
     _sheetSaveImg.style.display = 'none';
-    _shareBtn.style.display = navigator.share && _isIOS ? '' : 'none'; // במחשב: ״שתף בוואטסאפ״ במקום חלון השיתוף של המחשב
+    _shareBtn.style.display = navigator.share && _isIOS ? '' : 'none'; // במחשב: ״שלח בוואטסאפ״ במקום חלון השיתוף של המחשב
     // במחשב (לא iOS): העתקת התמונה ופתיחת וואטסאפ. חלון השיתוף של המחשב לא תמיד כולל את וואטסאפ.
     document.getElementById('actionWaBox').style.display = _isIOS ? 'none' : 'flex';
     _waMsg('');
@@ -2519,7 +2519,7 @@
     }
   }
 
-  // במחשב: מעתיקים את התמונה ללוח ופותחים את וואטסאפ ווב; בשיחה מדביקים (Ctrl+V).
+  // במחשב: מעתיקים את התמונה ללוח ופותחים את וואטסאפ ווב; בשיחה מדביקים (הדבק).
   // (אי אפשר לפתוח וואטסאפ עם תמונה מצורפת דרך קישור, ולכן מדביקים.)
   async function _copyImage() {
     try {
@@ -2533,7 +2533,7 @@
 
   // ״העתק תמונה״: רק מעתיקים, כדי להדביק איפה שרוצים (וואטסאפ, מייל, מסמך)
   async function actionCopyImage() {
-    if (await _copyImage()) _waMsg('התמונה הועתקה. אפשר להדביק אותה עם Ctrl+V.');
+    if (await _copyImage()) _waMsg('התמונה הועתקה. אפשר להדביק אותה בשיחה (הדבק).');
     else _waMsg('ההעתקה לא עבדה. לוחצים ״הורד שוב״ ומשתמשים בקובץ שהורד.', true);
   }
 
@@ -2542,7 +2542,7 @@
     const copied = await _copyImage();
     const w = window.open('https://web.whatsapp.com/', '_blank', 'noopener');
     if (copied) {
-      _waMsg(w ? 'התמונה הועתקה. בוואטסאפ ווב פותחים שיחה ולוחצים Ctrl+V.' : 'התמונה הועתקה, אבל וואטסאפ ווב לא נפתח. פותחים אותו בלשונית חדשה ולוחצים Ctrl+V בשיחה.', !w);
+      _waMsg(w ? 'התמונה הועתקה. בוואטסאפ פותחים שיחה, לוחצים בתיבת ההודעה ובוחרים ״הדבק״.' : 'התמונה הועתקה, אבל וואטסאפ ווב לא נפתח. פותחים אותו בלשונית חדשה ובשיחה בוחרים ״הדבק״.', !w);
     } else {
       _waMsg('לא הצלחנו להעתיק את התמונה. לוחצים ״הורד שוב״ וגוררים את הקובץ לשיחה בוואטסאפ ווב.', true);
     }
