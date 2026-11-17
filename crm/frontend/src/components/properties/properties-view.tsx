@@ -30,10 +30,10 @@ import { PropertyPanel } from "./property-panel";
 type Sort = "updated" | "price_asc" | "price_desc" | "rooms";
 
 type TabId = "official" | "mine" | "agents";
-const TABS: { id: TabId; label: string; hint: string }[] = [
-  { id: "official", label: "נכסים בבלעדיות המשרד", hint: "" },
-  { id: "mine", label: "הנכסים שלי", hint: "הסקיצות שלך: נכסים שעוד לא שודרו. אפשר לכתוב עליהם מה שרוצים ולהוסיף נכסים חדשים. רק אתה והמנהל רואים אותם." },
-  { id: "agents", label: "בגיוס אצל הסוכנים", hint: "הסקיצות של הסוכנים: נכסים שעוד לא שודרו. רק הסוכן ואתה רואים אותם." },
+const TABS: { id: TabId; label: string }[] = [
+  { id: "official", label: "נכסים בבלעדיות המשרד" },
+  { id: "mine", label: "הנכסים שלי" },
+  { id: "agents", label: "בגיוס אצל הסוכנים" },
 ];
 
 /** Broadcast sellers are the office's official ones; the rest are sketches, the user's own or (manager) an agent's. */
@@ -191,9 +191,6 @@ export function PropertiesView() {
           </button>
         ))}
       </div>
-      {TABS.find((t) => t.id === tab)?.hint && (
-        <p className="text-sm text-muted-foreground">{TABS.find((t) => t.id === tab)?.hint}</p>
-      )}
 
       <div>
         {error ? (
