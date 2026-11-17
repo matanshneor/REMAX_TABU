@@ -171,7 +171,7 @@ export function PropertiesView() {
         </NativeSelect>
       </PropertyFiltersBar>
 
-      <div role="tablist" aria-label="סוגי נכסים" className="-mb-2 flex flex-wrap gap-1.5 border-b">
+      <div role="tablist" aria-label="סוגי נכסים" className="flex flex-wrap gap-1 border-b-2 border-border">
         {tabs.map((t) => (
           <button
             key={t.id}
@@ -180,8 +180,10 @@ export function PropertiesView() {
             aria-selected={tab === t.id}
             onClick={() => setTab(t.id)}
             className={cn(
-              "-mb-px flex items-center gap-2 border-b-[3px] px-3.5 py-2.5 text-sm font-semibold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring rounded-t-md",
-              tab === t.id ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground",
+              "-mb-0.5 flex items-center gap-2 rounded-t-lg border-2 px-4 py-2.5 text-sm font-semibold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+              tab === t.id
+                ? "border-border border-b-background bg-background text-primary"
+                : "border-transparent text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
             {t.label}
