@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { DownloadIcon, ImagesIcon, MegaphoneIcon, PencilIcon, Share2Icon, Trash2Icon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { CopyIcon, DownloadIcon, ImagesIcon, MegaphoneIcon, PencilIcon, Share2Icon, Trash2Icon } from "lucide-react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth-provider";
 import { EmptyState, ErrorState, PageHeader } from "@/components/crm/page-header";
@@ -125,9 +125,55 @@ export function AdsView() {
   );
 }
 
-/** Download and share of a saved ad, for its card and for its preview. */
+const noopSubscribe = () => () => {};
+/** A phone or tablet: the browser's share sheet offers WhatsApp there. On a computer it usually doesn't. */
+function useIsPhone() {
+  return useSyncExternalStore(
+    noopSubscribe,
+    () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent),
+    () => false,
+  );
+}
+
+/** Download, share and copy of a saved ad, for its card and for its preview. */
 function useAdActions(ad: SavedAd) {
   const [busy, setBusy] = useState(false);
+  const isPhone = useIsPhone();
+
+  /** Puts the ad's picture on the clipboard. Returns whether it worked. */
+  async function copyImage() {
+    const { data, error } = await createClient().storage.from(BUCKET).download(`${ad.id}/ad.png`);
+    if (error) {
+      toast.error(errorMessage(error));
+      return false;
+    }
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": data })]);
+      return true;
+    } catch {
+      toast.error("לא הצלחנו להעתיק את התמונה. אפשר להוריד אותה ולצרף ידנית.");
+      return false;
+    }
+  }
+
+  async function copy() {
+    setBusy(true);
+    const ok = await copyImage();
+    setBusy(false);
+    if (ok) toast.success("התמונה הועתקה. אפשר להדביק אותה עם Ctrl+V.");
+  }
+
+  /** On a computer: copy the picture and open WhatsApp Web; in a chat the agent presses Ctrl+V. */
+  async function whatsapp() {
+    setBusy(true);
+    const ok = await copyImage();
+    setBusy(false);
+    if (!ok) return;
+    const w = window.open("https://web.whatsapp.com/", "_blank", "noopener");
+    toast.success(
+      w ? "התמונה הועתקה. בוואטסאפ ווב פותחים שיחה ולוחצים Ctrl+V." : "התמונה הועתקה, אבל וואטסאפ ווב לא נפתח. פותחים אותו בלשונית חדשה ולוחצים Ctrl+V בשיחה.",
+    );
+  }
 
   async function download() {
     setBusy(true);
@@ -157,7 +203,7 @@ function useAdActions(ad: SavedAd) {
     }
   }
 
-  return { busy, download, share };
+  return { busy, isPhone, download, share, copy, whatsapp };
 }
 
 function AdCard({
@@ -173,7 +219,7 @@ function AdCard({
   onOpen: () => void;
   onDelete: () => void;
 }) {
-  const { busy, download, share } = useAdActions(ad);
+  const { busy, isPhone, download, share, whatsapp } = useAdActions(ad);
 
   return (
     <div className="flex flex-col overflow-hidden rounded-xl border bg-card shadow-card">
@@ -198,7 +244,7 @@ function AdCard({
         <AdAction label="הורדה" onClick={download} disabled={busy}>
           <DownloadIcon />
         </AdAction>
-        <AdAction label="שיתוף" onClick={share} disabled={busy}>
+        <AdAction label={isPhone ? "שיתוף" : "וואטסאפ"} onClick={isPhone ? share : whatsapp} disabled={busy}>
           <Share2Icon />
         </AdAction>
         <AdAction label="עריכה" href={`${AD_TOOL_URL}#saved=${ad.id}`}>
@@ -234,7 +280,7 @@ function AdPreviewDialog({
 }
 
 function AdPreview({ ad, thumb, showAgent, onDelete }: { ad: SavedAd; thumb?: string; showAgent: boolean; onDelete: () => void }) {
-  const { busy, download, share } = useAdActions(ad);
+  const { busy, isPhone, download, share, copy, whatsapp } = useAdActions(ad);
   const path = `${ad.id}/ad.png`;
   const full = useSignedUrls(BUCKET, [path]).data?.[path];
   // The small picture shows at once, until the full one has come.
@@ -263,10 +309,16 @@ function AdPreview({ ad, thumb, showAgent, onDelete }: { ad: SavedAd; thumb?: st
           <DownloadIcon />
           הורדה
         </Button>
-        <Button variant="outline" onClick={share} disabled={busy}>
+        <Button variant="outline" onClick={isPhone ? share : whatsapp} disabled={busy}>
           <Share2Icon />
-          שיתוף
+          {isPhone ? "שיתוף" : "שתף בוואטסאפ"}
         </Button>
+        {!isPhone && (
+          <Button variant="outline" onClick={copy} disabled={busy}>
+            <CopyIcon />
+            העתק תמונה
+          </Button>
+        )}
         <Button variant="outline" render={<a href={`${AD_TOOL_URL}#saved=${ad.id}`} target="_blank" rel="noopener" />} nativeButton={false}>
           <PencilIcon />
           עריכה
