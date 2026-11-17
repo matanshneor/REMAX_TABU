@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CopyIcon, DownloadIcon, ImagesIcon, MegaphoneIcon, PencilIcon, Share2Icon, Trash2Icon } from "lucide-react";
+import { CopyIcon, DownloadIcon, ImagesIcon, MegaphoneIcon, MessageCircleIcon, PencilIcon, Share2Icon, Trash2Icon } from "lucide-react";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth-provider";
@@ -16,6 +16,7 @@ import { formatDate } from "@/lib/format";
 import { isAdmin } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/client";
 import type { SavedAd } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 /** The ad tool saves each ad's files here, under the ad's id (see ad-tool/frontend/public/index.html). */
 const BUCKET = "saved-ads";
@@ -24,6 +25,8 @@ const filesOf = (ad: SavedAd) => [
   `${ad.id}/thumb.jpg`,
   ...[0, 1, 2].map((i) => `${ad.id}/photo-${i}.jpg`),
 ];
+/** Two ads in a row on a phone; on wider screens, as many columns of about 200px as fit. */
+const GRID = "grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] sm:gap-4";
 const fileName = (ad: SavedAd) => `מודעה_${ad.title.replace(/\s+/g, "_")}.png`;
 
 /**
@@ -84,9 +87,9 @@ export function AdsView() {
       {error ? (
         <ErrorState error={error} />
       ) : isLoading ? (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4">
+        <div className={GRID}>
           {Array.from({ length: 6 }, (_, i) => (
-            <Skeleton key={i} className="aspect-[3/4] rounded-xl" />
+            <Skeleton key={i} className="aspect-[1/2] rounded-xl" />
           ))}
         </div>
       ) : rows.length === 0 ? (
@@ -96,7 +99,7 @@ export function AdsView() {
           hint="כל מודעה שיוצרים בכלי המודעות, כשמחוברים למערכת, תישמר כאן אוטומטית."
         />
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4">
+        <div className={GRID}>
           {rows.map((ad) => (
             <AdCard
               key={ad.id}
@@ -222,37 +225,53 @@ function AdCard({
   const { busy, isPhone, download, share, whatsapp } = useAdActions(ad);
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border bg-card shadow-card">
-      {/* A click on the picture opens the preview (it doesn't download). */}
-      <button type="button" onClick={onOpen} className="relative aspect-square bg-muted" aria-label={`תצוגה מקדימה של ${ad.title}`}>
+    // A gallery card: the ad is the main thing. Its title and price are printed on the ad itself, so they aren't repeated.
+    <div className="flex flex-col gap-2 rounded-xl border bg-card p-2 shadow-card">
+      {/* The whole ad, never cropped. A click opens the preview (it doesn't download). */}
+      <button
+        type="button"
+        onClick={onOpen}
+        title={ad.title}
+        aria-label={`תצוגה מקדימה של ${ad.title}`}
+        className="relative aspect-[3/5] overflow-hidden rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
         {thumb ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={thumb} alt="" className="absolute inset-0 size-full object-contain" />
+          <img src={thumb} alt="" className="absolute inset-0 size-full object-contain object-top" />
         ) : (
-          <Skeleton className="absolute inset-0 rounded-none" />
+          <Skeleton className="absolute inset-0" />
         )}
       </button>
-      <div className="flex flex-1 flex-col gap-0.5 px-3 py-2">
-        <p className="line-clamp-2 text-sm font-medium leading-snug">{ad.title}</p>
-        {ad.price && <p className="text-sm tabular-nums text-primary">{ad.price} ₪</p>}
-        <p className="mt-auto text-xs text-muted-foreground">
-          {showAgent && ad.agent_name ? `${ad.agent_name} · ` : ""}
-          {formatDate(ad.created_at)}
-        </p>
-      </div>
-      <div className="grid grid-cols-4 border-t">
-        <AdAction label="הורדה" onClick={download} disabled={busy}>
-          <DownloadIcon />
-        </AdAction>
-        <AdAction label={isPhone ? "שיתוף" : "שלח בוואטסאפ"} onClick={isPhone ? share : whatsapp} disabled={busy}>
-          <Share2Icon />
-        </AdAction>
-        <AdAction label="עריכה" href={`${AD_TOOL_URL}#saved=${ad.id}`}>
-          <PencilIcon />
-        </AdAction>
-        <AdAction label="מחיקה" onClick={onDelete} danger>
-          <Trash2Icon />
-        </AdAction>
+      <p className="flex items-baseline justify-between gap-2 px-0.5 text-[13px]">
+        {/* The manager sees whose ad it is; an agent, on their own ads, sees which ad it is. */}
+        <span className="min-w-0 truncate font-semibold">{(showAgent && ad.agent_name) || ad.title}</span>
+        <span className="shrink-0 tabular-nums text-muted-foreground">{formatDate(ad.created_at)}</span>
+      </p>
+      {/* The main button, and the three small ones under it. */}
+      <div className="flex flex-col gap-1.5">
+        <button
+          type="button"
+          onClick={isPhone ? share : whatsapp}
+          disabled={busy}
+          className={cn(
+            "flex h-8 items-center justify-center gap-1.5 rounded-lg px-2 text-[13px] font-semibold whitespace-nowrap text-white outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 pointer-coarse:h-10 [&_svg]:size-4",
+            isPhone ? "bg-primary hover:bg-primary/90" : "bg-whatsapp hover:bg-whatsapp-hover",
+          )}
+        >
+          {isPhone ? <Share2Icon /> : <MessageCircleIcon />}
+          {isPhone ? "שיתוף" : "שלח בוואטסאפ"}
+        </button>
+        <div className="flex gap-1">
+          <AdIconAction label="הורדה" onClick={download} disabled={busy}>
+            <DownloadIcon />
+          </AdIconAction>
+          <AdIconAction label="עריכה" href={`${AD_TOOL_URL}#saved=${ad.id}`}>
+            <PencilIcon />
+          </AdIconAction>
+          <AdIconAction label="מחיקה" onClick={onDelete} danger>
+            <Trash2Icon />
+          </AdIconAction>
+        </div>
       </div>
     </div>
   );
@@ -311,7 +330,7 @@ function AdPreview({ ad, thumb, showAgent, onDelete }: { ad: SavedAd; thumb?: st
         </Button>
         {!isPhone && (
           <Button variant="outline" onClick={whatsapp} disabled={busy} className="border-green-600 font-semibold text-green-700 hover:text-green-700 dark:text-green-500">
-            <Share2Icon />
+            <MessageCircleIcon />
             שלח בוואטסאפ
           </Button>
         )}
@@ -338,7 +357,8 @@ function AdPreview({ ad, thumb, showAgent, onDelete }: { ad: SavedAd; thumb?: st
   );
 }
 
-function AdAction({
+/** A small icon button on an ad's card; its name shows on hover and to screen readers. */
+function AdIconAction({
   label,
   onClick,
   href,
@@ -353,19 +373,18 @@ function AdAction({
   danger?: boolean;
   children: React.ReactNode;
 }) {
-  const className =
-    "flex flex-col items-center gap-0.5 border-s py-1.5 text-[11px] text-secondary-foreground first:border-s-0 hover:bg-secondary disabled:opacity-50 [&_svg]:size-4 " +
-    (danger ? "text-destructive hover:bg-destructive/10" : "");
+  const className = cn(
+    "flex h-8 flex-1 items-center justify-center rounded-lg border bg-card outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 pointer-coarse:h-10 [&_svg]:size-4",
+    danger ? "text-destructive hover:bg-destructive/10" : "text-muted-foreground hover:bg-secondary hover:text-primary",
+  );
   return href ? (
     // "Edit" opens the ad tool in a new tab, filled in with this ad.
-    <a href={href} target="_blank" rel="noopener" className={className} title={label}>
+    <a href={href} target="_blank" rel="noopener" className={className} title={label} aria-label={label}>
       {children}
-      {label}
     </a>
   ) : (
-    <button type="button" onClick={onClick} disabled={disabled} className={className} title={label}>
+    <button type="button" onClick={onClick} disabled={disabled} className={className} title={label} aria-label={label}>
       {children}
-      {label}
     </button>
   );
 }
