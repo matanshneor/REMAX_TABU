@@ -61,7 +61,6 @@ export function AdsView() {
       <PageHeader
         title={admin ? "מודעות המשרד" : "המודעות שלי"}
         count={rows.length}
-        description="כל מודעה שיוצרים בכלי המודעות נשמרת כאן לבד."
         actions={
           <>
             {admin && agents.length > 1 && (
