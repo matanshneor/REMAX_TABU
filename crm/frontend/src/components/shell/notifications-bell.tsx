@@ -29,6 +29,7 @@ export function NotificationsBell() {
       const { data, error } = await createClient()
         .from("notifications")
         .select("*")
+        .eq("is_read", false)
         .order("created_at", { ascending: false })
         .limit(30);
       if (error) throw error;
